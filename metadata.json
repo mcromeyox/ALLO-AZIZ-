@@ -1,0 +1,6 @@
+{
+  "name": "ALLO AZIZ",
+  "description": "تطبيق ألو عزيز لتوصيل الطلبات مع تتبع فوري، نظام دفع آمن، إشعارات، تقييمات، ودعم 24/7 بلغات متعددة",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
