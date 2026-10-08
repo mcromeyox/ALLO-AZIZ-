@@ -101,9 +101,9 @@ fun CartCheckoutScreen(
     BackHandler { onBack() }
 
     var promoInput by remember { mutableStateOf("") }
-    var cardNumber by remember { mutableStateOf("•••• •••• •••• 4242") }
-    var cardExpiry by remember { mutableStateOf("12/28") }
-    var cardCvv by remember { mutableStateOf("888") }
+    var cardNumber by remember { mutableStateOf("") }
+    var cardExpiry by remember { mutableStateOf("") }
+    var cardCvv by remember { mutableStateOf("") }
 
     val subtotal = cartItems.sumOf { it.product.price * it.quantity }
     val deliveryFee = if (cartItems.isNotEmpty()) 10.0 else 0.0
@@ -253,6 +253,13 @@ fun CartCheckoutScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("delivery_address_input"),
+                        placeholder = {
+                            Text(
+                                text = "أدخل عنوان التوصيل بالتفصيل (الشارع، رقم العمارة، الحي...)",
+                                fontSize = 12.sp
+                            )
+                        },
+                        label = { Text("عنوان التوصيل 📍", fontSize = 11.sp) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -393,27 +400,30 @@ fun CartCheckoutScreen(
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 OutlinedTextField(
                                     value = cardNumber,
-                                    onValueChange = { cardNumber = it },
+                                    onValueChange = { if (it.length <= 19) cardNumber = it },
                                     modifier = Modifier.weight(1.8f),
                                     label = { Text("رقم البطاقة", fontSize = 10.sp) },
+                                    placeholder = { Text("4111 2222 3333 4444", fontSize = 9.sp) },
                                     singleLine = true,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 OutlinedTextField(
                                     value = cardExpiry,
-                                    onValueChange = { cardExpiry = it },
+                                    onValueChange = { if (it.length <= 5) cardExpiry = it },
                                     modifier = Modifier.weight(1f),
                                     label = { Text("MM/YY", fontSize = 10.sp) },
+                                    placeholder = { Text("12/28", fontSize = 9.sp) },
                                     singleLine = true,
                                     shape = RoundedCornerShape(8.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 OutlinedTextField(
                                     value = cardCvv,
-                                    onValueChange = { cardCvv = it },
+                                    onValueChange = { if (it.length <= 4) cardCvv = it },
                                     modifier = Modifier.weight(0.8f),
                                     label = { Text("CVV", fontSize = 10.sp) },
+                                    placeholder = { Text("123", fontSize = 9.sp) },
                                     singleLine = true,
                                     shape = RoundedCornerShape(8.dp)
                                 )

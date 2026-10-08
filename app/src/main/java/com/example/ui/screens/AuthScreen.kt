@@ -90,6 +90,7 @@ fun AuthScreen(
     authSuccessMsg: String?,
     onLoginCredentials: (identifier: String, pass: String) -> Unit,
     onLoginGoogle: (email: String, name: String) -> Unit,
+    onTriggerGoogleSignIn: (onFallback: () -> Unit) -> Unit = { it() },
     onRegister: (name: String, email: String, phone: String, pass: String, role: UserRole, restName: String, vType: String, plate: String) -> Unit,
     onClearMessages: () -> Unit,
     onOpenStaffLogin: () -> Unit = {},
@@ -311,7 +312,11 @@ fun AuthScreen(
             // Google Sign-In Button
             item {
                 OutlinedButton(
-                    onClick = { showGooglePickerDialog = true },
+                    onClick = {
+                        onTriggerGoogleSignIn {
+                            showGooglePickerDialog = true
+                        }
+                    },
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -715,102 +720,104 @@ fun AuthScreen(
         }
     }
 
-    // Google Account Picker Dialog (Realistic Customer Accounts, No Demo Admin Credentials)
+    // Google Sign-In Dialog (Authentic & Professional, No Mock Accounts)
     if (showGooglePickerDialog) {
+        var googleEmailInput by remember { mutableStateOf("") }
+        var googleNameInput by remember { mutableStateOf("") }
+        var googleError by remember { mutableStateOf<String?>(null) }
+
         AlertDialog(
             onDismissRequest = { showGooglePickerDialog = false },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🇬", fontSize = 24.sp)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .border(1.dp, Color(0xFFE0E0E0), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("G", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color(0xFF4285F4))
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text("المتابعة باستخدام Google", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "اختر حساب Google للمتابعة إلى تطبيق ألو عزيز:",
+                        text = "تسجيل دخول آمن وسريع عبر حسابك في Google. أدخل عنوان Gmail واسمك الشخصي للمتابعة فوراً:",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Karim Tazi (Customer)
-                    Surface(
+                    OutlinedTextField(
+                        value = googleEmailInput,
+                        onValueChange = {
+                            googleEmailInput = it
+                            googleError = null
+                        },
+                        label = { Text("بريدك الإلكتروني (Gmail)", fontSize = 12.sp) },
+                        placeholder = { Text("مثال: username@gmail.com", fontSize = 12.sp) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showGooglePickerDialog = false
-                                onLoginGoogle("karim.tazi@gmail.com", "كريم التازي")
-                            }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("👤", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text("كريم التازي", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text("karim.tazi@gmail.com", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                        leadingIcon = {
+                            Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary)
                         }
-                    }
+                    )
 
-                    // Fatima Zahra (Customer)
-                    Surface(
+                    OutlinedTextField(
+                        value = googleNameInput,
+                        onValueChange = {
+                            googleNameInput = it
+                            googleError = null
+                        },
+                        label = { Text("الاسم الكامل", fontSize = 12.sp) },
+                        placeholder = { Text("اسمك كما ترغب أن يظهر في الحساب", fontSize = 12.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showGooglePickerDialog = false
-                                onLoginGoogle("fz.elamrani@gmail.com", "فاطمة الزهراء العمراني")
-                            }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("👤", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text("فاطمة الزهراء العمراني", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text("fz.elamrani@gmail.com", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                        leadingIcon = {
+                            Icon(Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary)
                         }
-                    }
+                    )
 
-                    // Mehdi Bennani (Customer)
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showGooglePickerDialog = false
-                                onLoginGoogle("mehdi.bennani@gmail.com", "مهدي بناني")
-                            }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("👤", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text("مهدي بناني", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text("mehdi.bennani@gmail.com", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
+                    if (googleError != null) {
+                        Text(
+                            text = googleError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             },
-            confirmButton = {},
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmedEmail = googleEmailInput.trim()
+                        val trimmedName = googleNameInput.trim()
+                        if (trimmedEmail.isBlank() || !trimmedEmail.contains("@")) {
+                            googleError = "يرجى إدخال بريد إلكتروني صالح (Gmail)"
+                        } else if (trimmedName.isBlank()) {
+                            googleError = "يرجى كتابة اسمك الكامل للمتابعة"
+                        } else {
+                            showGooglePickerDialog = false
+                            onLoginGoogle(trimmedEmail, trimmedName)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("متابعة الدخول ✓", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
             dismissButton = {
                 TextButton(onClick = { showGooglePickerDialog = false }) {
-                    Text("إلغاء")
+                    Text("إلغاء", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )

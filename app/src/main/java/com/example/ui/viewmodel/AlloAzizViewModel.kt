@@ -21,6 +21,7 @@ import com.example.data.local.ReviewEntity
 import com.example.data.local.StoreEntity
 import com.example.data.local.SupportTicketEntity
 import com.example.data.local.UserAccountEntity
+import com.example.data.local.UserProfile
 import com.example.data.local.WalletProfileEntity
 import com.example.data.model.AppLanguage
 import com.example.data.model.CartItem
@@ -170,7 +171,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     private val _deliveryNotes = MutableStateFlow("")
     val deliveryNotes: StateFlow<String> = _deliveryNotes.asStateFlow()
 
-    private val _selectedPaymentMethod = MutableStateFlow(PaymentMethodType.CREDIT_CARD)
+    private val _selectedPaymentMethod = MutableStateFlow(PaymentMethodType.CASH_ON_DELIVERY)
     val selectedPaymentMethod: StateFlow<PaymentMethodType> = _selectedPaymentMethod.asStateFlow()
 
     // Active order being tracked
@@ -199,6 +200,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     val pendingUsers: StateFlow<List<UserAccountEntity>>
     val pendingPartnerApplications: StateFlow<List<UserAccountEntity>>
     val allAddresses: StateFlow<List<AddressEntity>>
+    val userProfile: StateFlow<UserProfile?>
 
     // Google Play Services Real-Time Location Tracking
     private val _deviceLocation = MutableStateFlow<DeviceLocation?>(null)
@@ -299,6 +301,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
             emptyList()
+        )
+
+        userProfile = repository.userProfile.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            null
         )
 
         // Seed initial room data
@@ -462,7 +470,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     password = "google_authenticated",
                     role = "CUSTOMER",
                     status = "ACTIVE",
-                    balance = 50.0,
+                    balance = 0.0,
                     avatarEmoji = "👤",
                     authProvider = "GOOGLE"
                 )
@@ -538,7 +546,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 restaurantName = if (role == UserRole.RESTAURANT_OWNER) restaurantName.ifBlank { "مطعم $trimmedName" } else null,
                 vehicleType = if (role == UserRole.DRIVER) vehicleType.ifBlank { "دراجة نارية / سكوتر" } else null,
                 plateNumber = if (role == UserRole.DRIVER) plateNumber.ifBlank { "أ - 12345" } else null,
-                balance = if (role == UserRole.CUSTOMER) 50.0 else 0.0,
+                balance = 0.0,
                 avatarEmoji = role.emoji,
                 authProvider = if (trimmedEmail.endsWith("@gmail.com")) "GOOGLE" else "PHONE"
             )
@@ -759,7 +767,10 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun acceptDeliveryTask(orderId: String) {
         viewModelScope.launch {
-            repository.assignDriverToOrder(orderId, "drv_aziz", "عزيز برادة (المندوب السريع)")
+            val driver = _currentUser.value
+            val driverName = driver?.name?.ifBlank { "كابتن التوصيل" } ?: "كابتن التوصيل"
+            val driverPhone = driver?.phone?.ifBlank { "" } ?: ""
+            repository.assignDriverToOrder(orderId, driver?.id ?: "drv_aziz", driverName, driverPhone)
             HapticFeedbackHelper.vibrateAlert(getApplication())
             AndroidNotificationHelper.showOrderNotification(
                 context = getApplication(),
@@ -1303,18 +1314,18 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 discount = discount,
                 total = total,
                 status = "RECEIVED",
-                restaurantStatus = "ACCEPTED",
-                driverId = "drv_aziz",
+                restaurantStatus = "PENDING_ACCEPTANCE",
+                driverId = null,
                 paymentMethod = paymentMethodStr,
-                deliveryAddress = _deliveryAddress.value,
+                deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
                 deliveryNotes = _deliveryNotes.value,
                 timestamp = System.currentTimeMillis(),
-                courierName = "عزيز برادة (الكابتن عزيز)",
-                courierPhone = "+212 661-234567",
-                courierRating = 4.95,
-                courierVehicle = "دراجة نارية هوندا 125cc",
-                courierProgress = 0.05f,
-                estimatedMinsLeft = 20,
+                courierName = "جاري تعيين كابتن التوصيل... 🛵",
+                courierPhone = "",
+                courierRating = 5.0,
+                courierVehicle = "دراجة نارية",
+                courierProgress = 0.10f,
+                estimatedMinsLeft = 25,
                 hasReviewed = false
             )
 
@@ -1326,7 +1337,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 context = getApplication(),
                 orderId = orderId,
                 title = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
-                body = "المطعم \"$storeName\" بدأ التجهيز. الكابتن عزيز في خدمتك."
+                body = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك."
             )
 
             repository.addNotification(
@@ -1335,9 +1346,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     titleAr = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
                     titleFr = "Commande #$orderId confirmée ! 🛵",
                     titleEn = "Order #$orderId Confirmed! 🛵",
-                    bodyAr = "المطعم \"$storeName\" بدأ التجهيز. الكابتن عزيز في خدمتك.",
-                    bodyFr = "Le restaurant \"$storeName\" prépare votre commande. Coursier Aziz en service.",
-                    bodyEn = "Store \"$storeName\" is preparing your meal. Courier Aziz on duty.",
+                    bodyAr = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك.",
+                    bodyFr = "Votre commande chez \"$storeName\" est confirmée.",
+                    bodyEn = "Your order at \"$storeName\" is confirmed.",
                     timestamp = System.currentTimeMillis(),
                     isRead = false,
                     type = "ORDER",
@@ -1349,58 +1360,74 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             _trackingOrderId.value = orderId
             navigateTo(AppScreen.ORDER_TRACKING)
             onSuccess(orderId)
-
-            startLiveTrackingSimulation(orderId)
         }
     }
 
-    private fun startLiveTrackingSimulation(orderId: String) {
-        trackingJob?.cancel()
-        trackingJob = viewModelScope.launch {
-            delay(5000)
-            repository.updateOrderStatus(orderId, "PREPARING", 0.25f, 16)
-            repository.updateRestaurantStatus(orderId, "COOKING", "PREPARING")
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "المطعم يجهز وجبتك بعناية 👨‍🍳",
-                body = "طلبك #$orderId قيد التحضير في المطبخ الآن وسيتم تسليمه للمندوب قريباً."
-            )
-
-            delay(7000)
-            repository.updateOrderStatus(orderId, "ON_THE_WAY", 0.55f, 10)
-            repository.updateRestaurantStatus(orderId, "READY_FOR_PICKUP", "ON_THE_WAY")
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "الكابتن استلم الطلب وهو في الطريق إليك! 🛵💨",
-                body = "الكابتن عزيز انطلق بدراجته النارية، تتبع مساره الحي على الخريطة مباشرة."
-            )
-
-            delay(6000)
-            repository.updateOrderStatus(orderId, "ON_THE_WAY", 0.80f, 4)
-
-            delay(6000)
-            repository.updateOrderStatus(orderId, "ARRIVED", 0.95f, 1)
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "الكابتن وصل عند بابك! 📍🚪",
-                body = "الكابتن عزيز متواجد الآن أمام العنوان لتسليمك الوجبة ساخنة."
-            )
-
-            delay(6000)
-            repository.updateOrderStatus(orderId, "DELIVERED", 1.0f, 0)
-            HapticFeedbackHelper.vibrateSuccess(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
-                body = "شكراً لاختيارك ألو عزيز! شاركنا تقييمك للمتجر وسرعة التوصيل."
-            )
+    fun advanceOrderTrackingStage(orderId: String) {
+        viewModelScope.launch {
+            val order = allOrders.value.firstOrNull { it.id == orderId } ?: activeOrder.value ?: return@launch
+            when (order.status) {
+                "RECEIVED", "PLACED" -> {
+                    repository.updateOrderStatus(orderId, "PREPARING", 0.35f, 18)
+                    repository.updateRestaurantStatus(orderId, "COOKING", "PREPARING")
+                    HapticFeedbackHelper.vibrateAlert(getApplication())
+                    AndroidNotificationHelper.showOrderNotification(
+                        context = getApplication(),
+                        orderId = orderId,
+                        title = "المطعم يجهز وجبتك بعناية 👨‍🍳",
+                        body = "طلبك #$orderId قيد التحضير في المطبخ الآن."
+                    )
+                    _userAlertMessage.value = "المطعم بدأ في تحضير الطلب الآن 👨‍🍳"
+                }
+                "PREPARING" -> {
+                    val savedPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication())
+                    val courierPhone = if (!ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
+                        order.courierPhone
+                    } else if (!ExternalShareHelper.isPlaceholderOrInvalid(savedPhone)) {
+                        savedPhone
+                    } else {
+                        ""
+                    }
+                    val courierName = if (order.courierName.contains("جاري") || order.courierName.isBlank()) {
+                        "الكابتن عزيز برادة"
+                    } else {
+                        order.courierName
+                    }
+                    repository.assignDriverToOrder(orderId, order.driverId ?: "drv_aziz", courierName, courierPhone)
+                    repository.updateOrderStatus(orderId, "ON_THE_WAY", 0.65f, 10)
+                    repository.updateRestaurantStatus(orderId, "READY_FOR_PICKUP", "ON_THE_WAY")
+                    HapticFeedbackHelper.vibrateAlert(getApplication())
+                    AndroidNotificationHelper.showOrderNotification(
+                        context = getApplication(),
+                        orderId = orderId,
+                        title = "الكابتن استلم الطلب وهو في الطريق إليك! 🛵💨",
+                        body = "الكابتن انطلق بدراجته النارية لتسليم طلبك."
+                    )
+                    _userAlertMessage.value = "الكابتن استلم الطلب وهو في الطريق إليك 🛵💨"
+                }
+                "ON_THE_WAY" -> {
+                    repository.updateOrderStatus(orderId, "ARRIVED", 0.90f, 2)
+                    HapticFeedbackHelper.vibrateAlert(getApplication())
+                    AndroidNotificationHelper.showOrderNotification(
+                        context = getApplication(),
+                        orderId = orderId,
+                        title = "الكابتن وصل أمام العنوان! 📍🚪",
+                        body = "الكابتن متواجد أمام المبنى لتسليمك الطلب ساخناً."
+                    )
+                    _userAlertMessage.value = "الكابتن وصل عند بابك لتسليم الطلب 📍🚪"
+                }
+                "ARRIVED" -> {
+                    repository.updateOrderStatus(orderId, "DELIVERED", 1.0f, 0)
+                    HapticFeedbackHelper.vibrateSuccess(getApplication())
+                    AndroidNotificationHelper.showOrderNotification(
+                        context = getApplication(),
+                        orderId = orderId,
+                        title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
+                        body = "شكراً لاختيارك ألو عزيز! شاركنا تقييمك للخدمة."
+                    )
+                    _userAlertMessage.value = "تم تأكيد تسليم واستلام الطلب بنجاح! 🎉"
+                }
+            }
         }
     }
 
@@ -1627,19 +1654,72 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         ExternalShareHelper.shareOrderReceipt(context, order)
     }
 
-    fun openCourierWhatsApp(context: Context, order: OrderEntity) {
-        ExternalShareHelper.openWhatsApp(
+    fun openCourierWhatsApp(context: Context, order: OrderEntity, customPhone: String? = null): Boolean {
+        val targetPhone = when {
+            !customPhone.isNullOrBlank() && !ExternalShareHelper.isPlaceholderOrInvalid(customPhone) -> customPhone
+            !order.courierPhone.isBlank() && !ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone) -> order.courierPhone
+            else -> ExternalShareHelper.getSavedWhatsAppNumber(context)
+        }
+        if (ExternalShareHelper.isPlaceholderOrInvalid(targetPhone)) {
+            return false
+        }
+        return ExternalShareHelper.openWhatsApp(
             context = context,
-            phoneE164 = order.courierPhone,
-            prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName}."
+            phoneE164 = targetPhone,
+            prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
         )
     }
 
-    fun openSupportWhatsApp(context: Context) {
-        ExternalShareHelper.openWhatsApp(
+    fun openSupportWhatsApp(context: Context, customPhone: String? = null): Boolean {
+        val targetPhone = when {
+            !customPhone.isNullOrBlank() && !ExternalShareHelper.isPlaceholderOrInvalid(customPhone) -> customPhone
+            else -> ExternalShareHelper.getSavedWhatsAppNumber(context)
+        }
+        if (ExternalShareHelper.isPlaceholderOrInvalid(targetPhone)) {
+            return false
+        }
+        return ExternalShareHelper.openWhatsApp(
             context = context,
-            phoneE164 = "+212600123456",
-            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني بخصوص تطبيق ألو عزيز."
+            phoneE164 = targetPhone,
+            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة ألو عزيز بخصوص تطبيق التوصيل."
         )
+    }
+
+    // Local UserProfile & Preferences Management
+    fun saveUserProfile(profile: UserProfile) {
+        viewModelScope.launch {
+            repository.saveUserProfile(profile)
+            _userAlertMessage.value = "تم حفظ الملف الشخصي وتفضيلات التوصيل محلياً بنجاح! 💾"
+        }
+    }
+
+    fun updateDeliveryPreferences(
+        deliveryAddress: String,
+        city: String,
+        neighborhood: String,
+        buildingInfo: String,
+        notes: String,
+        contactless: Boolean = false,
+        requestCutlery: Boolean = true,
+        paymentMethod: String = "CASH_ON_DELIVERY"
+    ) {
+        viewModelScope.launch {
+            val current = userProfile.value ?: UserProfile()
+            val updated = current.copy(
+                streetAddress = deliveryAddress,
+                city = city,
+                neighborhood = neighborhood,
+                buildingInfo = buildingInfo,
+                deliveryNotes = notes,
+                contactlessDelivery = contactless,
+                requestCutlery = requestCutlery,
+                preferredPaymentMethod = paymentMethod,
+                updatedAt = System.currentTimeMillis()
+            )
+            repository.saveUserProfile(updated)
+            _deliveryAddress.value = deliveryAddress
+            _deliveryNotes.value = notes
+            _userAlertMessage.value = "تم تحديث عنوان التوصيل والتفضيلات محلياً بنجاح! 📍"
+        }
     }
 }

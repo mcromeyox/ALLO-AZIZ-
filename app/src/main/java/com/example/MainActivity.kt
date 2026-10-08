@@ -1,6 +1,8 @@
 package com.example
 
 import android.Manifest
+import android.accounts.AccountManager
+import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.location.LocationServiceManager
 import com.example.data.model.UserRole
 import com.example.ui.components.AlloAzizBottomNav
 import com.example.ui.components.AlloAzizTopBar
@@ -108,6 +111,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val favoriteStoreIds by viewModel.favoriteStoreIds.collectAsState()
     val favoriteProductIds by viewModel.favoriteProductIds.collectAsState()
     val allAddresses by viewModel.allAddresses.collectAsState()
+    val userProfile by viewModel.userProfile.collectAsState()
     val selectedCity by viewModel.selectedCity.collectAsState()
     val deviceLocation by viewModel.deviceLocation.collectAsState()
     val isGpsLive by viewModel.isLiveLocationTrackingEnabled.collectAsState()
@@ -116,6 +120,33 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { /* Permission result handled */ }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (fineGranted || coarseGranted) {
+            viewModel.fetchCurrentGpsLocation(context, updateDeliveryAddress = true)
+        }
+    }
+
+    val googleAccountPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val accountEmail = result.data?.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+            if (!accountEmail.isNullOrBlank()) {
+                val displayName = accountEmail.substringBefore("@")
+                    .replace(".", " ")
+                    .split(" ")
+                    .joinToString(" ") { part ->
+                        part.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
+                    }
+                viewModel.loginWithGoogle(accountEmail, displayName)
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -221,6 +252,36 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 authSuccessMsg = authSuccess,
                                 onLoginCredentials = { id, pass -> viewModel.loginWithCredentials(id, pass) },
                                 onLoginGoogle = { email, name -> viewModel.loginWithGoogle(email, name) },
+                                onTriggerGoogleSignIn = { onFallback ->
+                                    try {
+                                        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                            AccountManager.newChooseAccountIntent(
+                                                null,
+                                                null,
+                                                arrayOf("com.google"),
+                                                null,
+                                                null,
+                                                null,
+                                                null
+                                            )
+                                        } else {
+                                            @Suppress("DEPRECATION")
+                                            AccountManager.newChooseAccountIntent(
+                                                null,
+                                                null,
+                                                arrayOf("com.google"),
+                                                false,
+                                                null,
+                                                null,
+                                                null,
+                                                null
+                                            )
+                                        }
+                                        googleAccountPickerLauncher.launch(intent)
+                                    } catch (e: Exception) {
+                                        onFallback()
+                                    }
+                                },
                                 onRegister = { name, email, phone, pass, role, rName, vType, plate ->
                                     viewModel.registerUser(name, email, phone, pass, role, rName, vType, plate)
                                 },
@@ -316,7 +377,16 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onPlaceOrder = { viewModel.placeOrder { /* handled */ } },
                                 onNavigateToHome = { viewModel.navigateTo(AppScreen.HOME) },
                                 onUseCurrentGpsLocation = {
-                                    viewModel.fetchCurrentGpsLocation(context, updateDeliveryAddress = true)
+                                    if (!LocationServiceManager.hasLocationPermission(context)) {
+                                        locationPermissionLauncher.launch(
+                                            arrayOf(
+                                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                                Manifest.permission.ACCESS_COARSE_LOCATION
+                                            )
+                                        )
+                                    } else {
+                                        viewModel.fetchCurrentGpsLocation(context, updateDeliveryAddress = true)
+                                    }
                                 }
                             )
                         }
@@ -340,7 +410,16 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                     viewModel.openGoogleMapsRoute(context, order)
                                 },
                                 onRequestGpsLocation = {
-                                    viewModel.fetchCurrentGpsLocation(context)
+                                    if (!LocationServiceManager.hasLocationPermission(context)) {
+                                        locationPermissionLauncher.launch(
+                                            arrayOf(
+                                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                                Manifest.permission.ACCESS_COARSE_LOCATION
+                                            )
+                                        )
+                                    } else {
+                                        viewModel.fetchCurrentGpsLocation(context)
+                                    }
                                 },
                                 onToggleGpsTracking = { enabled ->
                                     if (enabled) {
@@ -354,6 +433,9 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 },
                                 onOpenWhatsAppCourier = { order ->
                                     viewModel.openCourierWhatsApp(context, order)
+                                },
+                                onAdvanceStage = { orderId ->
+                                    viewModel.advanceOrderTrackingStage(orderId)
                                 }
                             )
                         }
@@ -409,6 +491,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 currentUser = currentUser,
                                 wallet = wallet,
                                 reviews = allReviews,
+                                userProfile = userProfile,
+                                onSaveUserProfile = { viewModel.saveUserProfile(it) },
                                 onRoleChange = { viewModel.switchRole(it) },
                                 onLanguageChange = { viewModel.setLanguage(it) },
                                 onTopUpWallet = { viewModel.topUpWallet(it) },

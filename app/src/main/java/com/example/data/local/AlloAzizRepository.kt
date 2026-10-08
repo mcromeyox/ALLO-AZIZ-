@@ -20,6 +20,50 @@ class AlloAzizRepository(private val database: AppDatabase) {
     val wallet: Flow<WalletProfileEntity?> = database.walletDao().getWallet()
     val allTickets: Flow<List<SupportTicketEntity>> = database.supportTicketDao().getAllTickets()
     val allAddresses: Flow<List<AddressEntity>> = database.addressDao().getAddressesForUser("usr_customer_1")
+    val userProfile: Flow<UserProfile?> = database.userProfileDao().getDefaultUserProfile()
+
+    fun getUserProfile(userId: String): Flow<UserProfile?> = database.userProfileDao().getUserProfile(userId)
+    suspend fun getUserProfileOnce(userId: String): UserProfile? = database.userProfileDao().getUserProfileOnce(userId)
+
+    suspend fun saveUserProfile(profile: UserProfile) {
+        database.userProfileDao().saveUserProfile(profile)
+    }
+
+    suspend fun updateDeliveryAddress(
+        userId: String,
+        address: String,
+        city: String,
+        neighborhood: String,
+        buildingInfo: String,
+        notes: String
+    ) {
+        database.userProfileDao().updateDeliveryAddress(
+            userId = userId,
+            address = address,
+            city = city,
+            neighborhood = neighborhood,
+            buildingInfo = buildingInfo,
+            notes = notes
+        )
+    }
+
+    suspend fun updatePreferences(
+        userId: String,
+        language: String,
+        paymentMethod: String,
+        contactless: Boolean,
+        cutlery: Boolean,
+        pushNotifs: Boolean
+    ) {
+        database.userProfileDao().updatePreferences(
+            userId = userId,
+            language = language,
+            paymentMethod = paymentMethod,
+            contactless = contactless,
+            cutlery = cutlery,
+            pushNotifs = pushNotifs
+        )
+    }
 
     suspend fun insertAddress(address: AddressEntity) {
         database.addressDao().insertAddress(address)
@@ -110,8 +154,8 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.orderDao().updateRestaurantStatus(orderId, restStatus, orderStatus)
     }
 
-    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String) {
-        database.orderDao().assignDriverToOrder(orderId, driverId, driverName)
+    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String = "") {
+        database.orderDao().assignDriverToOrder(orderId, driverId, driverName, driverPhone)
     }
 
     suspend fun markOrderReviewed(orderId: String) {
@@ -164,7 +208,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
                 password = defaultHashedPassword,
                 role = "CUSTOMER",
                 status = "ACTIVE",
-                balance = 120.0,
+                balance = 0.0,
                 avatarEmoji = "🛍️"
             ),
             UserAccountEntity(
@@ -352,9 +396,9 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.walletDao().saveWallet(
             WalletProfileEntity(
                 id = 1,
-                balance = 120.0,
-                points = 350,
-                defaultAddress = "حي الرياض، شارع النخيل - الدار البيضاء"
+                balance = 0.0,
+                points = 0,
+                defaultAddress = ""
             )
         )
 
@@ -376,15 +420,15 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.notificationDao().insertNotification(
             NotificationEntity(
                 id = "notif_wallet_gift",
-                titleAr = "هدية رصيد مجاني 🎁",
-                titleFr = "Cadeau de bienvenue 🎁",
-                titleEn = "Welcome Gift Balance 🎁",
-                bodyAr = "تمت إضافة 120 د.م في محفظة ALLO Pay مع كود AZIZ20 لخصم 20%!",
-                bodyFr = "120 DH ont été ajoutés à votre portefeuille ALLO Pay !",
-                bodyEn = "120 MAD added to your ALLO Pay wallet to enjoy fast delivery!",
+                titleAr = "كود الخصم الترحيبي: AZIZ20 🏷️",
+                titleFr = "Code promo de bienvenue: AZIZ20 🏷️",
+                titleEn = "Welcome Promo Code: AZIZ20 🏷️",
+                bodyAr = "استخدم كود AZIZ20 عند إتمام الطلب للاستفادة من خصم 20% على وجبتك المفضلة!",
+                bodyFr = "Utilisez le code AZIZ20 pour obtenir 20% de réduction sur votre commande !",
+                bodyEn = "Use code AZIZ20 at checkout for 20% off your order!",
                 timestamp = System.currentTimeMillis() - 1800000,
                 isRead = false,
-                type = "WALLET"
+                type = "PROMO"
             )
         )
 
@@ -462,5 +506,32 @@ class AlloAzizRepository(private val database: AppDatabase) {
                 longitude = -7.3750
             )
         )
+
+        // 8. Seed Default UserProfile and delivery preferences
+        database.userProfileDao().saveUserProfile(
+            UserProfile(
+                userId = "default_user",
+                fullName = "",
+                email = "",
+                phoneNumber = "",
+                deliveryAddressTitle = "المنزل",
+                streetAddress = "",
+                city = "المحمدية",
+                neighborhood = "",
+                buildingInfo = "",
+                deliveryNotes = "",
+                preferredLanguage = "AR",
+                preferredPaymentMethod = "CASH_ON_DELIVERY",
+                contactlessDelivery = false,
+                requestCutlery = true,
+                enablePushNotifications = true,
+                enableOrderSmsUpdates = true,
+                enablePromoNotifications = true,
+                isDarkMode = false
+            )
+        )
+
+        // Sanitize any existing wallet balance if previously seeded with demo 120.0 or 150.0
+        database.walletDao().sanitizeDemoBalance()
     }
 }

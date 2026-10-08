@@ -15,9 +15,10 @@ import androidx.room.RoomDatabase
         NotificationEntity::class,
         WalletProfileEntity::class,
         SupportTicketEntity::class,
-        AddressEntity::class
+        AddressEntity::class,
+        UserProfile::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun walletDao(): WalletDao
     abstract fun supportTicketDao(): SupportTicketDao
     abstract fun addressDao(): AddressDao
+    abstract fun userProfileDao(): UserProfileDao
 
     companion object {
         @Volatile

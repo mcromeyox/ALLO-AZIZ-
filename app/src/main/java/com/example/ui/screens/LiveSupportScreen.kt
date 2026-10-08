@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.QuestionAnswer
 import androidx.compose.material.icons.filled.SupportAgent
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -42,6 +43,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -76,6 +78,10 @@ fun LiveSupportScreen(
     val context = LocalContext.current
     var inputMessage by remember { mutableStateOf("") }
     var expandedFaqIndex by remember { mutableIntStateOf(-1) }
+    var showWhatsAppDialog by remember { mutableStateOf(false) }
+    var customPhoneInput by remember {
+        mutableStateOf(com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context))
+    }
 
     val quickChips = listOf(
         "أين طلبي الآن؟ 🛵",
@@ -158,11 +164,16 @@ fun LiveSupportScreen(
                         // WhatsApp Support button
                         IconButton(
                             onClick = {
-                                com.example.data.system.ExternalShareHelper.openWhatsApp(
-                                    context = context,
-                                    phoneE164 = "+212600123456",
-                                    prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ألو عزيز."
-                                )
+                                val saved = com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context)
+                                if (saved.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(saved)) {
+                                    com.example.data.system.ExternalShareHelper.openWhatsApp(
+                                        context = context,
+                                        phoneE164 = saved,
+                                        prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ألو عزيز."
+                                    )
+                                } else {
+                                    showWhatsAppDialog = true
+                                }
                             },
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -375,6 +386,68 @@ fun LiveSupportScreen(
                 }
             }
         }
+    }
+
+    if (showWhatsAppDialog) {
+        AlertDialog(
+            onDismissRequest = { showWhatsAppDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("💬", fontSize = 22.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("دعم ألو عزيز عبر واتساب (WhatsApp 🇲🇦)", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "تواصل فوري ومباشر مع الدعم الفني وإدارة ألو عزيز عبر تطبيق واتساب.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("رقم هاتف الدعم الفني / الإدارة:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = customPhoneInput,
+                        onValueChange = { customPhoneInput = it },
+                        placeholder = { Text("مثال: 0612345678 أو 0712345678", fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth().testTag("support_custom_whatsapp_input"),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "💡 يمكنك كتابة رقم هاتفك أو رقم الإدارة للتواصل الفوري، وسيتم حفظه مباشرة.",
+                        fontSize = 11.sp,
+                        color = AzizMint
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val phoneToUse = customPhoneInput.trim()
+                        if (phoneToUse.isNotBlank()) {
+                            com.example.data.system.ExternalShareHelper.saveWhatsAppNumber(context, phoneToUse)
+                            com.example.data.system.ExternalShareHelper.openWhatsApp(
+                                context = context,
+                                phoneE164 = phoneToUse,
+                                prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ألو عزيز."
+                            )
+                            showWhatsAppDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AzizMint)
+                ) {
+                    Text("فتح واتساب الآن 🚀", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWhatsAppDialog = false }) {
+                    Text("إلغاء")
+                }
+            }
+        )
     }
 }
 

@@ -126,8 +126,8 @@ interface OrderDao {
     @Query("UPDATE orders SET restaurantStatus = :restStatus, status = :orderStatus WHERE id = :orderId")
     suspend fun updateRestaurantStatus(orderId: String, restStatus: String, orderStatus: String)
 
-    @Query("UPDATE orders SET driverId = :driverId, courierName = :driverName, status = 'ON_THE_WAY', courierProgress = 0.5 WHERE id = :orderId")
-    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String)
+    @Query("UPDATE orders SET driverId = :driverId, courierName = :driverName, courierPhone = :driverPhone, status = 'ON_THE_WAY', courierProgress = 0.5 WHERE id = :orderId")
+    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String)
 
     @Query("UPDATE orders SET hasReviewed = 1 WHERE id = :orderId")
     suspend fun markOrderReviewed(orderId: String)
@@ -170,6 +170,9 @@ interface WalletDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveWallet(wallet: WalletProfileEntity)
+
+    @Query("UPDATE wallet_profile SET balance = 0.0, points = 0 WHERE id = 1 AND (balance = 120.0 OR balance = 150.0)")
+    suspend fun sanitizeDemoBalance()
 
     @Query("UPDATE wallet_profile SET balance = balance + :amount WHERE id = 1")
     suspend fun topUp(amount: Double)

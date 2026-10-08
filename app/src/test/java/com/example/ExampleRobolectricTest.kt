@@ -54,11 +54,11 @@ class ExampleRobolectricTest {
 
         val tajineStore = CatalogData.stores.find { it.id == "store_tajine" }
         assertNotNull(tajineStore)
-        assertEquals("طاجين فاس الملكي", tajineStore?.nameAr)
+        assertEquals("طاجين البركة البلدي - قصبة المحمدية", tajineStore?.nameAr)
 
         val mcdoStore = CatalogData.stores.find { it.id == "store_mcdonalds" }
         assertNotNull(mcdoStore)
-        assertEquals("ماكدونالدز", mcdoStore?.nameAr)
+        assertEquals("ماكدونالدز ميرامار المحمدية", mcdoStore?.nameAr)
     }
 
     @Test

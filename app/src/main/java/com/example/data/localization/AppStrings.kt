@@ -252,9 +252,15 @@ object AppStrings {
     }
 
     fun statusReceived(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "تم استلام الطلب"
-        AppLanguage.FRENCH -> "Commande reçue"
-        AppLanguage.ENGLISH -> "Order Received"
+        AppLanguage.ARABIC -> "تم استلام الطلب (Order Placed)"
+        AppLanguage.FRENCH -> "Commande reçue (Order Placed)"
+        AppLanguage.ENGLISH -> "Order Placed"
+    }
+
+    fun statusOrderPlaced(lang: AppLanguage): String = when (lang) {
+        AppLanguage.ARABIC -> "تم استلام الطلب (Order Placed)"
+        AppLanguage.FRENCH -> "Commande enregistrée (Order Placed)"
+        AppLanguage.ENGLISH -> "Order Placed"
     }
 
     fun statusPreparing(lang: AppLanguage): String = when (lang) {
@@ -263,10 +269,22 @@ object AppStrings {
         AppLanguage.ENGLISH -> "Preparing in Kitchen"
     }
 
+    fun statusPickedUp(lang: AppLanguage): String = when (lang) {
+        AppLanguage.ARABIC -> "تم استلام الطلب من المطعم (Picked Up)"
+        AppLanguage.FRENCH -> "Commande récupérée (Picked Up)"
+        AppLanguage.ENGLISH -> "Picked Up"
+    }
+
     fun statusOnTheWay(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "المندوب استلم الطلب وهو في الطريق إليك"
-        AppLanguage.FRENCH -> "Le livreur est en route vers vous"
-        AppLanguage.ENGLISH -> "Courier on the way to you"
+        AppLanguage.ARABIC -> "المندوب في الطريق للتوصيل (Out for Delivery)"
+        AppLanguage.FRENCH -> "En cours de livraison (Out for Delivery)"
+        AppLanguage.ENGLISH -> "Out for Delivery"
+    }
+
+    fun statusOutForDelivery(lang: AppLanguage): String = when (lang) {
+        AppLanguage.ARABIC -> "المندوب في الطريق للتوصيل (Out for Delivery)"
+        AppLanguage.FRENCH -> "En cours de livraison (Out for Delivery)"
+        AppLanguage.ENGLISH -> "Out for Delivery"
     }
 
     fun statusArrived(lang: AppLanguage): String = when (lang) {

@@ -132,9 +132,9 @@ data class NotificationEntity(
 @Entity(tableName = "wallet_profile")
 data class WalletProfileEntity(
     @PrimaryKey val id: Int = 1,
-    val balance: Double = 150.0,
-    val points: Int = 450,
-    val defaultAddress: String = "حي الرياض، شارع النخيل - الدار البيضاء"
+    val balance: Double = 0.0,
+    val points: Int = 0,
+    val defaultAddress: String = ""
 )
 
 @Entity(tableName = "support_tickets")

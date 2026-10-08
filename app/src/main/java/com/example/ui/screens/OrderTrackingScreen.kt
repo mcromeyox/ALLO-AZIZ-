@@ -114,13 +114,24 @@ fun OrderTrackingScreen(
     onRequestGpsLocation: (() -> Unit)? = null,
     onToggleGpsTracking: ((Boolean) -> Unit)? = null,
     onShareReceipt: ((OrderEntity) -> Unit)? = null,
-    onOpenWhatsAppCourier: ((OrderEntity) -> Unit)? = null
+    onOpenWhatsAppCourier: ((OrderEntity) -> Unit)? = null,
+    onAdvanceStage: ((String) -> Unit)? = null
 ) {
     BackHandler { onBack() }
 
     val context = LocalContext.current
     var showReviewDialog by remember { mutableStateOf(false) }
     var showCourierChatDialog by remember { mutableStateOf(false) }
+    var showWhatsAppModal by remember { mutableStateOf(false) }
+    var customWhatsAppPhoneInput by remember(order) {
+        mutableStateOf(
+            if (order != null && order.courierPhone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
+                order.courierPhone
+            } else {
+                com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context)
+            }
+        )
+    }
     var courierChatInput by remember { mutableStateOf("") }
     val courierChatLog = remember {
         mutableStateListOf(
@@ -415,7 +426,7 @@ fun OrderTrackingScreen(
             ElevatedCard(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().testTag("live_eta_progress_card")
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -425,19 +436,28 @@ fun OrderTrackingScreen(
                     ) {
                         Column {
                             Text(
-                                text = AppStrings.estimatedArrival(language),
+                                text = when (order.status) {
+                                    "RECEIVED" -> "حالة الطلب: قيد مراجعة المتجر ⏳"
+                                    "PREPARING" -> "حالة الطلب: قيد التحضير في المطبخ 🍳"
+                                    "ON_THE_WAY" -> AppStrings.estimatedArrival(language)
+                                    "ARRIVED" -> "المندوب وصل أمام العنوان 📍"
+                                    else -> AppStrings.statusDelivered(language)
+                                },
                                 fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            val arrivalText = if (order.status == "DELIVERED") {
-                                AppStrings.statusDelivered(language)
-                            } else {
-                                "${order.estimatedMinsLeft} ${AppStrings.minTime(language, order.estimatedMinsLeft)}"
+                            val arrivalText = when (order.status) {
+                                "RECEIVED" -> "بانتظار قبول المتجر (25-30 دقيقة)"
+                                "PREPARING" -> "قيد الطهي (15-20 دقيقة)"
+                                "ON_THE_WAY" -> "${order.estimatedMinsLeft} ${AppStrings.minTime(language, order.estimatedMinsLeft)}"
+                                "ARRIVED" -> "متواجد عند الباب الآن"
+                                else -> AppStrings.statusDelivered(language)
                             }
                             Text(
                                 text = arrivalText,
                                 fontWeight = FontWeight.Black,
-                                fontSize = 20.sp,
+                                fontSize = 18.sp,
                                 color = if (order.status == "DELIVERED") AzizMint else AzizOrangePrimary
                             )
                         }
@@ -465,12 +485,64 @@ fun OrderTrackingScreen(
                         currentStage = currentStageIndex,
                         language = language
                     )
+
+                    // Stage Progression Sync Controller for Testing & Real Sync
+                    if (onAdvanceStage != null && order.status != "DELIVERED") {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "مزامنة دورة التوصيل وتحديث الحالة:",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "انقر لتحديث مرحلة التوصيل خطوة بخطوة",
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            Button(
+                                onClick = { onAdvanceStage(order.id) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = when (order.status) {
+                                        "RECEIVED" -> AzizOrangePrimary
+                                        "PREPARING" -> AzizAmberSecondary
+                                        "ON_THE_WAY" -> AzizMint
+                                        else -> AzizMint
+                                    }
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                modifier = Modifier.testTag("sync_advance_stage_btn")
+                            ) {
+                                val nextLabel = when (order.status) {
+                                    "RECEIVED" -> "بدء التحضير 🍳"
+                                    "PREPARING" -> "انطلاق الكابتن 🛵"
+                                    "ON_THE_WAY" -> "وصول الكابتن 📍"
+                                    "ARRIVED" -> "تأكيد الاستلام ✓"
+                                    else -> "تحديث الحالة 🔄"
+                                }
+                                Text(nextLabel, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // Courier Aziz Profile Card
+        // Courier Profile Card (Shows pending state when not yet on the way)
         item {
+            val isCourierActive = order.status in listOf("ON_THE_WAY", "ARRIVED", "DELIVERED") && !order.courierName.contains("جاري")
+
             Card(
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -478,195 +550,265 @@ fun OrderTrackingScreen(
                 modifier = Modifier.testTag("courier_profile_card")
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(AzizOrangePrimary, AzizAmberSecondary)
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
+                    if (!isCourierActive) {
+                        // Pending assignment state
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("🛵", fontSize = 26.sp)
-                        }
+                            Surface(
+                                shape = CircleShape,
+                                color = AzizOrangePrimary.copy(alpha = 0.15f),
+                                modifier = Modifier.size(50.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("🛵", fontSize = 24.sp)
+                                }
+                            }
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
 
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = order.courierName,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = GoldStarColor,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${order.courierRating} (380+ توصيلة ناجحة)",
-                                    fontSize = 11.sp,
+                                    text = "كابتن التوصيل",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "جاري تعيين أقرب كابتن توصيل متوفر ⏳",
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
+                                    color = AzizOrangePrimary
+                                )
+                                Text(
+                                    text = "ستظهر بيانات الكابتن ورقم هاتفه وإمكانية الاتصال به فور انطلاقه بالطلب من المتجر.",
+                                    fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = { showWhatsAppModal = true },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("whatsapp_pending_support_btn")
+                        ) {
+                            Text("💬", fontSize = 15.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = order.courierVehicle,
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                text = "مراسلة إدارة المتجر والكباتن عبر واتساب (WhatsApp)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AzizMint
                             )
                         }
-                    }
+                    } else {
+                        // Assigned driver state
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(AzizOrangePrimary, AzizAmberSecondary)
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("🛵", fontSize = 26.sp)
+                            }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider()
-                    Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = order.courierName.ifBlank { "الكابتن عزيز برادة" },
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = GoldStarColor,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text(
+                                        text = "${order.courierRating} (كابتن معتمد 🇲🇦)",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Text(
+                                    text = order.courierVehicle.ifBlank { "دراجة نارية" },
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    val phone = order.courierPhone.ifBlank {
+                                        com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context)
+                                    }
+                                    if (phone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(phone)) {
+                                        val intent = Intent(Intent.ACTION_DIAL).apply {
+                                            data = Uri.parse("tel:$phone")
+                                        }
+                                        context.startActivity(intent)
+                                    } else {
+                                        showWhatsAppModal = true
+                                    }
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("call_courier_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = null,
+                                    tint = AzizOrangePrimary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = AppStrings.callCourier(language),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AzizOrangePrimary
+                                )
+                            }
+
+                            Button(
+                                onClick = { showCourierChatDialog = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("message_courier_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Chat,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = AppStrings.messageCourier(language),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                         OutlinedButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL).apply {
-                                    data = Uri.parse("tel:${order.courierPhone}")
+                                if (order.courierPhone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
+                                    com.example.data.system.ExternalShareHelper.openWhatsApp(
+                                        context = context,
+                                        phoneE164 = order.courierPhone,
+                                        prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName}."
+                                    )
+                                } else {
+                                    showWhatsAppModal = true
                                 }
-                                context.startActivity(intent)
                             },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
-                                .weight(1f)
-                                .testTag("call_courier_button")
+                                .fillMaxWidth()
+                                .testTag("whatsapp_courier_button")
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Call,
-                                contentDescription = null,
-                                tint = AzizOrangePrimary,
-                                modifier = Modifier.size(16.dp)
-                            )
+                            Text("💬", fontSize = 15.sp)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = AppStrings.callCourier(language),
+                                text = "مراسلة عبر واتساب (WhatsApp)",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = AzizOrangePrimary
+                                color = AzizMint
                             )
                         }
-
-                        Button(
-                            onClick = { showCourierChatDialog = true },
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("message_courier_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Chat,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = AppStrings.messageCourier(language),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = {
-                            onOpenWhatsAppCourier?.invoke(order) ?: run {
-                                com.example.data.system.ExternalShareHelper.openWhatsApp(
-                                    context = context,
-                                    phoneE164 = order.courierPhone,
-                                    prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id}."
-                                )
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("whatsapp_courier_button")
-                    ) {
-                        Text("💬", fontSize = 15.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "مراسلة عبر واتساب (WhatsApp)",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AzizMint
-                        )
                     }
                 }
             }
         }
 
-        // Rating & Review Card Button (if delivered or available)
-        item {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (order.hasReviewed) AzizMint.copy(alpha = 0.1f) else AzizAmberSecondary.copy(alpha = 0.12f)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showReviewDialog = true }
-                    .testTag("rate_order_action_card")
-            ) {
-                Row(
+        // Rating & Review Card Button (ONLY visible when order is actually DELIVERED)
+        if (order.status == "DELIVERED") {
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (order.hasReviewed) AzizMint.copy(alpha = 0.1f) else AzizAmberSecondary.copy(alpha = 0.12f)
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .clickable { showReviewDialog = true }
+                        .testTag("rate_order_action_card")
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = if (order.hasReviewed) "✅" else "⭐",
-                            fontSize = 24.sp
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = if (order.hasReviewed) "تم تقييم هذا الطلب بنجاح" else AppStrings.rateExperience(language),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = if (order.hasReviewed) "✅" else "⭐",
+                                fontSize = 24.sp
                             )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = if (order.hasReviewed) "تم تقييم هذا الطلب بنجاح" else AppStrings.rateExperience(language),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (order.hasReviewed) "شكراً لدعمك المتجر والمندوب عزيز!" else "شاركنا رأيك في سرعة التوصيل وجودة الطعام",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (order.hasReviewed) AzizMint else AzizOrangePrimary
+                        ) {
                             Text(
-                                text = if (order.hasReviewed) "شكراً لدعمك المتجر والمندوب عزيز!" else "شاركنا رأيك في سرعة التوصيل وجودة الطعام",
+                                text = if (order.hasReviewed) "مراجعة" else "تقييم",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                 fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
                         }
-                    }
-
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (order.hasReviewed) AzizMint else AzizOrangePrimary
-                    ) {
-                        Text(
-                            text = if (order.hasReviewed) "مراجعة" else "تقييم",
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
                     }
                 }
             }
@@ -829,6 +971,79 @@ fun OrderTrackingScreen(
             }
         )
     }
+
+    // Direct WhatsApp Modal Dialog (Ensures genuine phone number, never random dummy)
+    if (showWhatsAppModal) {
+        AlertDialog(
+            onDismissRequest = { showWhatsAppModal = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("💬", fontSize = 22.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "مراسلة عبر واتساب (WhatsApp 🇲🇦)",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "تواصل مباشر مع كابتن التوصيل أو إدارة ألو عزيز بخصوص طلبك #${order.id}.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "رقم واتساب الفعلي للكابتن أو الإدارة:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = customWhatsAppPhoneInput,
+                        onValueChange = { customWhatsAppPhoneInput = it },
+                        placeholder = { Text("مثال: 0612345678 أو 0712345678", fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth().testTag("custom_whatsapp_input"),
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "💡 سيتم حفظ هذا الرقم على جهازك وسيتم فتح محادثة واتساب فوراً بالرسالة الرسمية للطلب.",
+                        fontSize = 11.sp,
+                        color = AzizMint
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val phoneToUse = customWhatsAppPhoneInput.trim()
+                        if (phoneToUse.isNotBlank()) {
+                            com.example.data.system.ExternalShareHelper.saveWhatsAppNumber(context, phoneToUse)
+                            val prefilled = "السلام عليكم، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+                            com.example.data.system.ExternalShareHelper.openWhatsApp(
+                                context = context,
+                                phoneE164 = phoneToUse,
+                                prefilledText = prefilled
+                            )
+                            showWhatsAppModal = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                    modifier = Modifier.testTag("confirm_open_whatsapp_btn")
+                ) {
+                    Text("فتح واتساب الآن 🚀", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWhatsAppModal = false }) {
+                    Text("إلغاء")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -936,8 +1151,10 @@ fun LiveTrackingMapCanvas(
                     center = endPoint
                 )
 
-                // Calculate Courier Position based on progress (0.0 to 1.0)
+                // Calculate Courier Position based on actual order status and progress
                 val courierPos = when {
+                    status in listOf("RECEIVED", "PREPARING") -> startPoint
+                    status in listOf("ARRIVED", "DELIVERED") -> endPoint
                     progress <= 0.33f -> {
                         val segProgress = progress / 0.33f
                         Offset(
@@ -1062,19 +1279,40 @@ fun LiveTrackingMapCanvas(
                 }
             }
 
-            // Moving Courier Floating Tag
+            // Dynamic Courier / Delivery Stage Floating Tag
+            val tagAlignment = when (status) {
+                "RECEIVED", "PREPARING" -> Alignment.CenterStart
+                "ARRIVED", "DELIVERED" -> Alignment.CenterEnd
+                else -> Alignment.Center
+            }
+            val stageTagLabel = when (status) {
+                "RECEIVED" -> "المتجر يراجع الطلب ⏳"
+                "PREPARING" -> "قيد التحضير بالمطبخ 🍳"
+                "ON_THE_WAY" -> "الكابتن في الطريق 🛵"
+                "ARRIVED" -> "الكابتن وصل عند العنوان 🚪"
+                "DELIVERED" -> "تم التسليم بنجاح ✓"
+                else -> "كابتن ألو عزيز 🛵"
+            }
+
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
+                    .align(tagAlignment)
+                    .padding(horizontal = 24.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(AzizOrangePrimary)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .background(
+                        when (status) {
+                            "DELIVERED", "ARRIVED" -> AzizMint
+                            "PREPARING" -> AzizAmberSecondary
+                            else -> AzizOrangePrimary
+                        }
+                    )
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🛵", fontSize = 13.sp)
+                    Text(if (status in listOf("DELIVERED", "ARRIVED")) "✓" else "🛵", fontSize = 13.sp)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "عزيز المندوب",
+                        text = stageTagLabel,
                         color = Color.White,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
