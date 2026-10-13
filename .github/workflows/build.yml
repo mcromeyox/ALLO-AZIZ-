@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
 jobs:
   build:
@@ -20,18 +18,17 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
 
       - name: Install Android SDK packages
-        shell: bash
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "cmdline-tools;latest" "platform-tools"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -39,7 +36,7 @@ jobs:
           gradle-version: "9.3.1"
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
