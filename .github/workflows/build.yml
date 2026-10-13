@@ -26,9 +26,52 @@ jobs:
         env:
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "cmdline-tools;latest" "platform-tools"
+          set -euo pipefail
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
+
+          # Ensure the sdkmanager from a pinned cmdline-tools is preferred on PATH
+          export PATH="${ANDROID_SDK_ROOT}/cmdline-tools/9.0/bin:${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
+
+          echo "Listing existing cmdline-tools"
+          ls -la "${ANDROID_SDK_ROOT}/cmdline-tools" || true
+
+          # Retry helper
+          attempt=0
+          max_attempts=3
+
+          until [ "$attempt" -ge "$max_attempts" ]; do
+            attempt=$((attempt+1))
+            echo "Attempt $attempt/$max_attempts: Installing cmdline-tools;9.0 and platform-tools"
+            if yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "cmdline-tools;9.0" "platform-tools"; then
+              echo "Installed cmdline-tools;9.0 successfully"
+              break
+            fi
+            echo "Install attempt $attempt failed — retrying in 5s"
+            sleep 5
+          done
+
+          # If cmdline-tools;9.0 couldn't be installed, try latest as a fallback
+          if [ ! -x "${ANDROID_SDK_ROOT}/cmdline-tools/9.0/bin/sdkmanager" ]; then
+            echo "Falling back to cmdline-tools;latest"
+            yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "cmdline-tools;latest" "platform-tools"
+          fi
+
+          # Install required platform and build-tools
           yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --install "platforms;android-36" "build-tools;36.0.0"
-          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses
+
+          # Accept licenses (non-zero exit shouldn't fail the job here)
+          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses || true
+
+          # Debugging info — show installed cmdline-tools and sdkmanager versions
+          echo "Installed cmdline-tools directory contents:"
+          ls -la "${ANDROID_SDK_ROOT}/cmdline-tools" || true
+
+          for sm in "${ANDROID_SDK_ROOT}"/cmdline-tools/*/bin/sdkmanager; do
+            if [ -x "$sm" ]; then
+              echo "== $sm =="
+              "$sm" --version || true
+            fi
+          done
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
