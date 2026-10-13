@@ -1,81 +1,95 @@
 name: Build ALLO AZIZ APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build Debug APK
     runs-on: ubuntu-latest
+    timeout-minutes: 25
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: "17"
+          distribution: "temurin"
+          java-version: "21"
 
-      - name: Install Android SDK and required packages
-        env:
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          set -euo pipefail
-
-          mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools"
-          cd /tmp
-
-          if [ ! -x "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" ]; then
-            echo "Downloading Android command line tools..."
-            curl -fsSL -o commandlinetools.zip \
-              "https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
-
-            rm -rf /tmp/cmdline-tools
-            unzip -q commandlinetools.zip -d /tmp/cmdline-tools
-
-            rm -rf "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
-            mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
-            cp -R /tmp/cmdline-tools/cmdline-tools/* "${ANDROID_SDK_ROOT}/cmdline-tools/latest/"
-          fi
-
-          export PATH="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${PATH}"
-
-          echo "Using sdkmanager: $(which sdkmanager)"
-          sdkmanager --version
-
-          attempt=0
-          max_attempts=3
-          until [ "$attempt" -ge "$max_attempts" ]; do
-            attempt=$((attempt+1))
-            echo "Attempt $attempt/$max_attempts: installing Android packages"
-            if yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" \
-              --install \
-              "platform-tools" \
-              "platforms;android-36" \
-              "build-tools;36.0.0"; then
-              echo "Android packages installed successfully"
-              break
-            fi
-            echo "Install attempt failed — retrying in 5s"
-            sleep 5
-          done
-
-          yes | sdkmanager --sdk_root="${ANDROID_SDK_ROOT}" --licenses || true
-
-      - name: Set up Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.3.1"
 
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+      - name: Prepare environment and keystore
+        run: |
+          # Ensure .env exists for Secrets Gradle Plugin
+          if [ ! -f .env ]; then
+            cp .env.example .env 2>/dev/null || touch .env
+          fi
 
-      - name: Upload APK
+          # Restore debug.keystore needed for debugConfig signing
+          if [ -f "debug.keystore.base64" ]; then
+            echo "Restoring debug.keystore from base64..."
+            base64 -d debug.keystore.base64 > debug.keystore
+          elif [ ! -f "debug.keystore" ]; then
+            echo "Generating debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+          # Ensure gradlew has execute permission
+          chmod +x gradlew
+
+      - name: Accept Android SDK Licenses and Setup Tools
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          export ANDROID_HOME="${ANDROID_SDK_ROOT}"
+          
+          # Pre-accept all Android SDK licenses so Gradle can auto-download SDK components
+          mkdir -p "${ANDROID_SDK_ROOT}/licenses"
+          echo -e "24333f8a63b6825ea9c5514f83c2829b004d1fee\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "${ANDROID_SDK_ROOT}/licenses/android-sdk-license"
+          echo -e "84831b9409646a918e30573bab4c9c91346d8abd" > "${ANDROID_SDK_ROOT}/licenses/android-sdk-preview-license"
+          
+          # Find or run sdkmanager safely
+          SDK_MGR=""
+          for p in "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+                   "${ANDROID_SDK_ROOT}/cmdline-tools"/*/bin/sdkmanager; do
+            if [ -x "$p" ]; then
+              SDK_MGR="$p"
+              break
+            fi
+          done
+
+          if [ -n "$SDK_MGR" ]; then
+            echo "Found sdkmanager: $SDK_MGR"
+            yes | "$SDK_MGR" --sdk_root="${ANDROID_SDK_ROOT}" --licenses || true
+            yes | "$SDK_MGR" --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
+          fi
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK was created
+        run: |
+          ls -lh app/build/outputs/apk/debug/
+          APK_COUNT=$(find app/build/outputs/apk/debug/ -name "*.apk" | wc -l)
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "Error: No APK found after build!"
+            exit 1
+          fi
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ALLO-AZIZ-debug-APK
+          name: ALLO-AZIZ-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          retention-days: 14
