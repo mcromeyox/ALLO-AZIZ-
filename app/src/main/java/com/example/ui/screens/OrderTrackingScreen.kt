@@ -105,6 +105,7 @@ import com.example.ui.theme.OrderReceivedColor
 fun OrderTrackingScreen(
     order: OrderEntity?,
     language: AppLanguage,
+    currentRole: com.example.data.model.UserRole = com.example.data.model.UserRole.CUSTOMER,
     currentDeviceLocation: DeviceLocation? = null,
     isGpsLive: Boolean = false,
     onBack: () -> Unit,
@@ -198,7 +199,7 @@ fun OrderTrackingScreen(
         modifier = Modifier
             .fillMaxSize()
             .testTag("order_tracking_screen"),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 90.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Top Header
@@ -486,8 +487,8 @@ fun OrderTrackingScreen(
                         language = language
                     )
 
-                    // Stage Progression Sync Controller for Testing & Real Sync
-                    if (onAdvanceStage != null && order.status != "DELIVERED") {
+                    // Stage Progression Sync Controller (visible ONLY for staff/partner testing, never for customer)
+                    if (currentRole != com.example.data.model.UserRole.CUSTOMER && onAdvanceStage != null && order.status != "DELIVERED") {
                         Spacer(modifier = Modifier.height(14.dp))
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         Spacer(modifier = Modifier.height(10.dp))
@@ -499,13 +500,13 @@ fun OrderTrackingScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "مزامنة دورة التوصيل وتحديث الحالة:",
+                                    text = "مزامنة دورة التوصيل (لوحة الإدارة):",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
-                                    text = "انقر لتحديث مرحلة التوصيل خطوة بخطوة",
+                                    text = "تحديث مرحلة التوصيل تجريبياً",
                                     fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                 )

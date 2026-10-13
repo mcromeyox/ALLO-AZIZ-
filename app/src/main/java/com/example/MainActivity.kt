@@ -350,8 +350,11 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 StoreDetailScreen(
                                     store = store,
                                     language = language,
+                                    cartItemCount = cartItems.sumOf { it.quantity },
+                                    cartTotal = cartItems.sumOf { it.product.price * it.quantity },
                                     onBack = { viewModel.navigateBack() },
-                                    onAddToCart = { viewModel.addToCart(it) }
+                                    onAddToCart = { viewModel.addToCart(it) },
+                                    onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) }
                                 )
                             } ?: run {
                                 viewModel.navigateTo(AppScreen.HOME)
@@ -399,6 +402,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                             OrderTrackingScreen(
                                 order = orderToTrack,
                                 language = language,
+                                currentRole = currentRole,
                                 currentDeviceLocation = deviceLocation,
                                 isGpsLive = isGpsLive,
                                 onBack = { viewModel.navigateBack() },

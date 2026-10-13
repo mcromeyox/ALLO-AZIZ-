@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,21 +62,25 @@ import androidx.compose.runtime.setValue
 fun StoreDetailScreen(
     store: Store,
     language: AppLanguage,
+    cartItemCount: Int = 0,
+    cartTotal: Double = 0.0,
     onBack: () -> Unit,
     onAddToCart: (Product) -> Unit,
-    onAddToCartWithOptions: (Product, Int, List<String>, Double, String) -> Unit = { p, q, opts, extra, notes -> onAddToCart(p) }
+    onAddToCartWithOptions: (Product, Int, List<String>, Double, String) -> Unit = { p, q, opts, extra, notes -> onAddToCart(p) },
+    onOpenCart: () -> Unit = {}
 ) {
     BackHandler { onBack() }
 
     var customizingProduct by remember { mutableStateOf<Product?>(null) }
     val storeProducts = CatalogData.products.filter { it.storeId == store.id }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("store_detail_lazy_column"),
-        contentPadding = PaddingValues(bottom = 90.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("store_detail_lazy_column"),
+            contentPadding = PaddingValues(bottom = if (cartItemCount > 0) 140.dp else 90.dp)
+        ) {
         // Store Header Card
         item {
             Box(
@@ -253,6 +258,61 @@ fun StoreDetailScreen(
                         }
                     }
                 )
+            }
+        }
+    }
+
+    // Glovo-style Floating Cart Bar
+    if (cartItemCount > 0) {
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onOpenCart() }
+                    .testTag("floating_cart_bar"),
+                color = AzizOrangePrimary,
+                shadowElevation = 8.dp,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.25f),
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "$cartItemCount",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "عرض السلة وإتمام الطلب 🛒",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                    Text(
+                        text = "%.2f ${AppStrings.currency(language)}".format(cartTotal),
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 15.sp
+                    )
+                }
             }
         }
     }
