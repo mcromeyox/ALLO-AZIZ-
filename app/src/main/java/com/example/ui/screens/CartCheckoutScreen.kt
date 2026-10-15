@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Money
@@ -177,7 +178,6 @@ fun CartCheckoutScreen(
         contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Title
         item {
             Text(
                 text = AppStrings.cartTitle(language),
@@ -187,7 +187,6 @@ fun CartCheckoutScreen(
             )
         }
 
-        // Cart items list
         items(cartItems) { item ->
             CartItemRow(
                 item = item,
@@ -197,7 +196,6 @@ fun CartCheckoutScreen(
             )
         }
 
-        // Delivery Address Card
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -329,7 +327,6 @@ fun CartCheckoutScreen(
             }
         }
 
-        // Promo Code Card
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -378,7 +375,6 @@ fun CartCheckoutScreen(
             }
         }
 
-        // Secure Payment Method Selector
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -417,7 +413,6 @@ fun CartCheckoutScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // 1. Credit Card
                     PaymentOptionRow(
                         title = AppStrings.payCard(language),
                         subtitle = "تشفير بنكي آمن 100% مع حماية 3D-Secure",
@@ -478,7 +473,6 @@ fun CartCheckoutScreen(
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
 
-                    // 2. Cash on Delivery
                     PaymentOptionRow(
                         title = AppStrings.payCash(language),
                         subtitle = "ادفع نقداً للمندوب عزيز عند استلام طلبك",
@@ -489,10 +483,9 @@ fun CartCheckoutScreen(
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
 
-                    // 3. ALLO Pay Wallet
                     PaymentOptionRow(
                         title = "${AppStrings.payWallet(language)} $walletBalance ${AppStrings.currency(language)})",
-                        subtitle = if (walletBalance >= total) "رصيدك كافٍ - دفع فوري بنقرة واحدة ⚡" else "الرصيد غير كافٍ، يمكنك شحن المحفظة من الحساب",
+                        subtitle = if (walletBalance >= total) "رصيدك كافٍ - دفع فوري بنقرة واحدة ⚡" else "الرصيد غير كافٍ، يمكنك شحن المحفظة",
                         icon = Icons.Default.AccountBalanceWallet,
                         isSelected = selectedPaymentMethod == PaymentMethodType.ALLO_PAY_WALLET,
                         onClick = { onSelectPaymentMethod(PaymentMethodType.ALLO_PAY_WALLET) }
@@ -500,7 +493,6 @@ fun CartCheckoutScreen(
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
 
-                    // 4. Google Pay / Apple Pay
                     PaymentOptionRow(
                         title = AppStrings.payAppleGoogle(language),
                         subtitle = "الدفع بلمسة واحدة عبر محفظتك الرقمية",
@@ -512,7 +504,6 @@ fun CartCheckoutScreen(
             }
         }
 
-        // Cost Breakdown & Summary
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -603,7 +594,6 @@ fun CartCheckoutScreen(
             }
         }
 
-        // Place Order CTA Button
         item {
             Button(
                 onClick = onPlaceOrder,
@@ -696,7 +686,6 @@ fun CartItemRow(
                 )
             }
 
-            // Quantity buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
