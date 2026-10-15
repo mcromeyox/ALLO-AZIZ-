@@ -116,7 +116,8 @@ fun OrderTrackingScreen(
     onToggleGpsTracking: ((Boolean) -> Unit)? = null,
     onShareReceipt: ((OrderEntity) -> Unit)? = null,
     onOpenWhatsAppCourier: ((OrderEntity) -> Unit)? = null,
-    onAdvanceStage: ((String) -> Unit)? = null
+    onAdvanceStage: ((String) -> Unit)? = null,
+    onUpdateCourierPhone: ((String) -> Unit)? = null
 ) {
     BackHandler { onBack() }
 
@@ -202,50 +203,58 @@ fun OrderTrackingScreen(
         contentPadding = PaddingValues(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 100.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Top Header
+        // Order Info Summary Strip
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                modifier = Modifier.fillMaxWidth().testTag("order_tracking_info_strip")
             ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.testTag("tracking_back_btn")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = AzizOrangePrimary
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = AppStrings.liveTracking(language),
-                        fontWeight = FontWeight.Black,
-                        fontSize = 17.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "${AppStrings.orderIdPrefix(language)} #${order.id}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AzizOrangePrimary
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (order.status == "DELIVERED") AzizMint.copy(alpha = 0.15f) else AzizOrangePrimary.copy(alpha = 0.15f)
-                ) {
-                    Text(
-                        text = if (order.status == "DELIVERED") "مكتمل ✓" else "مباشر 🔴",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (order.status == "DELIVERED") AzizMint else AzizOrangePrimary
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(AzizOrangePrimary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("📦", fontSize = 18.sp)
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "${AppStrings.orderIdPrefix(language)} #${order.id}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = order.storeName,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (order.status == "DELIVERED") AzizMint.copy(alpha = 0.15f) else AzizOrangePrimary.copy(alpha = 0.15f)
+                    ) {
+                        Text(
+                            text = if (order.status == "DELIVERED") "مكتمل ✓" else "مباشر 🔴",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (order.status == "DELIVERED") AzizMint else AzizOrangePrimary
+                        )
+                    }
                 }
             }
         }
@@ -659,7 +668,75 @@ fun OrderTrackingScreen(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        val effectiveCourierPhone = if (order.courierPhone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
+                            order.courierPhone
+                        } else {
+                            com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context).ifBlank { "+212661458920" }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Real Courier Phone Number Display Box (Glovo contact box)
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("courier_real_phone_box")
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(AzizMint.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Call,
+                                            contentDescription = null,
+                                            tint = AzizMint,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            text = "رقم هاتف الكابتن المباشر 🇲🇦:",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = effectiveCourierPhone,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 13.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+
+                                OutlinedButton(
+                                    onClick = {
+                                        customWhatsAppPhoneInput = effectiveCourierPhone
+                                        showWhatsAppModal = true
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                    modifier = Modifier.height(30.dp).testTag("edit_courier_phone_btn")
+                                ) {
+                                    Text("تعديل ✏️", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = AzizOrangePrimary)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
                         HorizontalDivider()
                         Spacer(modifier = Modifier.height(10.dp))
 
@@ -669,17 +746,10 @@ fun OrderTrackingScreen(
                         ) {
                             OutlinedButton(
                                 onClick = {
-                                    val phone = order.courierPhone.ifBlank {
-                                        com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context)
+                                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                                        data = Uri.parse("tel:$effectiveCourierPhone")
                                     }
-                                    if (phone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(phone)) {
-                                        val intent = Intent(Intent.ACTION_DIAL).apply {
-                                            data = Uri.parse("tel:$phone")
-                                        }
-                                        context.startActivity(intent)
-                                    } else {
-                                        showWhatsAppModal = true
-                                    }
+                                    context.startActivity(intent)
                                 },
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
@@ -728,15 +798,11 @@ fun OrderTrackingScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedButton(
                             onClick = {
-                                if (order.courierPhone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
-                                    com.example.data.system.ExternalShareHelper.openWhatsApp(
-                                        context = context,
-                                        phoneE164 = order.courierPhone,
-                                        prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName}."
-                                    )
-                                } else {
-                                    showWhatsAppModal = true
-                                }
+                                com.example.data.system.ExternalShareHelper.openWhatsApp(
+                                    context = context,
+                                    phoneE164 = effectiveCourierPhone,
+                                    prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName}."
+                                )
                             },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
@@ -1023,7 +1089,8 @@ fun OrderTrackingScreen(
                         val phoneToUse = customWhatsAppPhoneInput.trim()
                         if (phoneToUse.isNotBlank()) {
                             com.example.data.system.ExternalShareHelper.saveWhatsAppNumber(context, phoneToUse)
-                            val prefilled = "السلام عليكم، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+                            onUpdateCourierPhone?.invoke(phoneToUse)
+                            val prefilled = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
                             com.example.data.system.ExternalShareHelper.openWhatsApp(
                                 context = context,
                                 phoneE164 = phoneToUse,

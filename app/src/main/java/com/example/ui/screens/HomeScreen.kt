@@ -1,6 +1,10 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -113,7 +117,10 @@ fun HomeScreen(
     savedAddresses: List<AddressEntity> = emptyList(),
     onAddNewAddress: (String, String, String, String, String, String) -> Unit = { _, _, _, _, _, _ -> },
     onDeleteAddress: (String) -> Unit = {},
-    onNavigateToSearch: () -> Unit = {}
+    onNavigateToSearch: () -> Unit = {},
+    cartItemCount: Int = 0,
+    cartTotal: Double = 0.0,
+    onOpenCart: () -> Unit = {}
 ) {
     var customizingProduct by remember { mutableStateOf<Product?>(null) }
     var showAddressDialog by remember { mutableStateOf(false) }
@@ -136,12 +143,13 @@ fun HomeScreen(
         matchesCategory && matchesQuery
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag("home_screen_lazy_column"),
-        contentPadding = PaddingValues(bottom = 90.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("home_screen_lazy_column"),
+            contentPadding = PaddingValues(bottom = if (cartItemCount > 0) 90.dp else 24.dp)
+        ) {
         // Location / Address Bar at Top of Home Screen
         item {
             Surface(
@@ -454,6 +462,82 @@ fun HomeScreen(
                             fontSize = 12.sp,
                             lineHeight = 18.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+        // Glovo-style Floating Cart Bar
+        AnimatedVisibility(
+            visible = cartItemCount > 0,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable { onOpenCart() }
+                    .testTag("home_floating_cart_bar"),
+                color = AzizOrangePrimary,
+                shadowElevation = 8.dp,
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.White.copy(alpha = 0.25f),
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = "$cartItemCount",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "عرض السلة وإتمام الطلب 🛒",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = "ألو عزيز إكسبريس • المحمدية",
+                                color = Color.White.copy(alpha = 0.85f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "%.2f ${AppStrings.currency(language)}".format(cartTotal),
+                            color = Color.White,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }

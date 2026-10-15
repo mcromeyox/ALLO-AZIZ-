@@ -129,6 +129,9 @@ interface OrderDao {
     @Query("UPDATE orders SET driverId = :driverId, courierName = :driverName, courierPhone = :driverPhone, status = 'ON_THE_WAY', courierProgress = 0.5 WHERE id = :orderId")
     suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String)
 
+    @Query("UPDATE orders SET courierPhone = :driverPhone WHERE id = :orderId")
+    suspend fun updateCourierPhone(orderId: String, driverPhone: String)
+
     @Query("UPDATE orders SET hasReviewed = 1 WHERE id = :orderId")
     suspend fun markOrderReviewed(orderId: String)
 }

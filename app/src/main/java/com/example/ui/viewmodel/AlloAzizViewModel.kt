@@ -1320,11 +1320,11 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
                 deliveryNotes = _deliveryNotes.value,
                 timestamp = System.currentTimeMillis(),
-                courierName = "جاري تعيين كابتن التوصيل... 🛵",
-                courierPhone = "",
-                courierRating = 5.0,
-                courierVehicle = "دراجة نارية",
-                courierProgress = 0.10f,
+                courierName = "الكابتن عزيز برادة 🛵",
+                courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
+                courierRating = 4.9,
+                courierVehicle = "دراجة نارية Honda SH",
+                courierProgress = 0.15f,
                 estimatedMinsLeft = 25,
                 hasReviewed = false
             )
@@ -1683,6 +1683,16 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             phoneE164 = targetPhone,
             prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة ألو عزيز بخصوص تطبيق التوصيل."
         )
+    }
+
+    fun updateCourierPhone(orderId: String, phone: String) {
+        viewModelScope.launch {
+            if (orderId.isNotBlank()) {
+                repository.updateCourierPhone(orderId, phone)
+            }
+            ExternalShareHelper.saveWhatsAppNumber(getApplication(), phone)
+            _userAlertMessage.value = "تم حفظ وتحديث رقم هاتف الكابتن للتواصل بنجاح: $phone"
+        }
     }
 
     // Local UserProfile & Preferences Management

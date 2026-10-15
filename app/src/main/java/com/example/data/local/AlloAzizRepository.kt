@@ -158,6 +158,10 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.orderDao().assignDriverToOrder(orderId, driverId, driverName, driverPhone)
     }
 
+    suspend fun updateCourierPhone(orderId: String, phone: String) {
+        database.orderDao().updateCourierPhone(orderId, phone)
+    }
+
     suspend fun markOrderReviewed(orderId: String) {
         database.orderDao().markOrderReviewed(orderId)
     }

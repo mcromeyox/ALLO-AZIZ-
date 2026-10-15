@@ -20,7 +20,8 @@ object ExternalShareHelper {
 
     fun getSavedWhatsAppNumber(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_SAVED_WHATSAPP, "") ?: ""
+        val saved = prefs.getString(KEY_SAVED_WHATSAPP, "") ?: ""
+        return saved.ifBlank { "+212661458920" }
     }
 
     fun saveWhatsAppNumber(context: Context, phone: String) {

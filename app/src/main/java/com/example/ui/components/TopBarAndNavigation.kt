@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AdminPanelSettings
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.ElectricScooter
 import androidx.compose.material.icons.filled.HeadsetMic
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
@@ -84,29 +86,102 @@ fun AlloAzizTopBar(
     onCartClick: () -> Unit,
     unreadNotifCount: Int,
     cartItemCount: Int,
-    deliveryAddress: String
+    deliveryAddress: String,
+    onAddressClick: (() -> Unit)? = null
 ) {
     var showLangMenu by remember { mutableStateOf(false) }
-    var showRoleMenu by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding(),
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 1.dp
+        tonalElevation = 1.dp,
+        shadowElevation = 2.dp
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 4.dp)
+                .height(52.dp)
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Left action (Back or App Logo)
-                if (currentScreen != AppScreen.AUTH && currentScreen != AppScreen.HOME && currentScreen != AppScreen.RESTAURANT_DASHBOARD && currentScreen != AppScreen.DRIVER_DASHBOARD && currentScreen != AppScreen.SUPPORT_DASHBOARD && currentScreen != AppScreen.ADMIN_DASHBOARD) {
+            if (currentScreen == AppScreen.HOME) {
+                // Home: Logo
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.testTag("brand_logo_tag")
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(AzizOrangePrimary, AzizAmberSecondary)
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "🛵", fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "ALLO AZIZ",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 15.sp,
+                        color = AzizOrangePrimary,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
+                // Center: Glovo-style Delivery Address Pill
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.75f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .clickable { onAddressClick?.invoke() }
+                        .testTag("topbar_delivery_address_pill")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = null,
+                            tint = AzizOrangePrimary,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text(
+                            text = deliveryAddress.ifBlank { "المحمدية 🇲🇦" },
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            } else {
+                // Subscreens: Back button + Title
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     IconButton(
                         onClick = onBackClick,
                         modifier = Modifier
@@ -116,72 +191,76 @@ fun AlloAzizTopBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = AzizOrangePrimary
+                            tint = AzizOrangePrimary,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
-                } else {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.testTag("brand_logo_tag")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val title = when (currentScreen) {
+                        AppScreen.CART_CHECKOUT -> "سلة المشتريات والدفع"
+                        AppScreen.ORDER_TRACKING -> "تتبع مسار الطلب"
+                        AppScreen.ORDER_HISTORY -> "سجل الطلبات"
+                        AppScreen.FAVORITES -> "قائمتي المفضلة"
+                        AppScreen.PROFILE_SETTINGS -> "الملف الشخصي والإعدادات"
+                        AppScreen.SEARCH -> "البحث والتصنيفات"
+                        AppScreen.NOTIFICATIONS -> "التنبيهات والإشعارات"
+                        AppScreen.LIVE_SUPPORT -> "الدعم الفني المباشر"
+                        AppScreen.RESTAURANT_DASHBOARD -> "لوحة تحكم المطعم 🍳"
+                        AppScreen.DRIVER_DASHBOARD -> "لوحة كابتن التوصيل 🛵"
+                        AppScreen.ADMIN_DASHBOARD -> "لوحة إدارة النظام ⚙️"
+                        AppScreen.SUPPORT_DASHBOARD -> "مركز خدمة العملاء 🎧"
+                        else -> "ألو عزيز إكسبريس"
+                    }
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // Right Actions: Live indicator, Language Chip, Notifications, Cart
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                if (currentScreen == AppScreen.ORDER_TRACKING) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AzizOrangePrimary.copy(alpha = 0.15f)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(AzizOrangePrimary, AzizAmberSecondary)
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "🛵",
-                                fontSize = 18.sp
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Column {
-                            Text(
-                                text = "ALLO AZIZ",
-                                fontWeight = FontWeight.Black,
-                                fontSize = 16.sp,
-                                color = AzizOrangePrimary,
-                                letterSpacing = 0.5.sp
-                            )
-                            Text(
-                                text = "ألو عزيز إكسبريس",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        Text(
+                            text = "مباشر 🔴",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AzizOrangePrimary
+                        )
                     }
                 }
 
-                // Middle: Role Indicator Pill (Only shown for internal staff/partner roles, NEVER for customers)
-                if (currentRole != UserRole.CUSTOMER) {
+                if (currentRole != UserRole.CUSTOMER && currentScreen == AppScreen.HOME) {
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = Color(currentRole.badgeColorHex).copy(alpha = 0.15f),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .testTag("role_indicator_pill")
+                        modifier = Modifier.testTag("role_indicator_pill")
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                         ) {
-                            Text(currentRole.emoji, fontSize = 13.sp)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            val roleTitle = when (language) {
-                                AppLanguage.ARABIC -> currentRole.titleAr
-                                AppLanguage.FRENCH -> currentRole.titleFr
-                                AppLanguage.ENGLISH -> currentRole.titleEn
-                            }
+                            Text(currentRole.emoji, fontSize = 11.sp)
+                            Spacer(modifier = Modifier.width(2.dp))
                             Text(
-                                text = roleTitle,
-                                fontSize = 11.sp,
+                                text = when (language) {
+                                    AppLanguage.ARABIC -> currentRole.titleAr
+                                    AppLanguage.FRENCH -> currentRole.titleFr
+                                    AppLanguage.ENGLISH -> currentRole.titleEn
+                                },
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Black,
                                 color = Color(currentRole.badgeColorHex)
                             )
@@ -189,113 +268,107 @@ fun AlloAzizTopBar(
                     }
                 }
 
-                // Right actions: Language selector chip + Notifications + Cart
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Language Switcher Chip
-                    Box {
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = AzizOrangePrimary.copy(alpha = 0.12f),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .clickable { showLangMenu = true }
-                                .testTag("language_switch_button")
-                        ) {
-                            Text(
-                                text = when (language) {
-                                    AppLanguage.ARABIC -> "ع 🇲🇦"
-                                    AppLanguage.FRENCH -> "FR 🇫🇷"
-                                    AppLanguage.ENGLISH -> "EN 🇬🇧"
+                // Language Switcher Chip
+                Box {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = AzizOrangePrimary.copy(alpha = 0.12f),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { showLangMenu = true }
+                            .testTag("language_switch_button")
+                    ) {
+                        Text(
+                            text = when (language) {
+                                AppLanguage.ARABIC -> "ع 🇲🇦"
+                                AppLanguage.FRENCH -> "FR 🇫🇷"
+                                AppLanguage.ENGLISH -> "EN 🇬🇧"
+                            },
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AzizOrangePrimary
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showLangMenu,
+                        onDismissRequest = { showLangMenu = false }
+                    ) {
+                        AppLanguage.values().forEach { lang ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = lang.displayName,
+                                        fontWeight = if (lang == language) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 12.sp,
+                                        color = if (lang == language) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface
+                                    )
                                 },
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 5.dp),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AzizOrangePrimary
+                                onClick = {
+                                    onLanguageChange(lang)
+                                    showLangMenu = false
+                                }
                             )
                         }
+                    }
+                }
 
-                        DropdownMenu(
-                            expanded = showLangMenu,
-                            onDismissRequest = { showLangMenu = false }
-                        ) {
-                            AppLanguage.values().forEach { lang ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            text = lang.displayName,
-                                            fontWeight = if (lang == language) FontWeight.Bold else FontWeight.Normal,
-                                            fontSize = 12.sp,
-                                            color = if (lang == language) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface
-                                        )
-                                    },
-                                    onClick = {
-                                        onLanguageChange(lang)
-                                        showLangMenu = false
-                                    }
-                                )
+                if (currentScreen != AppScreen.AUTH) {
+                    // Notifications Bell with Badge
+                    BadgedBox(
+                        badge = {
+                            if (unreadNotifCount > 0) {
+                                Badge(
+                                    containerColor = AzizOrangePrimary,
+                                    contentColor = Color.White
+                                ) {
+                                    Text(unreadNotifCount.toString(), fontSize = 9.sp)
+                                }
                             }
+                        }
+                    ) {
+                        IconButton(
+                            onClick = onNotificationClick,
+                            modifier = Modifier
+                                .size(34.dp)
+                                .testTag("notifications_icon_button")
+                        ) {
+                            Icon(
+                                imageVector = if (unreadNotifCount > 0) Icons.Default.Notifications else Icons.Outlined.Notifications,
+                                contentDescription = "Notifications",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(19.dp)
+                            )
                         }
                     }
 
-                    if (currentScreen != AppScreen.AUTH) {
-                        // Notification Bell with Badge
+                    // Cart Icon (only if customer and not already on Cart screen)
+                    if (currentRole == UserRole.CUSTOMER && currentScreen != AppScreen.CART_CHECKOUT) {
                         BadgedBox(
                             badge = {
-                                if (unreadNotifCount > 0) {
+                                if (cartItemCount > 0) {
                                     Badge(
-                                        containerColor = AzizOrangePrimary,
+                                        containerColor = AzizMint,
                                         contentColor = Color.White
                                     ) {
-                                        Text(unreadNotifCount.toString())
+                                        Text(cartItemCount.toString(), fontSize = 9.sp)
                                     }
                                 }
                             }
                         ) {
                             IconButton(
-                                onClick = onNotificationClick,
+                                onClick = onCartClick,
                                 modifier = Modifier
                                     .size(34.dp)
-                                    .testTag("notifications_icon_button")
+                                    .testTag("cart_icon_button")
                             ) {
                                 Icon(
-                                    imageVector = if (unreadNotifCount > 0) Icons.Default.Notifications else Icons.Outlined.Notifications,
-                                    contentDescription = "Notifications",
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(20.dp)
+                                    imageVector = Icons.Default.ShoppingBag,
+                                    contentDescription = "Cart",
+                                    tint = if (cartItemCount > 0) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(19.dp)
                                 )
-                            }
-                        }
-
-                        // Cart Icon with Badge (mainly for Customer role)
-                        if (currentRole == UserRole.CUSTOMER) {
-                            BadgedBox(
-                                badge = {
-                                    if (cartItemCount > 0) {
-                                        Badge(
-                                            containerColor = AzizMint,
-                                            contentColor = Color.White
-                                        ) {
-                                            Text(cartItemCount.toString())
-                                        }
-                                    }
-                                }
-                            ) {
-                                IconButton(
-                                    onClick = onCartClick,
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .testTag("cart_icon_button")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ShoppingBag,
-                                        contentDescription = "Cart",
-                                        tint = if (cartItemCount > 0) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
                             }
                         }
                     }

@@ -181,19 +181,22 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                 modifier = Modifier.fillMaxSize(),
                 contentWindowInsets = WindowInsets.safeDrawing,
                 topBar = {
-                    AlloAzizTopBar(
-                        currentScreen = currentScreen,
-                        currentRole = currentRole,
-                        language = language,
-                        onRoleChange = { viewModel.switchRole(it) },
-                        onLanguageChange = { viewModel.setLanguage(it) },
-                        onBackClick = { viewModel.navigateBack() },
-                        onNotificationClick = { viewModel.navigateTo(AppScreen.NOTIFICATIONS) },
-                        onCartClick = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) },
-                        unreadNotifCount = unreadNotifCount,
-                        cartItemCount = cartItems.sumOf { it.quantity },
-                        deliveryAddress = deliveryAddress
-                    )
+                    if (currentScreen != AppScreen.AUTH && currentScreen != AppScreen.STORE_DETAIL) {
+                        AlloAzizTopBar(
+                            currentScreen = currentScreen,
+                            currentRole = currentRole,
+                            language = language,
+                            onRoleChange = { viewModel.switchRole(it) },
+                            onLanguageChange = { viewModel.setLanguage(it) },
+                            onBackClick = { viewModel.navigateBack() },
+                            onNotificationClick = { viewModel.navigateTo(AppScreen.NOTIFICATIONS) },
+                            onCartClick = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) },
+                            unreadNotifCount = unreadNotifCount,
+                            cartItemCount = cartItems.sumOf { it.quantity },
+                            deliveryAddress = deliveryAddress,
+                            onAddressClick = { viewModel.navigateTo(AppScreen.HOME) }
+                        )
+                    }
                 },
                 bottomBar = {
                     if (currentScreen != AppScreen.AUTH) {
@@ -327,7 +330,10 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                     viewModel.addNewAddress(title, type, city, neighborhood, street, notes)
                                 },
                                 onDeleteAddress = { viewModel.deleteAddress(it) },
-                                onNavigateToSearch = { viewModel.navigateTo(AppScreen.SEARCH) }
+                                onNavigateToSearch = { viewModel.navigateTo(AppScreen.SEARCH) },
+                                cartItemCount = cartItems.sumOf { it.quantity },
+                                cartTotal = cartItems.sumOf { it.product.price * it.quantity },
+                                onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) }
                             )
                         }
 
@@ -341,7 +347,10 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onOpenStore = { viewModel.openStore(it) },
                                 onAddToCart = { viewModel.addToCart(it) },
                                 favoriteStoreIds = favoriteStoreIds,
-                                onToggleFavoriteStore = { viewModel.toggleFavoriteStore(it) }
+                                onToggleFavoriteStore = { viewModel.toggleFavoriteStore(it) },
+                                cartItemCount = cartItems.sumOf { it.quantity },
+                                cartTotal = cartItems.sumOf { it.product.price * it.quantity },
+                                onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) }
                             )
                         }
 
@@ -440,6 +449,9 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 },
                                 onAdvanceStage = { orderId ->
                                     viewModel.advanceOrderTrackingStage(orderId)
+                                },
+                                onUpdateCourierPhone = { phone ->
+                                    viewModel.updateCourierPhone(orderToTrack?.id ?: "", phone)
                                 }
                             )
                         }
