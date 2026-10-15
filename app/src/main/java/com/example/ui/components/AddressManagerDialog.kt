@@ -76,7 +76,8 @@ fun AddressManagerDialog(
     onSelectCity: (String) -> Unit,
     onAddNewAddress: (title: String, type: String, city: String, neighborhood: String, street: String, notes: String) -> Unit,
     onDeleteAddress: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onOpenGoogleMapsPicker: (() -> Unit)? = null
 ) {
     var showAddForm by remember { mutableStateOf(false) }
 
@@ -232,6 +233,42 @@ fun AddressManagerDialog(
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                }
+                            }
+                        }
+                    }
+
+                    if (onOpenGoogleMapsPicker != null) {
+                        item {
+                            Card(
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = AzizOrangePrimary.copy(alpha = 0.1f)),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        onDismiss()
+                                        onOpenGoogleMapsPicker()
+                                    }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("🗺️", fontSize = 20.sp)
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = "تحديد موقعك بدقة على Google Maps",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = AzizOrangePrimary
+                                        )
+                                        Text(
+                                            text = "فتح الخريطة لتثبيت الدبوس واختيار أحياء المحمدية بدقة",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                             }
                         }

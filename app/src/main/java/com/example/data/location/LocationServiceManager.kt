@@ -36,11 +36,114 @@ data class DeviceLocation(
     val addressLabel: String = ""
 )
 
+data class MohammediaLocationPreset(
+    val id: String,
+    val nameAr: String,
+    val nameFr: String,
+    val district: String,
+    val lat: Double,
+    val lng: Double,
+    val icon: String = "📍"
+)
+
 object LocationServiceManager {
 
     // Default reference coordinate (Casablanca / Mohammedia hub)
     const val DEFAULT_LAT = 33.6835
     const val DEFAULT_LNG = -7.3849
+
+    val MOHAMMEDIA_PRESETS = listOf(
+        MohammediaLocationPreset(
+            id = "hassan2",
+            nameAr = "شارع الحسن الثاني (المركز)",
+            nameFr = "Boulevard Hassan II (Centre)",
+            district = "وسط المدينة",
+            lat = 33.6835,
+            lng = -7.3849,
+            icon = "🏢"
+        ),
+        MohammediaLocationPreset(
+            id = "parc_villes",
+            nameAr = "حديقة المدن المتوأمة",
+            nameFr = "Parc des Villes Jumelées",
+            district = "الحدائق المركزية",
+            lat = 33.6865,
+            lng = -7.3875,
+            icon = "🌴"
+        ),
+        MohammediaLocationPreset(
+            id = "corniche_miramar",
+            nameAr = "كورنيش وشاطئ ميرامار",
+            nameFr = "Corniche & Plage Miramar",
+            district = "الشاطئ",
+            lat = 33.7012,
+            lng = -7.3880,
+            icon = "🌊"
+        ),
+        MohammediaLocationPreset(
+            id = "kasbah",
+            nameAr = "القصبة العتيقة والميناء",
+            nameFr = "La Kasbah & Port de Pêche",
+            district = "القصبة",
+            lat = 33.7060,
+            lng = -7.3940,
+            icon = "🏰"
+        ),
+        MohammediaLocationPreset(
+            id = "alia",
+            nameAr = "حي العالية والأسواق",
+            nameFr = "Quartier El Alia",
+            district = "العالية",
+            lat = 33.6890,
+            lng = -7.3750,
+            icon = "🛍️"
+        ),
+        MohammediaLocationPreset(
+            id = "rachidia",
+            nameAr = "حي الراشيدية 1 و 2",
+            nameFr = "Quartier Rachidia",
+            district = "الراشيدية",
+            lat = 33.6780,
+            lng = -7.3910,
+            icon = "🏡"
+        ),
+        MohammediaLocationPreset(
+            id = "wafa",
+            nameAr = "حي الوفاء والياسمين",
+            nameFr = "Quartier El Wafa & Yasmine",
+            district = "الوفاء",
+            lat = 33.6730,
+            lng = -7.3820,
+            icon = "🏘️"
+        ),
+        MohammediaLocationPreset(
+            id = "facultes",
+            nameAr = "قطب الكليات والجامعة",
+            nameFr = "Pôle Universitaire & Facultés",
+            district = "الجامعة",
+            lat = 33.6950,
+            lng = -7.3600,
+            icon = "🎓"
+        ),
+        MohammediaLocationPreset(
+            id = "marina_siesta",
+            nameAr = "مارينا لا سييستا ومونيكا",
+            nameFr = "Marina La Siesta & Monica",
+            district = "لا سييستا",
+            lat = 33.7120,
+            lng = -7.3760,
+            icon = "⛵"
+        ),
+        MohammediaLocationPreset(
+            id = "gare_oncf",
+            nameAr = "محطة القطار المحمدية",
+            nameFr = "Gare ONCF Mohammedia",
+            district = "المحطة",
+            lat = 33.6908,
+            lng = -7.3862,
+            icon = "🚆"
+        )
+    )
 
     fun hasLocationPermission(context: Context): Boolean {
         val fineLocation = ContextCompat.checkSelfPermission(
@@ -235,6 +338,25 @@ object LocationServiceManager {
         } catch (_: Exception) {
             // Final fallback to Google Maps web directions URL
             val webUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$destinationLat,$destinationLng")
+            val webIntent = Intent(Intent.ACTION_VIEW, webUri).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(webIntent)
+        }
+    }
+
+    /**
+     * Open Google Maps centered at specific coordinates with a marker pin
+     */
+    fun openGoogleMapsLocation(context: Context, lat: Double, lng: Double, label: String = "موقع التوصيل") {
+        try {
+            val geoUri = Uri.parse("geo:$lat,$lng?q=$lat,$lng($label)")
+            val mapIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(mapIntent)
+        } catch (_: Exception) {
+            val webUri = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng")
             val webIntent = Intent(Intent.ACTION_VIEW, webUri).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }

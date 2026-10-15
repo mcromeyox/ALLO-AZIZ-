@@ -136,6 +136,33 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     private val _deliveryAddress = MutableStateFlow("شارع الحسن الثاني، قرب حديقة المدن المتوأمة، المحمدية 🇲🇦")
     val deliveryAddress: StateFlow<String> = _deliveryAddress.asStateFlow()
 
+    private val _customerLat = MutableStateFlow(LocationServiceManager.DEFAULT_LAT)
+    val customerLat: StateFlow<Double> = _customerLat.asStateFlow()
+
+    private val _customerLng = MutableStateFlow(LocationServiceManager.DEFAULT_LNG)
+    val customerLng: StateFlow<Double> = _customerLng.asStateFlow()
+
+    private val _showLocationPickerModal = MutableStateFlow(false)
+    val showLocationPickerModal: StateFlow<Boolean> = _showLocationPickerModal.asStateFlow()
+
+    fun openLocationPicker() {
+        _showLocationPickerModal.value = true
+    }
+
+    fun closeLocationPicker() {
+        _showLocationPickerModal.value = false
+    }
+
+    fun setAccurateCustomerLocation(lat: Double, lng: Double, address: String) {
+        _customerLat.value = lat
+        _customerLng.value = lng
+        if (address.isNotBlank()) {
+            _deliveryAddress.value = address
+        }
+        _showLocationPickerModal.value = false
+        _userAlertMessage.value = "تم اعتماد موقع التوصيل الجغرافي وتثبيته بدقة: $address 🎯"
+    }
+
     private val _selectedCity = MutableStateFlow("المحمدية (Mohammedia)")
     val selectedCity: StateFlow<String> = _selectedCity.asStateFlow()
 
@@ -1326,7 +1353,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 courierVehicle = "دراجة نارية Honda SH",
                 courierProgress = 0.15f,
                 estimatedMinsLeft = 25,
-                hasReviewed = false
+                hasReviewed = false,
+                customerLat = _customerLat.value,
+                customerLng = _customerLng.value
             )
 
             repository.insertOrder(newOrder)
@@ -1447,6 +1476,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             val location = LocationServiceManager.getCurrentLocation(context)
             if (location != null) {
                 _deviceLocation.value = location
+                _customerLat.value = location.latitude
+                _customerLng.value = location.longitude
                 if (updateDeliveryAddress && location.addressLabel.isNotBlank()) {
                     _deliveryAddress.value = location.addressLabel
                     _userAlertMessage.value = "تم تحديد موقعك بدقة: ${location.addressLabel} 🎯"

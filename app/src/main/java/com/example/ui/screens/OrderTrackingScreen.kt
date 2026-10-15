@@ -259,13 +259,45 @@ fun OrderTrackingScreen(
             }
         }
 
-        // Live Simulated Map Canvas
+        // High-Fidelity Realistic Google Delivery Map Tracking
         item {
-            LiveTrackingMapCanvas(
-                progress = order.courierProgress,
-                status = order.status,
-                storeName = order.storeName,
-                address = order.deliveryAddress
+            com.example.ui.components.RealisticGoogleDeliveryMap(
+                order = order,
+                onOpenGoogleMapsApp = {
+                    if (onOpenGoogleMaps != null) {
+                        onOpenGoogleMaps(order)
+                    } else {
+                        LocationServiceManager.openGoogleMapsNavigation(
+                            context = context,
+                            destinationLat = order.customerLat,
+                            destinationLng = order.customerLng,
+                            destinationLabel = order.deliveryAddress
+                        )
+                    }
+                },
+                onCallCourier = {
+                    val phone = if (order.courierPhone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
+                        order.courierPhone
+                    } else {
+                        com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context).ifBlank { "+212661458920" }
+                    }
+                    try {
+                        val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                        context.startActivity(dialIntent)
+                    } catch (_: Exception) {}
+                },
+                onWhatsAppCourier = {
+                    val phone = if (order.courierPhone.isNotBlank() && !com.example.data.system.ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
+                        order.courierPhone
+                    } else {
+                        com.example.data.system.ExternalShareHelper.getSavedWhatsAppNumber(context).ifBlank { "+212661458920" }
+                    }
+                    com.example.data.system.ExternalShareHelper.openWhatsApp(
+                        context = context,
+                        phoneE164 = phone,
+                        prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+                    )
+                }
             )
         }
 

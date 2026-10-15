@@ -96,7 +96,8 @@ fun CartCheckoutScreen(
     onSelectPaymentMethod: (PaymentMethodType) -> Unit,
     onPlaceOrder: () -> Unit,
     onNavigateToHome: () -> Unit,
-    onUseCurrentGpsLocation: (() -> Unit)? = null
+    onUseCurrentGpsLocation: (() -> Unit)? = null,
+    onOpenLocationPicker: (() -> Unit)? = null
 ) {
     BackHandler { onBack() }
 
@@ -246,7 +247,51 @@ fun CartCheckoutScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (onOpenLocationPicker != null) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = AzizOrangePrimary.copy(alpha = 0.10f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizOrangePrimary.copy(alpha = 0.35f)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenLocationPicker() }
+                                .testTag("open_map_location_picker_checkout_btn")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("🗺️", fontSize = 16.sp)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(
+                                            text = "تحديد موقعك بدقة على خريطة Google Maps",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizOrangePrimary
+                                        )
+                                        Text(
+                                            text = "انقر لفتح الخريطة وتثبيت الدبوس وأحياء المحمدية",
+                                            fontSize = 10.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.Directions,
+                                    contentDescription = null,
+                                    tint = AzizOrangePrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                     OutlinedTextField(
                         value = deliveryAddress,
                         onValueChange = onAddressChange,

@@ -120,7 +120,8 @@ fun HomeScreen(
     onNavigateToSearch: () -> Unit = {},
     cartItemCount: Int = 0,
     cartTotal: Double = 0.0,
-    onOpenCart: () -> Unit = {}
+    onOpenCart: () -> Unit = {},
+    onOpenLocationPicker: (() -> Unit)? = null
 ) {
     var customizingProduct by remember { mutableStateOf<Product?>(null) }
     var showAddressDialog by remember { mutableStateOf(false) }
@@ -566,7 +567,8 @@ fun HomeScreen(
             onSelectCity = onSelectCity,
             onAddNewAddress = onAddNewAddress,
             onDeleteAddress = onDeleteAddress,
-            onDismiss = { showAddressDialog = false }
+            onDismiss = { showAddressDialog = false },
+            onOpenGoogleMapsPicker = onOpenLocationPicker
         )
     }
 }

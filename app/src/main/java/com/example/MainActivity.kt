@@ -116,6 +116,9 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val deviceLocation by viewModel.deviceLocation.collectAsState()
     val isGpsLive by viewModel.isLiveLocationTrackingEnabled.collectAsState()
     val isNetworkConnected by viewModel.isNetworkConnected.collectAsState()
+    val customerLat by viewModel.customerLat.collectAsState()
+    val customerLng by viewModel.customerLng.collectAsState()
+    val showLocationPickerModal by viewModel.showLocationPickerModal.collectAsState()
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -194,7 +197,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                             unreadNotifCount = unreadNotifCount,
                             cartItemCount = cartItems.sumOf { it.quantity },
                             deliveryAddress = deliveryAddress,
-                            onAddressClick = { viewModel.navigateTo(AppScreen.HOME) }
+                            onAddressClick = { viewModel.openLocationPicker() }
                         )
                     }
                 },
@@ -399,7 +402,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                     } else {
                                         viewModel.fetchCurrentGpsLocation(context, updateDeliveryAddress = true)
                                     }
-                                }
+                                },
+                                onOpenLocationPicker = { viewModel.openLocationPicker() }
                             )
                         }
 
@@ -577,6 +581,33 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onBroadcastAnnouncement = { title, body -> viewModel.broadcastSystemAnnouncement(title, body) }
                             )
                         }
+                    }
+
+                    if (showLocationPickerModal) {
+                        com.example.ui.components.CustomerGoogleMapLocationDialog(
+                            initialLat = customerLat,
+                            initialLng = customerLng,
+                            initialAddress = deliveryAddress,
+                            onDismissRequest = { viewModel.closeLocationPicker() },
+                            onConfirmLocation = { lat, lng, fullAddress ->
+                                viewModel.setAccurateCustomerLocation(lat, lng, fullAddress)
+                            },
+                            onRequestGpsLocation = { onSuccess ->
+                                if (!LocationServiceManager.hasLocationPermission(context)) {
+                                    locationPermissionLauncher.launch(
+                                        arrayOf(
+                                            Manifest.permission.ACCESS_FINE_LOCATION,
+                                            Manifest.permission.ACCESS_COARSE_LOCATION
+                                        )
+                                    )
+                                } else {
+                                    viewModel.fetchCurrentGpsLocation(context, updateDeliveryAddress = true)
+                                    deviceLocation?.let {
+                                        onSuccess(it.latitude, it.longitude, it.addressLabel)
+                                    }
+                                }
+                            }
+                        )
                     }
                 }
             }
