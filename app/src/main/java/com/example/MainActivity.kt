@@ -336,7 +336,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onNavigateToSearch = { viewModel.navigateTo(AppScreen.SEARCH) },
                                 cartItemCount = cartItems.sumOf { it.quantity },
                                 cartTotal = cartItems.sumOf { it.product.price * it.quantity },
-                                onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) }
+                                onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) },
+                                onOpenLocationPicker = { viewModel.openLocationPicker() }
                             )
                         }
 

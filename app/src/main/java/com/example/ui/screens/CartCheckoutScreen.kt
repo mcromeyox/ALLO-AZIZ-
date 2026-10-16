@@ -280,7 +280,7 @@ fun CartCheckoutScreen(
                                     }
                                 }
                                 Icon(
-                                    imageVector = Icons.Default.Directions,
+                                    imageVector = Icons.Default.LocationOn,
                                     contentDescription = null,
                                     tint = AzizOrangePrimary,
                                     modifier = Modifier.size(18.dp)
