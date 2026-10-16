@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ElectricScooter
 import androidx.compose.material.icons.filled.HeadsetMic
 import androidx.compose.material.icons.filled.History
@@ -87,7 +88,8 @@ fun AlloAzizTopBar(
     unreadNotifCount: Int,
     cartItemCount: Int,
     deliveryAddress: String,
-    onAddressClick: (() -> Unit)? = null
+    onAddressClick: (() -> Unit)? = null,
+    onAiVoiceClick: (() -> Unit)? = null
 ) {
     var showLangMenu by remember { mutableStateOf(false) }
 
@@ -160,7 +162,13 @@ fun AlloAzizTopBar(
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(
-                            text = deliveryAddress.ifBlank { "المحمدية 🇲🇦" },
+                            text = deliveryAddress.ifBlank {
+                                when (language) {
+                                    AppLanguage.FRENCH -> "Mohammédia, Maroc 🇲🇦"
+                                    AppLanguage.ENGLISH -> "Mohammedia, Morocco 🇲🇦"
+                                    AppLanguage.ARABIC -> "المحمدية 🇲🇦"
+                                }
+                            },
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -197,19 +205,67 @@ fun AlloAzizTopBar(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     val title = when (currentScreen) {
-                        AppScreen.CART_CHECKOUT -> "سلة المشتريات والدفع"
-                        AppScreen.ORDER_TRACKING -> "تتبع مسار الطلب"
-                        AppScreen.ORDER_HISTORY -> "سجل الطلبات"
-                        AppScreen.FAVORITES -> "قائمتي المفضلة"
-                        AppScreen.PROFILE_SETTINGS -> "الملف الشخصي والإعدادات"
-                        AppScreen.SEARCH -> "البحث والتصنيفات"
-                        AppScreen.NOTIFICATIONS -> "التنبيهات والإشعارات"
-                        AppScreen.LIVE_SUPPORT -> "الدعم الفني المباشر"
-                        AppScreen.RESTAURANT_DASHBOARD -> "لوحة تحكم المطعم 🍳"
-                        AppScreen.DRIVER_DASHBOARD -> "لوحة كابتن التوصيل 🛵"
-                        AppScreen.ADMIN_DASHBOARD -> "لوحة إدارة النظام ⚙️"
-                        AppScreen.SUPPORT_DASHBOARD -> "مركز خدمة العملاء 🎧"
-                        else -> "ألو عزيز إكسبريس"
+                        AppScreen.CART_CHECKOUT -> when (language) {
+                            AppLanguage.FRENCH -> "Panier et Paiement"
+                            AppLanguage.ENGLISH -> "Cart & Checkout"
+                            AppLanguage.ARABIC -> "سلة المشتريات والدفع"
+                        }
+                        AppScreen.ORDER_TRACKING -> when (language) {
+                            AppLanguage.FRENCH -> "Suivi de Commande en Direct"
+                            AppLanguage.ENGLISH -> "Live Order Tracking"
+                            AppLanguage.ARABIC -> "تتبع مسار الطلب"
+                        }
+                        AppScreen.ORDER_HISTORY -> when (language) {
+                            AppLanguage.FRENCH -> "Historique des Commandes"
+                            AppLanguage.ENGLISH -> "Order History"
+                            AppLanguage.ARABIC -> "سجل الطلبات"
+                        }
+                        AppScreen.FAVORITES -> when (language) {
+                            AppLanguage.FRENCH -> "Mes Favoris"
+                            AppLanguage.ENGLISH -> "My Favorites"
+                            AppLanguage.ARABIC -> "قائمتي المفضلة"
+                        }
+                        AppScreen.PROFILE_SETTINGS -> when (language) {
+                            AppLanguage.FRENCH -> "Profil et Paramètres"
+                            AppLanguage.ENGLISH -> "Profile & Settings"
+                            AppLanguage.ARABIC -> "الملف الشخصي والإعدادات"
+                        }
+                        AppScreen.SEARCH -> when (language) {
+                            AppLanguage.FRENCH -> "Recherche & Catégories"
+                            AppLanguage.ENGLISH -> "Search & Categories"
+                            AppLanguage.ARABIC -> "البحث والتصنيفات"
+                        }
+                        AppScreen.NOTIFICATIONS -> when (language) {
+                            AppLanguage.FRENCH -> "Notifications & Alertes"
+                            AppLanguage.ENGLISH -> "Notifications & Alerts"
+                            AppLanguage.ARABIC -> "التنبيهات والإشعارات"
+                        }
+                        AppScreen.LIVE_SUPPORT -> when (language) {
+                            AppLanguage.FRENCH -> "Support Client 24/7"
+                            AppLanguage.ENGLISH -> "24/7 Customer Support"
+                            AppLanguage.ARABIC -> "الدعم الفني المباشر"
+                        }
+                        AppScreen.RESTAURANT_DASHBOARD -> when (language) {
+                            AppLanguage.FRENCH -> "Tableau de Bord Restaurant 🍳"
+                            AppLanguage.ENGLISH -> "Restaurant Dashboard 🍳"
+                            AppLanguage.ARABIC -> "لوحة تحكم المطعم 🍳"
+                        }
+                        AppScreen.DRIVER_DASHBOARD -> when (language) {
+                            AppLanguage.FRENCH -> "Espace Coursier Aziz 🛵"
+                            AppLanguage.ENGLISH -> "Courier Aziz Space 🛵"
+                            AppLanguage.ARABIC -> "لوحة كابتن التوصيل 🛵"
+                        }
+                        AppScreen.ADMIN_DASHBOARD -> when (language) {
+                            AppLanguage.FRENCH -> "Administration Système ⚙️"
+                            AppLanguage.ENGLISH -> "System Administration ⚙️"
+                            AppLanguage.ARABIC -> "لوحة إدارة النظام ⚙️"
+                        }
+                        AppScreen.SUPPORT_DASHBOARD -> when (language) {
+                            AppLanguage.FRENCH -> "Centre Support Client 🎧"
+                            AppLanguage.ENGLISH -> "Customer Support Hub 🎧"
+                            AppLanguage.ARABIC -> "مركز خدمة العملاء 🎧"
+                        }
+                        else -> "ALLO AZIZ"
                     }
                     Text(
                         text = title,
@@ -233,7 +289,11 @@ fun AlloAzizTopBar(
                         color = AzizOrangePrimary.copy(alpha = 0.15f)
                     ) {
                         Text(
-                            text = "مباشر 🔴",
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "DIRECT 🔴"
+                                AppLanguage.ENGLISH -> "LIVE 🔴"
+                                AppLanguage.ARABIC -> "مباشر 🔴"
+                            },
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -340,6 +400,38 @@ fun AlloAzizTopBar(
                                 tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(19.dp)
                             )
+                        }
+                    }
+
+                    // AI Voice Shopping Assistant Button (Customer only)
+                    if (currentRole == UserRole.CUSTOMER) {
+                        Surface(
+                            onClick = { onAiVoiceClick?.invoke() },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFF6366F1).copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF6366F1).copy(alpha = 0.4f)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .testTag("topbar_ai_voice_button")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "AI Voice Assistant",
+                                    tint = Color(0xFF6366F1),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = "AI 🎙️",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFF4F46E5)
+                                )
+                            }
                         }
                     }
 

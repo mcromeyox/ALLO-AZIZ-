@@ -120,6 +120,12 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val customerLng by viewModel.customerLng.collectAsState()
     val showLocationPickerModal by viewModel.showLocationPickerModal.collectAsState()
 
+    val showAiAssistant by viewModel.showAiAssistant.collectAsState()
+    val aiRecommendation by viewModel.aiRecommendation.collectAsState()
+    val isAiListening by viewModel.isAiListening.collectAsState()
+    val isAiProcessing by viewModel.isAiProcessing.collectAsState()
+    val aiSpokenQuery by viewModel.aiSpokenQuery.collectAsState()
+
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { /* Permission result handled */ }
@@ -197,7 +203,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                             unreadNotifCount = unreadNotifCount,
                             cartItemCount = cartItems.sumOf { it.quantity },
                             deliveryAddress = deliveryAddress,
-                            onAddressClick = { viewModel.openLocationPicker() }
+                            onAddressClick = { viewModel.openLocationPicker() },
+                            onAiVoiceClick = { viewModel.openAiAssistant() }
                         )
                     }
                 },
@@ -337,7 +344,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 cartItemCount = cartItems.sumOf { it.quantity },
                                 cartTotal = cartItems.sumOf { it.product.price * it.quantity },
                                 onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) },
-                                onOpenLocationPicker = { viewModel.openLocationPicker() }
+                                onOpenLocationPicker = { viewModel.openLocationPicker() },
+                                onOpenAiAssistant = { viewModel.openAiAssistant() }
                             )
                         }
 
@@ -608,6 +616,21 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                     }
                                 }
                             }
+                        )
+                    }
+
+                    if (showAiAssistant) {
+                        com.example.ui.components.AiVoiceShoppingDialog(
+                            language = language,
+                            recommendation = aiRecommendation,
+                            isListening = isAiListening,
+                            isProcessing = isAiProcessing,
+                            spokenQuery = aiSpokenQuery,
+                            onDismissRequest = { viewModel.closeAiAssistant() },
+                            onSubmitQuery = { viewModel.submitAiVoiceQuery(it) },
+                            onConfirmRecommendation = { viewModel.confirmAiShoppingRecommendation(it) },
+                            onUpdateQuantity = { pid, delta -> viewModel.updateAiItemQuantity(pid, delta) },
+                            onRemoveItem = { pid -> viewModel.removeAiItem(pid) }
                         )
                     }
                 }

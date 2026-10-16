@@ -109,8 +109,17 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     private val _driverIsOnline = MutableStateFlow(true)
     val driverIsOnline: StateFlow<Boolean> = _driverIsOnline.asStateFlow()
 
-    // Language
-    private val _selectedLanguage = MutableStateFlow(AppLanguage.ARABIC)
+    // Language (Default: French 🇫🇷 as primary language, customer can switch to English or Arabic)
+    private val prefs = getApplication<Application>().getSharedPreferences("allo_aziz_prefs", Context.MODE_PRIVATE)
+
+    private val _selectedLanguage = MutableStateFlow(
+        try {
+            val savedCode = prefs.getString("user_lang", AppLanguage.FRENCH.code)
+            AppLanguage.values().firstOrNull { it.code == savedCode } ?: AppLanguage.FRENCH
+        } catch (e: Exception) {
+            AppLanguage.FRENCH
+        }
+    )
     val selectedLanguage: StateFlow<AppLanguage> = _selectedLanguage.asStateFlow()
 
     // Store & Catalog selection
@@ -161,6 +170,112 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         }
         _showLocationPickerModal.value = false
         _userAlertMessage.value = "تم اعتماد موقع التوصيل الجغرافي وتثبيته بدقة: $address 🎯"
+    }
+
+    // AI Voice Shopping Assistant
+    private val _showAiAssistant = MutableStateFlow(false)
+    val showAiAssistant: StateFlow<Boolean> = _showAiAssistant.asStateFlow()
+
+    private val _aiRecommendation = MutableStateFlow<com.example.data.services.AiShoppingRecommendation?>(null)
+    val aiRecommendation: StateFlow<com.example.data.services.AiShoppingRecommendation?> = _aiRecommendation.asStateFlow()
+
+    private val _isAiListening = MutableStateFlow(false)
+    val isAiListening: StateFlow<Boolean> = _isAiListening.asStateFlow()
+
+    private val _isAiProcessing = MutableStateFlow(false)
+    val isAiProcessing: StateFlow<Boolean> = _isAiProcessing.asStateFlow()
+
+    private val _aiSpokenQuery = MutableStateFlow("")
+    val aiSpokenQuery: StateFlow<String> = _aiSpokenQuery.asStateFlow()
+
+    fun openAiAssistant(initialQuery: String? = null) {
+        _showAiAssistant.value = true
+        if (!initialQuery.isNullOrBlank()) {
+            submitAiVoiceQuery(initialQuery)
+        }
+    }
+
+    fun closeAiAssistant() {
+        _showAiAssistant.value = false
+        _isAiListening.value = false
+        _isAiProcessing.value = false
+    }
+
+    fun setAiListening(listening: Boolean) {
+        _isAiListening.value = listening
+    }
+
+    fun submitAiVoiceQuery(query: String) {
+        val clean = query.trim()
+        if (clean.isBlank()) return
+        _aiSpokenQuery.value = clean
+        _isAiListening.value = false
+        _isAiProcessing.value = true
+
+        viewModelScope.launch {
+            try {
+                val recommendation = com.example.data.services.AiShoppingService.analyzeShoppingIntent(clean)
+                _aiRecommendation.value = recommendation
+            } catch (e: Exception) {
+                _aiRecommendation.value = com.example.data.services.AiShoppingService.matchLocalCatalogWithNlp(clean, CatalogData.products)
+            } finally {
+                _isAiProcessing.value = false
+            }
+        }
+    }
+
+    fun updateAiItemQuantity(productId: String, delta: Int) {
+        val currentRec = _aiRecommendation.value ?: return
+        val updatedItems = currentRec.items.mapNotNull { item ->
+            if (item.product.id == productId) {
+                val newQty = item.quantity + delta
+                if (newQty <= 0) null else item.copy(quantity = newQty, subtotal = item.product.price * newQty)
+            } else {
+                item
+            }
+        }
+        val newSubtotal = updatedItems.sumOf { it.subtotal }
+        val newDelivery = if (updatedItems.isEmpty()) 0.0 else currentRec.deliveryFee
+        _aiRecommendation.value = currentRec.copy(
+            items = updatedItems,
+            estimatedTotal = newSubtotal,
+            grandTotal = newSubtotal + newDelivery
+        )
+    }
+
+    fun removeAiItem(productId: String) {
+        updateAiItemQuantity(productId, -999)
+    }
+
+    fun confirmAiShoppingRecommendation(recommendation: com.example.data.services.AiShoppingRecommendation) {
+        if (recommendation.items.isEmpty()) return
+        val current = _cartItems.value.toMutableList()
+        recommendation.items.forEach { aiItem ->
+            val existingIndex = current.indexOfFirst { it.product.id == aiItem.product.id }
+            if (existingIndex >= 0) {
+                val existing = current[existingIndex]
+                current[existingIndex] = existing.copy(
+                    quantity = existing.quantity + aiItem.quantity,
+                    notes = if (aiItem.customNote.isNotBlank()) aiItem.customNote else existing.notes
+                )
+            } else {
+                current.add(
+                    CartItem(
+                        product = aiItem.product,
+                        quantity = aiItem.quantity,
+                        notes = aiItem.customNote
+                    )
+                )
+            }
+        }
+        _cartItems.value = current
+        _showAiAssistant.value = false
+        _userAlertMessage.value = when (_selectedLanguage.value) {
+            AppLanguage.ARABIC -> "تم تأكيد مشترياتك بالذكاء الاصطناعي وإضافتها للسلة بنجاح! 🛒✨"
+            AppLanguage.FRENCH -> "Votre panier intelligent est confirmé et prêt pour la commande ! 🛒"
+            AppLanguage.ENGLISH -> "Smart basket confirmed and ready for checkout! 🛒"
+        }
+        navigateTo(AppScreen.CART_CHECKOUT)
     }
 
     private val _selectedCity = MutableStateFlow("المحمدية (Mohammedia)")
@@ -1197,6 +1312,16 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     // Language
     fun setLanguage(lang: AppLanguage) {
         _selectedLanguage.value = lang
+        try {
+            prefs.edit().putString("user_lang", lang.code).apply()
+        } catch (e: Exception) {
+            // ignore
+        }
+        _userAlertMessage.value = when (lang) {
+            AppLanguage.FRENCH -> "Langue définie sur Français 🇫🇷"
+            AppLanguage.ENGLISH -> "Language set to English 🇬🇧"
+            AppLanguage.ARABIC -> "تم ضبط اللغة على العربية 🇲🇦"
+        }
     }
 
     // Filter stores
