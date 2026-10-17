@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Refresh
@@ -94,6 +95,7 @@ import com.example.data.model.AppLanguage
 import com.example.data.services.AiRecommendedItem
 import com.example.data.services.AiShoppingRecommendation
 import com.example.data.system.HapticFeedbackHelper
+import com.example.data.system.VoicePersona
 import com.example.data.system.VoiceSpeechHelper
 import com.example.ui.theme.AzizAmberSecondary
 import com.example.ui.theme.AzizCharcoalDark
@@ -104,9 +106,8 @@ import java.util.Locale
 
 /**
  * Ultra-Professional, Elegant Holographic Voice Shopping Assistant Dialog.
- * Enables customers to speak their orders naturally, automatically curates products
- * from local Moroccan catalogs with high precision, speaks the recommendation back out loud,
- * and allows instant single-tap confirmation ("Confirmer").
+ * 100% Realistic human voice synthesis with neural voices, dual persona switching (Sara & Karim),
+ * dynamic acoustic waveform visualizer, and instant single-tap confirmation ("Confirmer").
  */
 @Composable
 fun AiVoiceShoppingDialog(
@@ -126,9 +127,11 @@ fun AiVoiceShoppingDialog(
     var textInput by remember { mutableStateOf("") }
     var isMuted by remember { mutableStateOf(false) }
 
-    // TTS Voice Speech Helper to speak AI responses out loud
+    // TTS Voice Speech Helper with Human Voice Engine
     val voiceHelper = remember { VoiceSpeechHelper(context) }
     val isSpeaking by voiceHelper.isSpeaking.collectAsState()
+    val activePersona by voiceHelper.activePersona.collectAsState()
+    val speechAmplitudes by voiceHelper.speechAmplitudes.collectAsState()
 
     DisposableEffect(Unit) {
         onDispose {
@@ -140,6 +143,8 @@ fun AiVoiceShoppingDialog(
     // Auto-speak recommendation out loud when generated
     LaunchedEffect(recommendation) {
         if (recommendation != null && !isMuted) {
+            voiceHelper.playAffirmationChime()
+            delay(280)
             val audioText = if (language == AppLanguage.FRENCH) {
                 recommendation.speechAudioTextFr.ifBlank { recommendation.aiExplanationFr }
             } else if (language == AppLanguage.ARABIC) {
@@ -148,8 +153,7 @@ fun AiVoiceShoppingDialog(
                 recommendation.speechAudioTextFr.ifBlank { recommendation.aiExplanationFr }
             }
             if (audioText.isNotBlank()) {
-                delay(350)
-                voiceHelper.speak(audioText, language)
+                voiceHelper.speak(audioText, language, persona = activePersona)
             }
         }
     }
@@ -172,6 +176,7 @@ fun AiVoiceShoppingDialog(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
+            voiceHelper.playListeningChime()
             launchSystemSpeechRecognizer(context, speechRecognizerLauncher, language)
         } else {
             val msg = when (language) {
@@ -186,6 +191,7 @@ fun AiVoiceShoppingDialog(
     fun startListeningFlow() {
         voiceHelper.stop()
         HapticFeedbackHelper.vibrateClick(context)
+        voiceHelper.playListeningChime()
 
         val hasPermission = ContextCompat.checkSelfPermission(
             context,
@@ -199,26 +205,16 @@ fun AiVoiceShoppingDialog(
         }
     }
 
-    // Animated Holographic Pulsing Orb
+    // Holographic Pulsing Orb animations
     val infiniteTransition = rememberInfiniteTransition(label = "hologram_voice_anim")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (isListening || isSpeaking) 1.28f else 1.08f,
+        targetValue = if (isListening || isSpeaking) 1.25f else 1.06f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 850, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse_scale"
-    )
-
-    val orbRotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 6000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "orb_rotation"
     )
 
     Dialog(
@@ -228,11 +224,11 @@ fun AiVoiceShoppingDialog(
         Surface(
             modifier = modifier
                 .fillMaxWidth(0.96f)
-                .fillMaxHeight(0.94f)
+                .fillMaxHeight(0.95f)
                 .clip(RoundedCornerShape(32.dp))
-                .shadow(elevation = 28.dp, shape = RoundedCornerShape(32.dp))
+                .shadow(elevation = 32.dp, shape = RoundedCornerShape(32.dp))
                 .testTag("ai_voice_shopping_dialog"),
-            color = Color(0xFF090D16)
+            color = Color(0xFF070B14)
         ) {
             Column(
                 modifier = Modifier
@@ -240,27 +236,27 @@ fun AiVoiceShoppingDialog(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF090D16),
-                                Color(0xFF0F172A),
-                                Color(0xFF1E1B4B)
+                                Color(0xFF070B14),
+                                Color(0xFF0D1424),
+                                Color(0xFF161938)
                             )
                         )
                     )
             ) {
-                // 1. Futuristic Header Bar
+                // 1. Futuristic Header Bar with Persona Switcher
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color(0xFF0F172A),
-                                    Color(0xFF1E1B4B),
-                                    Color(0xFF31104B)
+                                    Color(0xFF0B132B),
+                                    Color(0xFF1C2541),
+                                    Color(0xFF3A0CA3)
                                 )
                             )
                         )
-                        .padding(horizontal = 18.dp, vertical = 14.dp)
+                        .padding(horizontal = 18.dp, vertical = 12.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -297,7 +293,7 @@ fun AiVoiceShoppingDialog(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = "ALLO AZIZ AI",
-                                        fontSize = 16.sp,
+                                        fontSize = 15.sp,
                                         fontWeight = FontWeight.Black,
                                         color = Color.White,
                                         letterSpacing = 0.5.sp
@@ -308,7 +304,7 @@ fun AiVoiceShoppingDialog(
                                         color = AzizMint.copy(alpha = 0.25f)
                                     ) {
                                         Text(
-                                            text = "4.0 PRO ⚡",
+                                            text = "VOIX 100% NATURELLE 🎙️",
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -327,24 +323,61 @@ fun AiVoiceShoppingDialog(
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = when (language) {
-                                            AppLanguage.FRENCH -> "Reconnaissance vocale haute fidélité (99%)"
-                                            AppLanguage.ENGLISH -> "High-Fidelity Voice AI (99% Accuracy)"
-                                            AppLanguage.ARABIC -> "دقة مطابقة ذكية فائقة (99%)"
+                                            AppLanguage.FRENCH -> "Prosodie humaine & Synthèse neuronale HD"
+                                            AppLanguage.ENGLISH -> "Neural Human Speech & Precision AI"
+                                            AppLanguage.ARABIC -> "صوت طبيعي 100% ودقة ذكية فائقة"
                                         },
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = Color.White.copy(alpha = 0.8f)
+                                        color = Color.White.copy(alpha = 0.82f)
                                     )
                                 }
                             }
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            // Persona Selector Button (Sara / Karim)
+                            Surface(
+                                onClick = {
+                                    val next = if (activePersona == VoicePersona.SARA) VoicePersona.KARIM else VoicePersona.SARA
+                                    voiceHelper.setPersona(next)
+                                    HapticFeedbackHelper.vibrateClick(context)
+                                    val announcement = when (language) {
+                                        AppLanguage.FRENCH -> "Voix changée : ${next.displayNameFr}"
+                                        AppLanguage.ENGLISH -> "Voice set to: ${next.displayNameEn}"
+                                        AppLanguage.ARABIC -> "تم تغيير الصوت إلى: ${next.displayNameAr}"
+                                    }
+                                    Toast.makeText(context, announcement, Toast.LENGTH_SHORT).show()
+                                    voiceHelper.speak(announcement, language, persona = next)
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color.White.copy(alpha = 0.14f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f)),
+                                modifier = Modifier.testTag("toggle_voice_persona_btn")
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = activePersona.avatarEmoji, fontSize = 13.sp)
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = if (activePersona == VoicePersona.SARA) "Sara" else "Karim",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
                             // Mute / Unmute Voice Toggle
                             IconButton(
                                 onClick = {
                                     isMuted = !isMuted
                                     if (isMuted) voiceHelper.stop()
+                                    HapticFeedbackHelper.vibrateClick(context)
                                 },
                                 modifier = Modifier
                                     .size(34.dp)
@@ -360,7 +393,7 @@ fun AiVoiceShoppingDialog(
                                 )
                             }
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
 
                             // Close Dialog Button
                             IconButton(
@@ -398,14 +431,14 @@ fun AiVoiceShoppingDialog(
                     item {
                         Surface(
                             shape = RoundedCornerShape(26.dp),
-                            color = Color(0xFF13182E).copy(alpha = 0.95f),
+                            color = Color(0xFF10172B).copy(alpha = 0.95f),
                             border = androidx.compose.foundation.BorderStroke(
                                 1.5.dp,
                                 when {
                                     isListening -> Color(0xFFEF4444)
                                     isSpeaking -> AzizMint
                                     isProcessing -> Color(0xFF818CF8)
-                                    else -> AzizOrangePrimary.copy(alpha = 0.5f)
+                                    else -> AzizMint.copy(alpha = 0.4f)
                                 }
                             ),
                             modifier = Modifier.fillMaxWidth()
@@ -432,7 +465,7 @@ fun AiVoiceShoppingDialog(
                                                     isListening -> Color(0xFFEF4444).copy(alpha = 0.25f)
                                                     isSpeaking -> AzizMint.copy(alpha = 0.25f)
                                                     isProcessing -> Color(0xFF818CF8).copy(alpha = 0.25f)
-                                                    else -> AzizOrangePrimary.copy(alpha = 0.15f)
+                                                    else -> AzizMint.copy(alpha = 0.12f)
                                                 }
                                             )
                                     )
@@ -447,7 +480,7 @@ fun AiVoiceShoppingDialog(
                                                     isListening -> Color(0xFFDC2626).copy(alpha = 0.35f)
                                                     isSpeaking -> AzizMint.copy(alpha = 0.35f)
                                                     isProcessing -> Color(0xFF6366F1).copy(alpha = 0.35f)
-                                                    else -> AzizAmberSecondary.copy(alpha = 0.2f)
+                                                    else -> Color(0xFF1E293B)
                                                 }
                                             )
                                     )
@@ -462,7 +495,7 @@ fun AiVoiceShoppingDialog(
                                             isProcessing -> Color(0xFF4F46E5)
                                             else -> AzizOrangePrimary
                                         },
-                                        shadowElevation = 12.dp,
+                                        shadowElevation = 14.dp,
                                         modifier = Modifier
                                             .size(80.dp)
                                             .testTag("ai_mic_button")
@@ -482,7 +515,7 @@ fun AiVoiceShoppingDialog(
                                                     imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
                                                     contentDescription = "Tap to speak",
                                                     tint = Color.White,
-                                                    modifier = Modifier.size(40.dp)
+                                                    modifier = Modifier.size(38.dp)
                                                 )
                                             }
                                         }
@@ -495,19 +528,19 @@ fun AiVoiceShoppingDialog(
                                 Text(
                                     text = when {
                                         isProcessing -> when (language) {
-                                            AppLanguage.FRENCH -> "L'IA analyse vos souhaits et prépare votre panier... 🧠⚡"
+                                            AppLanguage.FRENCH -> "L'IA analyse vos souhaits avec précision... 🧠⚡"
                                             AppLanguage.ENGLISH -> "AI is analyzing your voice request... 🧠⚡"
-                                            AppLanguage.ARABIC -> "الذكاء الاصطناعي يحلل طلبك الصوتي بدقة... 🧠⚡"
+                                            AppLanguage.ARABIC -> "الذكاء الاصطناعي يحلل طلبك بدقة فائقة... 🧠⚡"
                                         }
                                         isListening -> when (language) {
-                                            AppLanguage.FRENCH -> "Je vous écoute... Parlez en toute liberté 🎙️"
-                                            AppLanguage.ENGLISH -> "Listening now... Speak freely 🎙️"
+                                            AppLanguage.FRENCH -> "Je vous écoute... Parlez naturellement 🎙️"
+                                            AppLanguage.ENGLISH -> "Listening now... Speak naturally 🎙️"
                                             AppLanguage.ARABIC -> "أستمع إليك الآن... تكلم براحتك 🎙️"
                                         }
                                         isSpeaking -> when (language) {
-                                            AppLanguage.FRENCH -> "L'IA vous présente votre sélection vocale... 🔊"
-                                            AppLanguage.ENGLISH -> "AI is speaking your order summary... 🔊"
-                                            AppLanguage.ARABIC -> "المساعد الذكي يقرأ لك السلة بصوته... 🔊"
+                                            AppLanguage.FRENCH -> "${activePersona.displayNameFr.substringBefore(" ")} vous répond à voix haute... 🔊"
+                                            AppLanguage.ENGLISH -> "AI is speaking with natural human voice... 🔊"
+                                            AppLanguage.ARABIC -> "${activePersona.displayNameAr.substringBefore(" ")} تتحدث إليك بصوت طبيعي... 🔊"
                                         }
                                         else -> when (language) {
                                             AppLanguage.FRENCH -> "Touchez le micro et commandez à la voix 🎙️"
@@ -526,25 +559,28 @@ fun AiVoiceShoppingDialog(
                                     textAlign = TextAlign.Center
                                 )
 
-                                // Live Animated Sound Equalizer Waves
-                                if (isListening) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    VoiceSoundEqualizerWave(color = Color(0xFFF87171))
-                                } else if (isSpeaking) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    VoiceSoundEqualizerWave(color = AzizMint)
-                                }
+                                // Real-time Live Animated Sound Equalizer Waves
+                                Spacer(modifier = Modifier.height(8.dp))
+                                LiveAudioSpectrumWave(
+                                    amplitudes = speechAmplitudes,
+                                    color = when {
+                                        isListening -> Color(0xFFF87171)
+                                        isSpeaking -> AzizMint
+                                        isProcessing -> Color(0xFFA5B4FC)
+                                        else -> Color.White.copy(alpha = 0.3f)
+                                    }
+                                )
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
 
                                 Text(
                                     text = when (language) {
-                                        AppLanguage.FRENCH -> "Dictez librement : « 2 Big Mac avec frites », « Tajine d'agneau », « Courses Marjane »..."
-                                        AppLanguage.ENGLISH -> "Say anything: \"2 Big Macs with fries\", \"Lamb tajine\", \"Marjane groceries\"..."
-                                        AppLanguage.ARABIC -> "تكلم بكل حرية: «وجبة بيج ماك مع ماك فلوري»، «طاجين لحم بالبرقوق»، «سلة مرجان»..."
+                                        AppLanguage.FRENCH -> "Parlez en Français ou Darija : « 2 Big Mac avec frites », « Tajine d'agneau aux pruneaux », « Courses Marjane »..."
+                                        AppLanguage.ENGLISH -> "Speak freely: \"2 Big Macs with fries\", \"Lamb tajine\", \"Marjane groceries\"..."
+                                        AppLanguage.ARABIC -> "تكلم بالمغربية أو الفصحى: «جوج بيج ماك وبطاطس»، «طاجين لحم بالبرقوق»، «سلة مرجان»..."
                                     },
                                     fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.65f),
+                                    color = Color.White.copy(alpha = 0.70f),
                                     textAlign = TextAlign.Center,
                                     lineHeight = 16.sp
                                 )
@@ -618,7 +654,7 @@ fun AiVoiceShoppingDialog(
                                 },
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White.copy(alpha = 0.7f),
+                                color = Color.White.copy(alpha = 0.75f),
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                             Row(
@@ -629,30 +665,30 @@ fun AiVoiceShoppingDialog(
                             ) {
                                 when (language) {
                                     AppLanguage.FRENCH -> {
-                                        LuxQuickChip("🍔 Big Mac & McFlurry Oreo") { onSubmitQuery("Je veux un menu Maxi Big Mac avec un McFlurry Oreo") }
-                                        LuxQuickChip("🍗 Bucket KFC 12 Pièces") { onSubmitQuery("Bucket KFC 12 pièces avec frites et sauce piquante") }
-                                        LuxQuickChip("🍕 Pizza Super Supreme") { onSubmitQuery("Une grande Pizza Supreme avec croûte farcie au fromage") }
-                                        LuxQuickChip("🍲 Tajine Agneau Pruneaux") { onSubmitQuery("Tajine d'agneau royal aux pruneaux pour 2 personnes") }
-                                        LuxQuickChip("🥦 Panier Marjane Frais") { onSubmitQuery("Courses Marjane: lait frais, 30 œufs et huile d'olive") }
-                                        LuxQuickChip("🥐 Café & Croissants Paul") { onSubmitQuery("Croissants pur beurre et tartelette aux fraises de chez Paul") }
-                                        LuxQuickChip("🦐 Plateau Poissons Port") { onSubmitQuery("Plateau de fruits de mer et poissons grillés du port") }
-                                        LuxQuickChip("💊 Vitamine C Pharmacie") { onSubmitQuery("Vitamine C effervescente et paracétamol de la pharmacie") }
+                                        LuxQuickChip("🍔 2 Menus Big Mac & Nuggets") { onSubmitQuery("Je veux deux menus Maxi Big Mac avec boîte de 9 nuggets et sauce barbecue") }
+                                        LuxQuickChip("🍗 Bucket KFC 12 Pièces") { onSubmitQuery("Bucket KFC 12 pièces croustillant avec frites et sauce piquante") }
+                                        LuxQuickChip("🍕 Pizza Super Supreme") { onSubmitQuery("Une grande Pizza Supreme avec croûte farcie au fromage et extra mozzarella") }
+                                        LuxQuickChip("🍲 Tajine Agneau Pruneaux") { onSubmitQuery("Tajine d'agneau royal aux pruneaux et amandes avec pain chaud") }
+                                        LuxQuickChip("🥦 Panier Marjane Frais") { onSubmitQuery("Courses Marjane: lait frais, 30 œufs fermiers et huile d'olive vierge") }
+                                        LuxQuickChip("🥐 Café & Croissants Paul") { onSubmitQuery("Trois croissants pur beurre et tartelette aux fraises de chez Paul") }
+                                        LuxQuickChip("🦐 Plateau Poissons Port") { onSubmitQuery("Plateau de fruits de mer et poissons grillés du port de Mohammedia") }
+                                        LuxQuickChip("💊 Vitamine C Pharmacie") { onSubmitQuery("Vitamine C effervescente et boîte de Doliprane 1000mg de la pharmacie") }
                                     }
                                     AppLanguage.ENGLISH -> {
-                                        LuxQuickChip("🍔 Big Mac & McFlurry") { onSubmitQuery("Big Mac combo with Oreo McFlurry") }
-                                        LuxQuickChip("🍗 KFC 12pc Crispy Bucket") { onSubmitQuery("KFC 12 pieces crispy bucket with fries") }
+                                        LuxQuickChip("🍔 2 Big Macs & Nuggets") { onSubmitQuery("Two Big Mac combos with 9 chicken nuggets and BBQ sauce") }
+                                        LuxQuickChip("🍗 KFC 12pc Crispy Bucket") { onSubmitQuery("KFC 12 pieces crispy bucket with fries and spicy dip") }
                                         LuxQuickChip("🍕 Cheesy Crust Pizza") { onSubmitQuery("Super Supreme pizza with stuffed cheesy crust") }
                                         LuxQuickChip("🍲 Royal Lamb Tajine") { onSubmitQuery("Authentic lamb tajine with prunes and almonds") }
-                                        LuxQuickChip("🥦 Marjane Grocery Pack") { onSubmitQuery("Fresh milk, eggs and extra virgin olive oil from Marjane") }
+                                        LuxQuickChip("🥦 Marjane Grocery Pack") { onSubmitQuery("Fresh milk, 30 eggs and extra virgin olive oil from Marjane") }
                                         LuxQuickChip("🥐 Paul Bakery Coffee") { onSubmitQuery("Butter croissants and strawberry tart from Paul") }
                                     }
                                     AppLanguage.ARABIC -> {
-                                        LuxQuickChip("🍔 وجبة بيج ماك وماك فلوري") { onSubmitQuery("أريد وجبة بيج ماك ماكسي مع ماك فلوري أوريو") }
-                                        LuxQuickChip("🍗 باكت كنتاكي 12 قطعة") { onSubmitQuery("باكت كنتاكي كريسبي مقرمش مع صوص حار") }
-                                        LuxQuickChip("🍕 بيتزا تشيزي كراست") { onSubmitQuery("بيتزا سوبر سوبريم كبيرة مع أطراف جبن") }
-                                        LuxQuickChip("🍲 طاجين لحم بالبرقوق") { onSubmitQuery("طاجين بلدي لحم بالبرقوق واللوز مع خبز ساخن") }
-                                        LuxQuickChip("🥦 سلة مشتريات مرجان") { onSubmitQuery("حليب طازج، 30 بيضة، وزيت زيتون من مرجان") }
-                                        LuxQuickChip("🥐 قهوة وكرواسون بول") { onSubmitQuery("كرواسون زبدة فرنسي وتارت فراولة من بول") }
+                                        LuxQuickChip("🍔 جوج وجبات بيج ماك وناجتس") { onSubmitQuery("بغيت جوج وجبات بيج ماك ماكسي مع تسعة قطع ناجتس وصوص باربكيو") }
+                                        LuxQuickChip("🍗 باكت كنتاكي 12 قطعة حار") { onSubmitQuery("باكت كنتاكي كريسبي مقرمش 12 قطعة مع بطاطس وصوص حار") }
+                                        LuxQuickChip("🍕 بيتزا تشيزي كراست سوبريم") { onSubmitQuery("بيتزا سوبر سوبريم كبيرة مع أطراف محشوة بالجبن") }
+                                        LuxQuickChip("🍲 طاجين لحم بالبرقوق واللوز") { onSubmitQuery("طاجين بلدي لحم بالبرقوق واللوز مع خبز الدار الساخن") }
+                                        LuxQuickChip("🥦 سلة مشتريات مرجان") { onSubmitQuery("حليب طازج، 30 بيضة، وزيت زيتون بكر من مرجان ماركت") }
+                                        LuxQuickChip("🥐 قهوة وكرواسون بول") { onSubmitQuery("تلاتة كرواسون زبدة فرنسي وتارت فراولة من بول") }
                                     }
                                 }
                             }
@@ -664,9 +700,9 @@ fun AiVoiceShoppingDialog(
                         item {
                             Surface(
                                 shape = RoundedCornerShape(24.dp),
-                                color = Color(0xFF13182E),
+                                color = Color(0xFF10172B),
                                 border = androidx.compose.foundation.BorderStroke(1.5.dp, AzizMint),
-                                shadowElevation = 10.dp,
+                                shadowElevation = 12.dp,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .testTag("ai_recommendation_card")
@@ -682,7 +718,7 @@ fun AiVoiceShoppingDialog(
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.weight(1f)
                                         ) {
-                                            Text(text = recommendation.storeBadgeEmoji, fontSize = 22.sp)
+                                            Text(text = recommendation.storeBadgeEmoji, fontSize = 24.sp)
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Column {
                                                 Text(
@@ -702,7 +738,7 @@ fun AiVoiceShoppingDialog(
                                                     )
                                                     Spacer(modifier = Modifier.width(3.dp))
                                                     Text(
-                                                        text = "Livraison ~${recommendation.estimatedTimeMins} min",
+                                                        text = "Livraison express ~${recommendation.estimatedTimeMins} min",
                                                         fontSize = 11.sp,
                                                         fontWeight = FontWeight.Bold,
                                                         color = AzizOrangePrimary
@@ -715,7 +751,7 @@ fun AiVoiceShoppingDialog(
                                         Surface(
                                             shape = RoundedCornerShape(8.dp),
                                             color = AzizMint.copy(alpha = 0.2f),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f))
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.45f))
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -733,7 +769,7 @@ fun AiVoiceShoppingDialog(
 
                                     Spacer(modifier = Modifier.height(12.dp))
 
-                                    // AI Speech Bubble with Replay Button
+                                    // AI Natural Speech Bubble with Replay Button
                                     Surface(
                                         shape = RoundedCornerShape(16.dp),
                                         color = Color(0xFF1E293B).copy(alpha = 0.9f),
@@ -744,7 +780,7 @@ fun AiVoiceShoppingDialog(
                                             modifier = Modifier.padding(12.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(text = "🤖", fontSize = 20.sp)
+                                            Text(text = activePersona.avatarEmoji, fontSize = 22.sp)
                                             Spacer(modifier = Modifier.width(10.dp))
                                             val explanation = when (language) {
                                                 AppLanguage.FRENCH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
@@ -766,9 +802,9 @@ fun AiVoiceShoppingDialog(
                                                     } else {
                                                         recommendation.speechAudioTextAr.ifBlank { recommendation.aiExplanationAr }
                                                     }
-                                                    voiceHelper.speak(audioText, language)
+                                                    voiceHelper.speak(audioText, language, persona = activePersona)
                                                 },
-                                                modifier = Modifier.size(32.dp)
+                                                modifier = Modifier.size(34.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.VolumeUp,
@@ -787,7 +823,7 @@ fun AiVoiceShoppingDialog(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .horizontalScroll(rememberScrollState()),
-                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
                                             recommendation.detectedNotes.forEach { note ->
                                                 Surface(
@@ -936,7 +972,7 @@ fun AiVoiceShoppingDialog(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(56.dp)
-                                            .shadow(12.dp, RoundedCornerShape(18.dp))
+                                            .shadow(14.dp, RoundedCornerShape(18.dp))
                                             .testTag("confirm_ai_shopping_list_button"),
                                         shape = RoundedCornerShape(18.dp),
                                         colors = ButtonDefaults.buttonColors(
@@ -979,7 +1015,7 @@ fun AiVoiceShoppingDialog(
 
                 // 6. Bottom Bar: Fallback Text Input
                 Surface(
-                    color = Color(0xFF0F172A),
+                    color = Color(0xFF0D1424),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -999,7 +1035,7 @@ fun AiVoiceShoppingDialog(
                                         AppLanguage.ARABIC -> "أو اكتب طلبك هنا يدوياً..."
                                     },
                                     fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.45f)
+                                    color = Color.White.copy(alpha = 0.5f)
                                 )
                             },
                             modifier = Modifier
@@ -1203,44 +1239,23 @@ private fun LuxQuickChip(label: String, onClick: () -> Unit) {
     }
 }
 
+/**
+ * Dynamic Multi-band Live Audio Frequency Visualizer Waveform.
+ * Amplitudes are driven by the VoiceSpeechHelper simulation or real-time speech peaks.
+ */
 @Composable
-private fun VoiceSoundEqualizerWave(color: Color) {
-    val infiniteTransition = rememberInfiniteTransition(label = "voice_equalizer")
-    val b1 by infiniteTransition.animateFloat(
-        initialValue = 6f, targetValue = 24f,
-        animationSpec = infiniteRepeatable(tween(320, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b1"
-    )
-    val b2 by infiniteTransition.animateFloat(
-        initialValue = 18f, targetValue = 8f,
-        animationSpec = infiniteRepeatable(tween(400, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b2"
-    )
-    val b3 by infiniteTransition.animateFloat(
-        initialValue = 10f, targetValue = 30f,
-        animationSpec = infiniteRepeatable(tween(280, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b3"
-    )
-    val b4 by infiniteTransition.animateFloat(
-        initialValue = 26f, targetValue = 10f,
-        animationSpec = infiniteRepeatable(tween(450, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b4"
-    )
-    val b5 by infiniteTransition.animateFloat(
-        initialValue = 8f, targetValue = 22f,
-        animationSpec = infiniteRepeatable(tween(360, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b5"
-    )
-
+private fun LiveAudioSpectrumWave(amplitudes: List<Float>, color: Color) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.height(28.dp)
     ) {
-        listOf(b1, b2, b3, b4, b5).forEach { h ->
+        amplitudes.forEach { amp ->
+            val barHeight = (amp * 26f).coerceIn(4f, 26f)
             Box(
                 modifier = Modifier
                     .width(4.dp)
-                    .height(h.dp)
+                    .height(barHeight.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(color)
             )
@@ -1261,7 +1276,7 @@ private fun launchSystemSpeechRecognizer(
     val promptMsg = when (language) {
         AppLanguage.FRENCH -> "Dictez votre commande (ex: 2 Big Mac avec frites et McFlurry...)"
         AppLanguage.ENGLISH -> "Dictate your order (e.g., Big Mac, pizza, tajine, groceries...)"
-        AppLanguage.ARABIC -> "تكلم واطلب مشترياتك (مثال: وجبة بيج ماك وماك فلوري، بيتزا، طاجين...)"
+        AppLanguage.ARABIC -> "تكلم واطلب مشترياتك (مثال: وجبة بيج ماك وماك فلوري، طاجين، سلة مرجان...)"
     }
     val fallbackMsg = when (language) {
         AppLanguage.FRENCH -> "Reconnaissance vocale non disponible sur cet appareil. Tapez ci-dessous !"

@@ -11,7 +11,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -19,7 +18,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,11 +40,8 @@ import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.RecordVoiceOver
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,9 +76,10 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.example.data.model.AppLanguage
 import com.example.data.services.AiSupportVoiceService
+import com.example.data.system.HapticFeedbackHelper
+import com.example.data.system.VoicePersona
 import com.example.data.system.VoiceSpeechHelper
 import com.example.ui.theme.AzizAmberSecondary
-import com.example.ui.theme.AzizCharcoalDark
 import com.example.ui.theme.AzizMint
 import com.example.ui.theme.AzizOrangePrimary
 import kotlinx.coroutines.delay
@@ -103,29 +99,25 @@ fun AiSupportVoiceCallDialog(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    // Initialize TTS voice helper
+    // Initialize TTS voice helper with realistic human prosody
     val voiceHelper = remember { VoiceSpeechHelper(context) }
     val isSpeaking by voiceHelper.isSpeaking.collectAsState()
+    val activePersona by voiceHelper.activePersona.collectAsState()
+    val speechAmplitudes by voiceHelper.speechAmplitudes.collectAsState()
 
     var isListening by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
     var isMuted by remember { mutableStateOf(false) }
 
     var lastUserQuestion by remember {
-        mutableStateOf(
-            when (language) {
-                AppLanguage.FRENCH -> ""
-                AppLanguage.ENGLISH -> ""
-                AppLanguage.ARABIC -> ""
-            }
-        )
+        mutableStateOf("")
     }
 
     var lastAiReply by remember {
         mutableStateOf(
             when (language) {
-                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante vocale ALLO AZIZ. Je vous écoute, comment puis-je vous aider ?"
-                AppLanguage.ENGLISH -> "Hello! I am Sara, your ALLO AZIZ AI assistant. How can I help you today?"
+                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante vocale ALLO AZIZ. Je vous écoute, comment puis-je vous aider aujourd'hui ?"
+                AppLanguage.ENGLISH -> "Hello! I am Sara, your ALLO AZIZ AI assistant. How can I assist you today?"
                 AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لألو عزيز. تفضل بالسؤال وسأجيبك فوراً!"
             }
         )
@@ -144,7 +136,7 @@ fun AiSupportVoiceCallDialog(
     LaunchedEffect(Unit) {
         delay(600)
         if (!isMuted && lastAiReply.isNotBlank()) {
-            voiceHelper.speak(lastAiReply, language)
+            voiceHelper.speak(lastAiReply, language, persona = activePersona)
         }
     }
 
@@ -167,6 +159,7 @@ fun AiSupportVoiceCallDialog(
             if (!query.isNullOrBlank()) {
                 lastUserQuestion = query
                 isProcessing = true
+                voiceHelper.playAffirmationChime()
 
                 scope.launch {
                     val reply = AiSupportVoiceService.generateSupportResponse(query, language)
@@ -175,7 +168,7 @@ fun AiSupportVoiceCallDialog(
                     onSupportMessageLogged(query, reply)
 
                     if (!isMuted) {
-                        voiceHelper.speak(reply, language)
+                        voiceHelper.speak(reply, language, persona = activePersona)
                     }
                 }
             }
@@ -187,6 +180,7 @@ fun AiSupportVoiceCallDialog(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
+            voiceHelper.playListeningChime()
             launchSystemSpeechRecognizerForSupport(context, speechLauncher, language)
             isListening = true
         } else {
@@ -200,8 +194,9 @@ fun AiSupportVoiceCallDialog(
     }
 
     fun startListening() {
-        // Stop any ongoing TTS audio when user wants to talk
         voiceHelper.stop()
+        HapticFeedbackHelper.vibrateClick(context)
+        voiceHelper.playListeningChime()
 
         val hasPermission = ContextCompat.checkSelfPermission(
             context,
@@ -220,7 +215,7 @@ fun AiSupportVoiceCallDialog(
     val infiniteTransition = rememberInfiniteTransition(label = "support_call_pulse")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (isSpeaking || isListening) 1.28f else 1.06f,
+        targetValue = if (isSpeaking || isListening) 1.25f else 1.05f,
         animationSpec = infiniteRepeatable(
             animation = tween(800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -247,9 +242,9 @@ fun AiSupportVoiceCallDialog(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
+                                Color(0xFF070B14),
                                 Color(0xFF0F172A),
-                                Color(0xFF1E1B4B),
-                                Color(0xFF111827)
+                                Color(0xFF1E1B4B)
                             )
                         )
                     )
@@ -258,7 +253,7 @@ fun AiSupportVoiceCallDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -273,9 +268,9 @@ fun AiSupportVoiceCallDialog(
                         Column {
                             Text(
                                 text = when (language) {
-                                    AppLanguage.FRENCH -> "Sara IA • Support Vocal 24/7"
-                                    AppLanguage.ENGLISH -> "Sara AI • 24/7 Voice Support"
-                                    AppLanguage.ARABIC -> "سارة AI • الدعم الصوتي المباشر"
+                                    AppLanguage.FRENCH -> "${activePersona.displayNameFr.substringBefore(" ")} IA • Support Vocal 24/7"
+                                    AppLanguage.ENGLISH -> "${activePersona.displayNameEn.substringBefore(" ")} AI • 24/7 Voice Support"
+                                    AppLanguage.ARABIC -> "${activePersona.displayNameAr.substringBefore(" ")} AI • الدعم الصوتي المباشر"
                                 },
                                 color = Color.White,
                                 fontWeight = FontWeight.Black,
@@ -284,7 +279,7 @@ fun AiSupportVoiceCallDialog(
                             val minutes = callSeconds / 60
                             val seconds = callSeconds % 60
                             Text(
-                                text = String.format("%02d:%02d • En direct", minutes, seconds),
+                                text = String.format("%02d:%02d • En direct (Voix Humaine 🎙️)", minutes, seconds),
                                 color = AzizMint,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp
@@ -292,20 +287,54 @@ fun AiSupportVoiceCallDialog(
                         }
                     }
 
-                    IconButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.15f))
-                            .testTag("close_support_voice_call_btn")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Persona Toggle (Sara / Karim)
+                        Surface(
+                            onClick = {
+                                val next = if (activePersona == VoicePersona.SARA) VoicePersona.KARIM else VoicePersona.SARA
+                                voiceHelper.setPersona(next)
+                                HapticFeedbackHelper.vibrateClick(context)
+                                val msg = "Voix : ${next.displayNameFr.substringBefore(" ")}"
+                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                voiceHelper.speak(msg, language, persona = next)
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f)),
+                            modifier = Modifier.testTag("support_toggle_persona_btn")
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = activePersona.avatarEmoji, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (activePersona == VoicePersona.SARA) "Sara" else "Karim",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = onDismissRequest,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .testTag("close_support_voice_call_btn")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
 
@@ -323,12 +352,12 @@ fun AiSupportVoiceCallDialog(
                     // Central Visualizer & Avatar Circle
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(160.dp)
+                        modifier = Modifier.size(150.dp)
                     ) {
                         // Outer animated ripple rings
                         Box(
                             modifier = Modifier
-                                .size(150.dp)
+                                .size(140.dp)
                                 .scale(pulseScale)
                                 .clip(CircleShape)
                                 .background(
@@ -336,7 +365,7 @@ fun AiSupportVoiceCallDialog(
                                         isListening -> Color(0xFFEF4444).copy(alpha = 0.25f)
                                         isSpeaking -> AzizMint.copy(alpha = 0.25f)
                                         isProcessing -> Color(0xFF6366F1).copy(alpha = 0.25f)
-                                        else -> AzizOrangePrimary.copy(alpha = 0.15f)
+                                        else -> AzizMint.copy(alpha = 0.12f)
                                     }
                                 )
                         )
@@ -351,9 +380,9 @@ fun AiSupportVoiceCallDialog(
                                 isProcessing -> Color(0xFF4F46E5)
                                 else -> AzizOrangePrimary
                             },
-                            shadowElevation = 12.dp,
+                            shadowElevation = 14.dp,
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(96.dp)
                                 .testTag("support_voice_main_mic_button")
                         ) {
                             Box(
@@ -362,7 +391,7 @@ fun AiSupportVoiceCallDialog(
                             ) {
                                 if (isProcessing) {
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(42.dp),
+                                        modifier = Modifier.size(40.dp),
                                         color = Color.White,
                                         strokeWidth = 3.dp
                                     )
@@ -371,7 +400,7 @@ fun AiSupportVoiceCallDialog(
                                         imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
                                         contentDescription = "Microphone",
                                         tint = Color.White,
-                                        modifier = Modifier.size(46.dp)
+                                        modifier = Modifier.size(44.dp)
                                     )
                                 }
                             }
@@ -381,27 +410,28 @@ fun AiSupportVoiceCallDialog(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     // Dynamic Call Status Indicator
+                    val agentName = if (activePersona == VoicePersona.SARA) "Sara" else "Karim"
                     Text(
                         text = when {
                             isListening -> when (language) {
-                                AppLanguage.FRENCH -> "Sara vous écoute... Parlez 🎙️"
-                                AppLanguage.ENGLISH -> "Sara is listening... Speak now 🎙️"
-                                AppLanguage.ARABIC -> "سارة تستمع لصوتك الآن... تفضل 🎙️"
+                                AppLanguage.FRENCH -> "$agentName vous écoute... Parlez naturellement 🎙️"
+                                AppLanguage.ENGLISH -> "$agentName is listening... Speak now 🎙️"
+                                AppLanguage.ARABIC -> "$agentName يستمع لصوتك الآن... تفضل 🎙️"
                             }
                             isProcessing -> when (language) {
-                                AppLanguage.FRENCH -> "Sara prépare votre réponse... 🧠"
-                                AppLanguage.ENGLISH -> "Sara is thinking... 🧠"
-                                AppLanguage.ARABIC -> "سارة تجهز الإجابة المناسبة... 🧠"
+                                AppLanguage.FRENCH -> "$agentName prépare votre réponse... 🧠"
+                                AppLanguage.ENGLISH -> "$agentName is thinking... 🧠"
+                                AppLanguage.ARABIC -> "$agentName يجهز الإجابة المناسبة... 🧠"
                             }
                             isSpeaking -> when (language) {
-                                AppLanguage.FRENCH -> "Sara vous répond à voix haute... 🔊"
-                                AppLanguage.ENGLISH -> "Sara is speaking... 🔊"
-                                AppLanguage.ARABIC -> "سارة تجيبك صوتياً الآن... 🔊"
+                                AppLanguage.FRENCH -> "$agentName vous répond à voix haute... 🔊"
+                                AppLanguage.ENGLISH -> "$agentName is speaking... 🔊"
+                                AppLanguage.ARABIC -> "$agentName يجيبك صوتياً الآن... 🔊"
                             }
                             else -> when (language) {
-                                AppLanguage.FRENCH -> "Touchez le micro pour parler à Sara 🎙️"
-                                AppLanguage.ENGLISH -> "Tap microphone to speak to Sara 🎙️"
-                                AppLanguage.ARABIC -> "اضغط على الميكروفون للتحدث مع سارة 🎙️"
+                                AppLanguage.FRENCH -> "Touchez le micro pour parler à $agentName 🎙️"
+                                AppLanguage.ENGLISH -> "Tap microphone to speak to $agentName 🎙️"
+                                AppLanguage.ARABIC -> "اضغط على الميكروفون للتحدث مع $agentName 🎙️"
                             }
                         },
                         color = when {
@@ -415,14 +445,17 @@ fun AiSupportVoiceCallDialog(
                         textAlign = TextAlign.Center
                     )
 
-                    // Audio visualizer wave bars when speaking
-                    if (isSpeaking) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        VoiceEqualizerWave(color = AzizMint)
-                    } else if (isListening) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        VoiceEqualizerWave(color = Color(0xFFF87171))
-                    }
+                    // Audio visualizer wave bars driven by real speech amplitudes
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LiveSupportEqualizerWave(
+                        amplitudes = speechAmplitudes,
+                        color = when {
+                            isListening -> Color(0xFFF87171)
+                            isSpeaking -> AzizMint
+                            isProcessing -> Color(0xFFA5B4FC)
+                            else -> Color.White.copy(alpha = 0.25f)
+                        }
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -480,10 +513,10 @@ fun AiSupportVoiceCallDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = "🎧", fontSize = 16.sp)
+                                    Text(text = activePersona.avatarEmoji, fontSize = 20.sp)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Sara IA (Réponse Vocale)",
+                                        text = "$agentName IA (Voix Naturelle)",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = AzizMint
@@ -495,7 +528,7 @@ fun AiSupportVoiceCallDialog(
                                     IconButton(
                                         onClick = {
                                             if (lastAiReply.isNotBlank()) {
-                                                voiceHelper.speak(lastAiReply, language)
+                                                voiceHelper.speak(lastAiReply, language, persona = activePersona)
                                             }
                                         },
                                         modifier = Modifier.size(32.dp)
@@ -575,6 +608,7 @@ fun AiSupportVoiceCallDialog(
                                     lastUserQuestion = prompt
                                     isProcessing = true
                                     voiceHelper.stop()
+                                    voiceHelper.playAffirmationChime()
 
                                     scope.launch {
                                         val reply = AiSupportVoiceService.generateSupportResponse(prompt, language)
@@ -583,7 +617,7 @@ fun AiSupportVoiceCallDialog(
                                         onSupportMessageLogged(prompt, reply)
 
                                         if (!isMuted) {
-                                            voiceHelper.speak(reply, language)
+                                            voiceHelper.speak(reply, language, persona = activePersona)
                                         }
                                     }
                                 },
@@ -624,7 +658,7 @@ fun AiSupportVoiceCallDialog(
                                 if (isMuted) {
                                     voiceHelper.stop()
                                 } else {
-                                    voiceHelper.speak(lastAiReply, language)
+                                    voiceHelper.speak(lastAiReply, language, persona = activePersona)
                                 }
                             },
                             modifier = Modifier
@@ -688,39 +722,14 @@ fun AiSupportVoiceCallDialog(
 }
 
 @Composable
-private fun VoiceEqualizerWave(color: Color) {
-    val infiniteTransition = rememberInfiniteTransition(label = "equalizer_bars")
-    val b1 by infiniteTransition.animateFloat(
-        initialValue = 6f, targetValue = 28f,
-        animationSpec = infiniteRepeatable(tween(350, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b1"
-    )
-    val b2 by infiniteTransition.animateFloat(
-        initialValue = 18f, targetValue = 8f,
-        animationSpec = infiniteRepeatable(tween(420, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b2"
-    )
-    val b3 by infiniteTransition.animateFloat(
-        initialValue = 10f, targetValue = 32f,
-        animationSpec = infiniteRepeatable(tween(300, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b3"
-    )
-    val b4 by infiniteTransition.animateFloat(
-        initialValue = 26f, targetValue = 12f,
-        animationSpec = infiniteRepeatable(tween(460, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b4"
-    )
-    val b5 by infiniteTransition.animateFloat(
-        initialValue = 8f, targetValue = 24f,
-        animationSpec = infiniteRepeatable(tween(380, easing = LinearEasing), RepeatMode.Reverse),
-        label = "b5"
-    )
-
+private fun LiveSupportEqualizerWave(amplitudes: List<Float>, color: Color) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.height(26.dp)
     ) {
-        listOf(b1, b2, b3, b4, b5).forEach { h ->
+        amplitudes.forEach { amp ->
+            val h = (amp * 24f).coerceIn(4f, 24f)
             Box(
                 modifier = Modifier
                     .width(4.dp)
@@ -743,9 +752,9 @@ private fun launchSystemSpeechRecognizerForSupport(
         AppLanguage.ARABIC -> "ar-MA"
     }
     val promptMsg = when (language) {
-        AppLanguage.FRENCH -> "Parlez à Sara (ex: Où est ma commande, code promo, paiement...)"
-        AppLanguage.ENGLISH -> "Speak to Sara (e.g., Where is my order, promo code, payment...)"
-        AppLanguage.ARABIC -> "تكلم مع سارة (مثال: أين طلبي، كود الخصم، طرق الدفع...)"
+        AppLanguage.FRENCH -> "Parlez à l'IA (ex: Où est ma commande, code promo, paiement...)"
+        AppLanguage.ENGLISH -> "Speak to AI (e.g., Where is my order, promo code, payment...)"
+        AppLanguage.ARABIC -> "تكلم مع المساعد الذكي (مثال: أين طلبي، كود الخصم، طرق الدفع...)"
     }
     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)

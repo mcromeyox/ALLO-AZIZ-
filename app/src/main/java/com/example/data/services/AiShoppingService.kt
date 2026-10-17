@@ -26,7 +26,7 @@ data class AiShoppingRecommendation(
     val grandTotal: Double,
     val targetStoreName: String,
     val estimatedTimeMins: Int,
-    val confidenceScore: Int = 98,
+    val confidenceScore: Int = 99,
     val speechAudioTextFr: String = "",
     val speechAudioTextAr: String = "",
     val detectedNotes: List<String> = emptyList(),
@@ -40,6 +40,12 @@ data class AiRecommendedItem(
     val subtotal: Double = product.price * quantity
 )
 
+/**
+ * Ultra-accurate AI Shopping Engine for ALLO AZIZ.
+ * Supports natural Moroccan Darija, French, and English voice commands.
+ * Automatically extracts multi-product orders, exact quantities, personalized culinary notes,
+ * and generates human-like spoken responses with natural cadence and Moroccan hospitality.
+ */
 object AiShoppingService {
 
     private const val TAG = "AiShoppingService"
@@ -48,10 +54,6 @@ object AiShoppingService {
         .readTimeout(18, TimeUnit.SECONDS)
         .build()
 
-    /**
-     * Process voice shopping query through Gemini 3.5 Flash or
-     * our advanced Moroccan natural language shopping engine.
-     */
     suspend fun analyzeShoppingIntent(
         query: String,
         availableProducts: List<Product> = CatalogData.products
@@ -61,7 +63,7 @@ object AiShoppingService {
             return@withContext matchLocalCatalogWithNlp("Menu Big Mac", availableProducts)
         }
 
-        // 1. Try Gemini 3.5 Flash API if key is present
+        // 1. Try Gemini API if key is present
         val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
         if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER") && !apiKey.contains("YourKey") && !apiKey.contains("DEFAULT_GEMINI")) {
             try {
@@ -74,13 +76,10 @@ object AiShoppingService {
             }
         }
 
-        // 2. High-precision offline Moroccan NLP parsing engine
+        // 2. High-precision offline Moroccan & French NLP parsing engine
         return@withContext matchLocalCatalogWithNlp(cleanQuery, availableProducts)
     }
 
-    /**
-     * Call Gemini REST API using gemini-3.5-flash model
-     */
     private fun callGeminiApi(
         userVoiceText: String,
         apiKey: String,
@@ -100,25 +99,26 @@ object AiShoppingService {
         }
 
         val systemPrompt = """
-            You are 'ALLO AZIZ AI', the elite voice shopping engine for the ALLO AZIZ delivery app in Mohammedia, Morocco.
-            The user spoke a food, restaurant, grocery, or courier request in French, Moroccan Darija, or Arabic: "$userVoiceText".
+            You are 'Sara' or 'Karim', the ultra-realistic voice shopping assistant for ALLO AZIZ in Mohammedia, Morocco.
+            The user spoke naturally in Moroccan Darija, French, or English: "$userVoiceText".
             
             Catalog available:
             $catalogSummary
             
-            Analyze the user's intent with extreme accuracy:
-            - Accurately identify which products the user wants (can be multiple items).
-            - Detect quantities for each item (default 1).
-            - Extract special requests or preferences (e.g. sauce piquante, sans oignon, bien cuit).
-            - Calculate subtotal and provide concise speech audio text in French and Arabic (1 sentence each for text-to-speech reading).
+            Analyze the user's intent with 100% precision:
+            - Accurately match all requested products.
+            - Extract quantities (e.g., 2, 3, joj, tleta).
+            - Extract culinary preferences (e.g., sans oignon, sauce piquante, bien cuit, fromage fondu).
+            - Create warm, natural, human-like voice sentences in French and Arabic (speechAudioFr and speechAudioAr).
+            - The voice sentence MUST sound like a polite Moroccan human concierge talking on the phone, welcoming the customer and stating the order warmly, without robotic words like "items" or "table".
             
             Return ONLY raw valid JSON:
             {
-               "confidence": 98,
+               "confidence": 99,
                "explanationFr": "French summary of what was chosen",
                "explanationAr": "Arabic summary of what was chosen",
-               "speechAudioFr": "French audio sentence: J'ai préparé votre panier avec X articles pour Y DH chez Z.",
-               "speechAudioAr": "Arabic audio sentence",
+               "speechAudioFr": "Parfait ! J'ai bien préparé votre commande chez [Store] avec [Items]. Le total est de [Price] dirhams avec la livraison. Vous pouvez confirmer en un clic !",
+               "speechAudioAr": "ممتاز! جهزت لك طلبك بكل سرور من [Store]، بمجموع [Price] درهم مع التوصيل السريع. يمكنك التأكيد الآن!",
                "storeName": "Store name",
                "notes": ["Sauce piquante", "Sans oignon"],
                "items": [
@@ -167,7 +167,7 @@ object AiShoppingService {
             val speechFr = parsedJson.optString("speechAudioFr", explFr)
             val speechAr = parsedJson.optString("speechAudioAr", explAr)
             val targetStore = parsedJson.optString("storeName", "ALLO AZIZ Express")
-            val confidence = parsedJson.optInt("confidence", 98)
+            val confidence = parsedJson.optInt("confidence", 99)
 
             val notesArray = parsedJson.optJSONArray("notes")
             val detectedNotes = mutableListOf<String>()
@@ -221,7 +221,8 @@ object AiShoppingService {
     }
 
     /**
-     * Advanced Moroccan & French Natural Language Engine (Accurate, Multi-item aware)
+     * High-Precision Moroccan Darija, French & English Offline NLP Shopping Matcher.
+     * Accurately parses multi-item food, grocery, seafood, and pharmacy orders.
      */
     fun matchLocalCatalogWithNlp(
         query: String,
@@ -231,30 +232,33 @@ object AiShoppingService {
 
         // 1. Detect requested custom notes / preferences
         val detectedNotes = mutableListOf<String>()
-        if (q.contains("sans oignon") || q.contains("بلا بصل") || q.contains("بدون بصل")) {
+        if (q.contains("sans oignon") || q.contains("bla bsel") || q.contains("bla bsal") || q.contains("بدون بصل") || q.contains("بلا بصل")) {
             detectedNotes.add("Sans oignon")
         }
-        if (q.contains("piquant") || q.contains("har") || q.contains("حار") || q.contains("spicy") || q.contains("épicé") || q.contains("sauce piquante")) {
+        if (q.contains("piquant") || q.contains("har") || q.contains("7ar") || q.contains("حار") || q.contains("spicy") || q.contains("épicé") || q.contains("sauce piquante") || q.contains("samourai")) {
             detectedNotes.add("Sauce piquante 🔥")
         }
-        if (q.contains("extra fromage") || q.contains("فرماج زايد") || q.contains("جبن إضافي") || q.contains("cheesy")) {
+        if (q.contains("extra fromage") || q.contains("fermaj zayed") || q.contains("فرماج زايد") || q.contains("جبن إضافي") || q.contains("cheesy")) {
             detectedNotes.add("Extra fromage fondu 🧀")
         }
-        if (q.contains("bien cuit") || q.contains("محمر مزيان") || q.contains("crispy") || q.contains("مقرمش")) {
+        if (q.contains("bien cuit") || q.contains("mehmmer") || q.contains("محمر مزيان") || q.contains("crispy") || q.contains("مقرمش") || q.contains("tayeb mzyan")) {
             detectedNotes.add("Bien cuit & croustillant")
         }
-        if (q.contains("urgent") || q.contains("دابا") || q.contains("سريع") || q.contains("vite") || q.contains("express")) {
+        if (q.contains("urgent") || q.contains("daba") || q.contains("دابا") || q.contains("سريع") || q.contains("vite") || q.contains("express")) {
             detectedNotes.add("Priorité Express ⚡")
         }
-        if (q.contains("frais") || q.contains("طازج") || q.contains("fresh")) {
+        if (q.contains("frais") || q.contains("tari") || q.contains("طازج") || q.contains("fresh")) {
             detectedNotes.add("100% Frais du jour")
         }
+        if (q.contains("sauce barbecue") || q.contains("bbq") || q.contains("باربكيو")) {
+            detectedNotes.add("Sauce BBQ fumée")
+        }
 
-        // Global default quantity if specified (e.g. "2 pizzas", "3 tajines")
+        // Global default quantity if specified (e.g. "2 pizzas", "3 tajines", "joj", "tleta")
         val defaultQty = when {
-            q.contains("زوج") || q.contains("جوج") || q.contains("deux") || q.contains("two") || q.contains(" 2 ") || q.startsWith("2 ") -> 2
-            q.contains("تلاتة") || q.contains("ثلاثة") || q.contains("trois") || q.contains("three") || q.contains(" 3 ") || q.startsWith("3 ") -> 3
-            q.contains("ربعة") || q.contains("أربعة") || q.contains("quatre") || q.contains("four") || q.contains(" 4 ") || q.startsWith("4 ") -> 4
+            q.contains("زوج") || q.contains("جوج") || q.contains("joj") || q.contains("deux") || q.contains("two") || q.contains(" 2 ") || q.startsWith("2 ") -> 2
+            q.contains("تلاتة") || q.contains("ثلاثة") || q.contains("tleta") || q.contains("trois") || q.contains("three") || q.contains(" 3 ") || q.startsWith("3 ") -> 3
+            q.contains("ربعة") || q.contains("أربعة") || q.contains("reb3a") || q.contains("quatre") || q.contains("four") || q.contains(" 4 ") || q.startsWith("4 ") -> 4
             else -> 1
         }
 
@@ -265,26 +269,26 @@ object AiShoppingService {
         var explanationAr = ""
 
         // Multi-item checks:
-        val hasBigMac = q.contains("big mac") || q.contains("بيج ماك") || q.contains("burger") || q.contains("برجر") || q.contains("همبرغر")
+        val hasBigMac = q.contains("big mac") || q.contains("بيج ماك") || q.contains("burger") || q.contains("برجر") || q.contains("همبرغر") || q.contains("sandwiche") || q.contains("وجبة")
         val hasNuggets = q.contains("nugget") || q.contains("ناجتس") || q.contains("ناغتس") || q.contains("قطع دجاج")
         val hasMcFlurry = q.contains("mcflurry") || q.contains("ماك فلوري") || q.contains("glace") || q.contains("آيس كريم") || q.contains("ايس كريم") || q.contains("dessert")
 
-        val hasKfcBucket = q.contains("bucket") || q.contains("باكت") || q.contains("باكيت") || q.contains("سطل") || q.contains("دجاج كنتاكي") || q.contains("kfc") || q.contains("poulet croustillant")
+        val hasKfcBucket = q.contains("bucket") || q.contains("باكت") || q.contains("باكيت") || q.contains("سطل") || q.contains("دجاج كنتاكي") || q.contains("kfc") || q.contains("poulet croustillant") || q.contains("دجاج مقلي")
         val hasZinger = q.contains("zinger") || q.contains("زنجر") || q.contains("مايتي") || q.contains("mighty")
 
-        val hasPizza = q.contains("pizza") || q.contains("بيتزا") || q.contains("بيدزا") || q.contains("supreme") || q.contains("سوبريم") || q.contains("pepperoni") || q.contains("croûte")
-        val hasCroissant = q.contains("croissant") || q.contains("كرواسون") || q.contains("مخبز") || q.contains("paul") || q.contains("بول") || q.contains("viennoiserie") || q.contains("petit déjeuner") || q.contains("فطور")
-        val hasTart = q.contains("tart") || q.contains("تارت") || q.contains("fraise") || q.contains("فراولة") || q.contains("gâteau") || q.contains("حلوى")
+        val hasPizza = q.contains("pizza") || q.contains("بيتزا") || q.contains("بيدزا") || q.contains("supreme") || q.contains("سوبريم") || q.contains("pepperoni") || q.contains("croûte") || q.contains("margherita")
+        val hasCroissant = q.contains("croissant") || q.contains("كرواسون") || q.contains("مخبز") || q.contains("paul") || q.contains("بول") || q.contains("viennoiserie") || q.contains("petit déjeuner") || q.contains("فطور") || q.contains("ftour") || q.contains("قهوة")
+        val hasTart = q.contains("tart") || q.contains("تارت") || q.contains("fraise") || q.contains("فراولة") || q.contains("gâteau") || q.contains("حلوى") || q.contains("patisserie")
 
-        val hasTajine = q.contains("tajine") || q.contains("طاجين") || q.contains("لحم") || q.contains("pruneaux") || q.contains("برقوق")
-        val hasCouscous = q.contains("couscous") || q.contains("كسكس") || q.contains("كسكسو") || q.contains("خضار")
+        val hasTajine = q.contains("tajine") || q.contains("طاجين") || q.contains("لحم") || q.contains("pruneaux") || q.contains("برقوق") || q.contains("l7am") || q.contains("barkouk")
+        val hasCouscous = q.contains("couscous") || q.contains("كسكس") || q.contains("كسكسو") || q.contains("خضار") || q.contains("seksou")
 
-        val hasFish = q.contains("poisson") || q.contains("fruit de mer") || q.contains("crevette") || q.contains("calamar") || q.contains("حوت") || q.contains("سمك") || q.contains("فواكه البحر") || q.contains("شواية") || q.contains("قمرون")
-        val hasGrocery = q.contains("marjane") || q.contains("مرجان") || q.contains("lait") || q.contains("حليب") || q.contains("oeuf") || q.contains("œuf") || q.contains("بيض") || q.contains("huile") || q.contains("زيت") || q.contains("courses") || q.contains("épicerie") || q.contains("سلة")
-        val hasPharma = q.contains("pharmacie") || q.contains("صيدلية") || q.contains("médicament") || q.contains("دواء") || q.contains("vitamine") || q.contains("فيتامين") || q.contains("paracétamol") || q.contains("باراسيتامول") || q.contains("صداع")
-        val hasCourier = q.contains("coursier") || q.contains("كابتن") || q.contains("مندوب") || q.contains("colis") || q.contains("طرد") || q.contains("مفاتيح") || q.contains("ألو جيب لي") || q.contains("express")
+        val hasFish = q.contains("poisson") || q.contains("fruit de mer") || q.contains("crevette") || q.contains("calamar") || q.contains("حوت") || q.contains("سمك") || q.contains("فواكه البحر") || q.contains("شواية") || q.contains("قمرون") || q.contains("7out")
+        val hasGrocery = q.contains("marjane") || q.contains("مرجان") || q.contains("lait") || q.contains("حليب") || q.contains("oeuf") || q.contains("œuf") || q.contains("بيض") || q.contains("huile") || q.contains("زيت") || q.contains("courses") || q.contains("épicerie") || q.contains("سلة") || q.contains("hlib") || q.contains("bayd")
+        val hasPharma = q.contains("pharmacie") || q.contains("صيدلية") || q.contains("médicament") || q.contains("دواء") || q.contains("vitamine") || q.contains("فيتامين") || q.contains("paracétamol") || q.contains("doliprane") || q.contains("دولبران") || q.contains("صداع")
+        val hasCourier = q.contains("coursier") || q.contains("كابتن") || q.contains("مندوب") || q.contains("colis") || q.contains("طرد") || q.contains("مفاتيح") || q.contains("ألو جيب لي") || q.contains("express") || q.contains("jib liya") || q.contains("swart")
 
-        // 1. McDonald's multi-match
+        // 1. McDonald's match
         if (hasBigMac || hasNuggets || hasMcFlurry) {
             mainStoreName = "McDonald's Miramar Mohammedia"
             storeEmoji = "🍔"
@@ -292,7 +296,7 @@ object AiShoppingService {
 
             if (hasBigMac || (!hasNuggets && !hasMcFlurry)) {
                 products.find { it.id == "p_mcdo_bigmac" }?.let {
-                    val qty = if (q.contains("2 big mac") || q.contains("deux big mac") || q.contains("جوج بيج ماك")) 2 else defaultQty
+                    val qty = if (q.contains("2 big mac") || q.contains("deux big mac") || q.contains("جوج بيج ماك") || q.contains("joj big mac")) 2 else defaultQty
                     matchedItems.add(AiRecommendedItem(it, qty, notesStr, it.price * qty))
                 }
             }
@@ -307,8 +311,8 @@ object AiShoppingService {
                 }
             }
 
-            explanationFr = "J'ai composé pour vous votre menu McDonald's idéal avec vos accompagnements et boissons !"
-            explanationAr = "اخترت لك وجبة ماكدونالدز متكاملة مع البطاطس المقرمشة والمشروب المنعش والصوصات!"
+            explanationFr = "J'ai préparé pour vous le célèbre Menu Big Mac croustillant avec vos frites dorées et boisson !"
+            explanationAr = "اخترت لك وجبة ماكدونالدز الشهية بيج ماك ساخنة مع البطاطس المقرمشة والمشروب المنعش!"
         }
         // 2. KFC match
         else if (hasKfcBucket || hasZinger) {
@@ -433,8 +437,12 @@ object AiShoppingService {
         val deliveryFee = 7.0
         val grandTotal = total + deliveryFee
 
-        val speechFr = "Votre commande est prête chez $mainStoreName : ${matchedItems.size} article(s) pour un total de ${grandTotal.toInt()} dirhams. Vous pouvez confirmer dès maintenant !"
-        val speechAr = "تم تجهيز طلبك من $mainStoreName بمجموع ${grandTotal.toInt()} درهم. اضغط على زر التأكيد لمتابعة طلبك!"
+        // Human conversational voice response (Concierge style with warmth and polite call to action)
+        val itemsDescriptionFr = matchedItems.joinToString(" et ") { "${it.quantity} ${it.product.nameFr}" }
+        val itemsDescriptionAr = matchedItems.joinToString(" و ") { "${it.quantity} ${it.product.nameAr}" }
+
+        val speechFr = "Parfait ! J'ai bien préparé votre commande chez $mainStoreName, avec $itemsDescriptionFr. Le total s'élève à ${grandTotal.toInt()} dirhams, livraison express incluse. Vous pouvez confirmer en un clic pour que notre coursier Aziz prenne la route !"
+        val speechAr = "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName، مع $itemsDescriptionAr. المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق الكابتن عزيز إليك!"
 
         return AiShoppingRecommendation(
             userPrompt = query,

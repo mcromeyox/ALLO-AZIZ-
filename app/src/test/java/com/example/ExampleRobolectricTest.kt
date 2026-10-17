@@ -158,4 +158,32 @@ class ExampleRobolectricTest {
         assertEquals("ON_THE_WAY", updated?.status)
         assertEquals(8, updated?.estimatedMinsLeft)
     }
+
+    @Test
+    fun aiShoppingService_nlpExtraction_mcdoBurgerAndNotes() = runBlocking {
+        val query = "Je veux 2 menus Big Mac avec sauce piquante et sans oignon"
+        val recommendation = com.example.data.services.AiShoppingService.matchLocalCatalogWithNlp(query, CatalogData.products)
+
+        assertNotNull(recommendation)
+        assertTrue(recommendation.items.isNotEmpty())
+        assertEquals(2, recommendation.items[0].quantity)
+        assertTrue(recommendation.detectedNotes.contains("Sans oignon"))
+        assertTrue(recommendation.detectedNotes.contains("Sauce piquante 🔥"))
+        assertTrue(recommendation.speechAudioTextFr.contains("Parfait"))
+        assertTrue(recommendation.speechAudioTextFr.contains("dirhams"))
+    }
+
+    @Test
+    fun voiceSpeechHelper_humanizeTextForSpeech_prosody() {
+        val helper = com.example.data.system.VoiceSpeechHelper(context)
+        val textFr = "Total: 120 DH - Livraison: 15-25 min - Promo: 20%"
+        val humanizedFr = helper.humanizeTextForSpeech(textFr, AppLanguage.FRENCH)
+
+        assertTrue(humanizedFr.contains("dirhams"))
+        assertTrue(humanizedFr.contains("pour cent"))
+        assertTrue(humanizedFr.contains("quinze à vingt-cinq minutes"))
+
+        assertEquals("sara", com.example.data.system.VoicePersona.SARA.id)
+        assertEquals("karim", com.example.data.system.VoicePersona.KARIM.id)
+    }
 }
