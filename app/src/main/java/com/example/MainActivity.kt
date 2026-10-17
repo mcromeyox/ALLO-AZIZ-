@@ -121,6 +121,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val showLocationPickerModal by viewModel.showLocationPickerModal.collectAsState()
 
     val showAiAssistant by viewModel.showAiAssistant.collectAsState()
+    val showAiVoiceSupportDialog by viewModel.showAiVoiceSupportDialog.collectAsState()
     val aiRecommendation by viewModel.aiRecommendation.collectAsState()
     val isAiListening by viewModel.isAiListening.collectAsState()
     val isAiProcessing by viewModel.isAiProcessing.collectAsState()
@@ -345,7 +346,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 cartTotal = cartItems.sumOf { it.product.price * it.quantity },
                                 onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) },
                                 onOpenLocationPicker = { viewModel.openLocationPicker() },
-                                onOpenAiAssistant = { viewModel.openAiAssistant() }
+                                onOpenAiAssistant = { viewModel.openAiAssistant() },
+                                onOpenSupportVoiceCall = { viewModel.openAiVoiceSupportDialog() }
                             )
                         }
 
@@ -631,6 +633,16 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                             onConfirmRecommendation = { viewModel.confirmAiShoppingRecommendation(it) },
                             onUpdateQuantity = { pid, delta -> viewModel.updateAiItemQuantity(pid, delta) },
                             onRemoveItem = { pid -> viewModel.removeAiItem(pid) }
+                        )
+                    }
+
+                    if (showAiVoiceSupportDialog) {
+                        com.example.ui.components.AiSupportVoiceCallDialog(
+                            language = language,
+                            onDismissRequest = { viewModel.closeAiVoiceSupportDialog() },
+                            onSupportMessageLogged = { userQ, aiR ->
+                                viewModel.sendSupportMessage(userQ)
+                            }
                         )
                     }
                 }

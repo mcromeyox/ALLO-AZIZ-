@@ -142,7 +142,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     private val _promoDiscountPercent = MutableStateFlow(0.0)
     val promoDiscountPercent: StateFlow<Double> = _promoDiscountPercent.asStateFlow()
 
-    private val _deliveryAddress = MutableStateFlow("شارع الحسن الثاني، قرب حديقة المدن المتوأمة، المحمدية 🇲🇦")
+    private val _deliveryAddress = MutableStateFlow("Bd Hassan II, Parc des Villes Jumelées, Mohammedia 🇲🇦")
     val deliveryAddress: StateFlow<String> = _deliveryAddress.asStateFlow()
 
     private val _customerLat = MutableStateFlow(LocationServiceManager.DEFAULT_LAT)
@@ -199,6 +199,18 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         _showAiAssistant.value = false
         _isAiListening.value = false
         _isAiProcessing.value = false
+    }
+
+    // Interactive AI Voice Call Dialog for Technical Support (Sara IA)
+    private val _showAiVoiceSupportDialog = MutableStateFlow(false)
+    val showAiVoiceSupportDialog: StateFlow<Boolean> = _showAiVoiceSupportDialog.asStateFlow()
+
+    fun openAiVoiceSupportDialog() {
+        _showAiVoiceSupportDialog.value = true
+    }
+
+    fun closeAiVoiceSupportDialog() {
+        _showAiVoiceSupportDialog.value = false
     }
 
     fun setAiListening(listening: Boolean) {
@@ -1719,51 +1731,22 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         _supportMessages.value = _supportMessages.value + userMsg
 
         viewModelScope.launch {
-            delay(1000)
+            delay(500)
             val lang = _selectedLanguage.value
-            val responseText = when {
-                userText.contains("أين طلبي") || userText.contains("où est") || userText.contains("where") -> {
-                    when (lang) {
-                        AppLanguage.ARABIC -> "أهلاً بك! يمكنك تتبع طلبك لحظة بلحظة عبر قسم \"التتبع الفوري\" على الخريطة مباشرة لمعرفة موقع المندوب عزيز بدقة."
-                        AppLanguage.FRENCH -> "Vous pouvez suivre la position exacte du coursier Aziz en temps réel dans l'onglet 'Suivi en direct'."
-                        AppLanguage.ENGLISH -> "You can track courier Aziz live in real-time in the 'Live Tracking' screen on the map."
-                    }
-                }
-                userText.contains("سائق") || userText.contains("تفعيل") || userText.contains("driver") -> {
-                    when (lang) {
-                        AppLanguage.ARABIC -> "فريق الدعم الفني يراجع طلبات انضمام السائقين الجديدة فوراً! تم إعطاء الصلاحية للدعم لتفعيل حسابك فور استيفاء رخصة القيادة والبطاقة."
-                        AppLanguage.FRENCH -> "L'équipe support valide immédiatement les nouveaux chauffeurs éligibles !"
-                        AppLanguage.ENGLISH -> "Support team instantly verifies and activates eligible driver accounts!"
-                    }
-                }
-                userText.contains("دفع") || userText.contains("paiement") || userText.contains("pay") -> {
-                    when (lang) {
-                        AppLanguage.ARABIC -> "نظام الدفع في ألو عزيز آمن 100% ومشفر. نقبل البطاقات البنكية، محفظة ALLO Pay، والدفع نقداً عند الاستلام."
-                        AppLanguage.FRENCH -> "Le paiement est 100% sécurisé (cartes bancaires, portefeuille ALLO Pay ou paiement en espèces)."
-                        AppLanguage.ENGLISH -> "Payment is 100% encrypted & secure. We accept cards, ALLO Pay wallet, and Cash on Delivery."
-                    }
-                }
-                userText.contains("كود") || userText.contains("خصم") || userText.contains("promo") || userText.contains("discount") -> {
-                    when (lang) {
-                        AppLanguage.ARABIC -> "كود الخصم الحصري لك اليوم هو: AZIZ20 يمنحك خصماً فورياً 20% على طلبك!"
-                        AppLanguage.FRENCH -> "Votre code promo du jour est AZIZ20 pour -20% immédiats !"
-                        AppLanguage.ENGLISH -> "Your exclusive promo code is AZIZ20 for an instant 20% off!"
-                    }
-                }
-                else -> {
-                    when (lang) {
-                        AppLanguage.ARABIC -> "شكراً لتواصلك مع ألو عزيز! فريق الدعم الفني 24/7 يتابع استفسارك باهتمام وسنقوم بالرد فوراً."
-                        AppLanguage.FRENCH -> "Merci de contacter ALLO AZIZ ! Notre support 24/7 est à votre disposition."
-                        AppLanguage.ENGLISH -> "Thank you for contacting ALLO AZIZ! Our 24/7 team is here to assist you."
-                    }
-                }
-            }
+            val responseText = com.example.data.services.AiSupportVoiceService.generateSupportResponse(
+                userPrompt = userText,
+                language = lang
+            )
 
             val botMsg = SupportChatMessage(
                 id = "bot_${System.currentTimeMillis()}",
                 text = responseText,
                 isUser = false,
-                agentName = "سارة - دعم ألو عزيز"
+                agentName = when (lang) {
+                    AppLanguage.FRENCH -> "Sara (IA Support 24/7)"
+                    AppLanguage.ENGLISH -> "Sara (24/7 AI Support)"
+                    AppLanguage.ARABIC -> "سارة - دعم ألو عزيز"
+                }
             )
             _supportMessages.value = _supportMessages.value + botMsg
         }

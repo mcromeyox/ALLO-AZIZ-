@@ -115,12 +115,20 @@ fun FavoritesScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "مفضلاتي في ألو عزيز ❤️",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Mes Favoris chez ALLO AZIZ ❤️"
+                                    AppLanguage.ENGLISH -> "My Favorites on ALLO AZIZ ❤️"
+                                    AppLanguage.ARABIC -> "مفضلاتي في ألو عزيز ❤️"
+                                },
                                 fontWeight = FontWeight.Black,
                                 fontSize = 16.sp
                             )
                             Text(
-                                text = "الوصول السريع إلى متاجرك ووجباتك المحبوبة بالمحمدية",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Accès rapide à vos restaurants et plats préférés à Mohammédia"
+                                    AppLanguage.ENGLISH -> "Quick access to your favorite spots and meals in Mohammedia"
+                                    AppLanguage.ARABIC -> "الوصول السريع إلى متاجرك ووجباتك المحبوبة بالمحمدية"
+                                },
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -145,7 +153,11 @@ fun FavoritesScreen(
                             onClick = { selectedTab = 0 },
                             text = {
                                 Text(
-                                    text = "المتاجر المفضلة (${favoriteStores.size})",
+                                    text = when (language) {
+                                        AppLanguage.FRENCH -> "Restaurants Favoris (${favoriteStores.size})"
+                                        AppLanguage.ENGLISH -> "Favorite Stores (${favoriteStores.size})"
+                                        AppLanguage.ARABIC -> "المتاجر المفضلة (${favoriteStores.size})"
+                                    },
                                     fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                                     fontSize = 13.sp,
                                     color = if (selectedTab == 0) AzizGreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -157,7 +169,11 @@ fun FavoritesScreen(
                             onClick = { selectedTab = 1 },
                             text = {
                                 Text(
-                                    text = "الأطباق المحفوظة (${favoriteProducts.size})",
+                                    text = when (language) {
+                                        AppLanguage.FRENCH -> "Plats Sauvegardés (${favoriteProducts.size})"
+                                        AppLanguage.ENGLISH -> "Saved Dishes (${favoriteProducts.size})"
+                                        AppLanguage.ARABIC -> "الأطباق المحفوظة (${favoriteProducts.size})"
+                                    },
                                     fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
                                     fontSize = 13.sp,
                                     color = if (selectedTab == 1) AzizGreenPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -187,12 +203,20 @@ fun FavoritesScreen(
                             Text("🏪", fontSize = 42.sp)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "لم تقم بحفظ أي متجر في المفضلة بعد",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Aucun restaurant dans vos favoris"
+                                    AppLanguage.ENGLISH -> "No favorite stores yet"
+                                    AppLanguage.ARABIC -> "لم تقم بحفظ أي متجر في المفضلة بعد"
+                                },
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "اضغط على رمز القلب في بطاقة أي متجر بالمحمدية للوصول السريع إليه هنا.",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Appuyez sur le cœur d'un restaurant à Mohammédia pour y accéder rapidement ici."
+                                    AppLanguage.ENGLISH -> "Tap the heart icon on any store card to add it to your favorites."
+                                    AppLanguage.ARABIC -> "اضغط على رمز القلب في بطاقة أي متجر بالمحمدية للوصول السريع إليه هنا."
+                                },
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -245,8 +269,13 @@ fun FavoritesScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    val storeTitle = when (language) {
+                                        AppLanguage.FRENCH -> store.nameFr
+                                        AppLanguage.ENGLISH -> store.name
+                                        AppLanguage.ARABIC -> store.nameAr
+                                    }
                                     Text(
-                                        text = store.name,
+                                        text = storeTitle,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp
                                     )
@@ -273,9 +302,14 @@ fun FavoritesScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(imageVector = Icons.Default.Timer, contentDescription = null, tint = AzizGreenPrimary, modifier = Modifier.size(14.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(text = "${store.deliveryTimeMins} دقيقة", fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                        Text(text = AppStrings.minTime(language, store.deliveryTimeMins), fontSize = 11.sp, fontWeight = FontWeight.Medium)
                                         Spacer(modifier = Modifier.width(12.dp))
-                                        Text(text = "توصيل: ${store.deliveryFee} د.م", fontSize = 11.sp, color = AzizMint, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = "${AppStrings.deliveryFee(language)}: ${store.deliveryFee} ${AppStrings.currency(language)}",
+                                            fontSize = 11.sp,
+                                            color = AzizMint,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
 
                                     Button(
@@ -284,7 +318,16 @@ fun FavoritesScreen(
                                         colors = ButtonDefaults.buttonColors(containerColor = AzizGreenPrimary),
                                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                                     ) {
-                                        Text("تصفح القائمة", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = when (language) {
+                                                AppLanguage.FRENCH -> "Voir le menu"
+                                                AppLanguage.ENGLISH -> "View Menu"
+                                                AppLanguage.ARABIC -> "تصفح القائمة"
+                                            },
+                                            fontSize = 12.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
                                 }
                             }
@@ -312,12 +355,20 @@ fun FavoritesScreen(
                             Text("🍔", fontSize = 42.sp)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "لم تقم بحفظ أي طبق في المفضلة بعد",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Aucun plat dans vos favoris"
+                                    AppLanguage.ENGLISH -> "No favorite dishes yet"
+                                    AppLanguage.ARABIC -> "لم تقم بحفظ أي طبق في المفضلة بعد"
+                                },
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "انقر على رمز القلب في أي وجبة لإضافتها إلى قائمة أطباقك المفضلة هنا.",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Appuyez sur le cœur d'un plat pour le retrouver facilement ici."
+                                    AppLanguage.ENGLISH -> "Tap the heart icon on any dish to save it to your favorites."
+                                    AppLanguage.ARABIC -> "انقر على رمز القلب في أي وجبة لإضافتها إلى قائمة أطباقك المفضلة هنا."
+                                },
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -355,8 +406,13 @@ fun FavoritesScreen(
                             Spacer(modifier = Modifier.width(12.dp))
 
                             Column(modifier = Modifier.weight(1f)) {
+                                val prodTitle = when (language) {
+                                    AppLanguage.FRENCH -> product.nameFr
+                                    AppLanguage.ENGLISH -> product.nameEn
+                                    AppLanguage.ARABIC -> product.nameAr
+                                }
                                 Text(
-                                    text = product.name,
+                                    text = prodTitle,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
                                 )

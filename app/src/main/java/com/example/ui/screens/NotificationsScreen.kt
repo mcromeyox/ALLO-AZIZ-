@@ -125,7 +125,11 @@ fun NotificationsScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "لا توجد إشعارات جديدة حالياً",
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Aucune nouvelle notification"
+                            AppLanguage.ENGLISH -> "No new notifications"
+                            AppLanguage.ARABIC -> "لا توجد إشعارات جديدة حالياً"
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )

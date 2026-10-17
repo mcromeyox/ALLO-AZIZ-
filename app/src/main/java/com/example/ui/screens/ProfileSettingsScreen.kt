@@ -304,7 +304,8 @@ fun ProfileSettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        AppLanguage.values().forEach { lang ->
+                        val orderedLanguages = listOf(AppLanguage.FRENCH, AppLanguage.ARABIC, AppLanguage.ENGLISH)
+                        orderedLanguages.forEach { lang ->
                             val isSelected = lang == language
                             Surface(
                                 shape = RoundedCornerShape(12.dp),

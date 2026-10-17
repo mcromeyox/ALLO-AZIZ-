@@ -1,6 +1,6 @@
 {
   "name": "ALLO AZIZ",
-  "description": "تطبيق ألو عزيز لتوصيل الطلبات مع تتبع فوري، نظام دفع آمن، إشعارات، تقييمات، ودعم 24/7 بلغات متعددة",
+  "description": "Application de livraison express ALLO AZIZ avec assistant vocal IA, suivi en direct, support 24/7 et commandes intelligentes à Mohammedia",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.ElectricScooter
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Percent
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
@@ -51,6 +52,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -114,8 +116,8 @@ fun HomeScreen(
     favoriteStoreIds: Set<String> = emptySet(),
     onToggleFavoriteStore: (String) -> Unit = {},
     onAddToCartWithOptions: (Product, Int, List<String>, Double, String) -> Unit = { p, q, o, e, n -> onAddToCart(p) },
-    currentAddress: String = "شارع الحسن الثاني، قرب حديقة المدن المتوأمة، المحمدية 🇲🇦",
-    currentCity: String = "المحمدية",
+    currentAddress: String = "Bd Hassan II, Parc des Villes Jumelées, Mohammedia 🇲🇦",
+    currentCity: String = "Mohammedia",
     onSelectAddress: (String) -> Unit = {},
     onSelectCity: (String) -> Unit = {},
     savedAddresses: List<AddressEntity> = emptyList(),
@@ -126,7 +128,8 @@ fun HomeScreen(
     cartTotal: Double = 0.0,
     onOpenCart: () -> Unit = {},
     onOpenLocationPicker: (() -> Unit)? = null,
-    onOpenAiAssistant: (() -> Unit)? = null
+    onOpenAiAssistant: (() -> Unit)? = null,
+    onOpenSupportVoiceCall: (() -> Unit)? = null
 ) {
     var customizingProduct by remember { mutableStateOf<Product?>(null) }
     var showAddressDialog by remember { mutableStateOf(false) }
@@ -303,10 +306,11 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(22.dp))
                     .testTag("home_ai_voice_hero_banner"),
-                shape = RoundedCornerShape(20.dp),
-                shadowElevation = 3.dp
+                shape = RoundedCornerShape(22.dp),
+                border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF818CF8).copy(alpha = 0.45f)),
+                shadowElevation = 5.dp
             ) {
                 Box(
                     modifier = Modifier
@@ -314,9 +318,9 @@ fun HomeScreen(
                         .background(
                             Brush.linearGradient(
                                 colors = listOf(
-                                    AzizCharcoalDark,
-                                    Color(0xFF2C1654),
-                                    Color(0xFF1E3A8A)
+                                    Color(0xFF0F172A),
+                                    Color(0xFF1E1B4B),
+                                    Color(0xFF2C1654)
                                 )
                             )
                         )
@@ -410,6 +414,132 @@ fun HomeScreen(
                                         AppLanguage.FRENCH -> "Parler 🎙️"
                                         AppLanguage.ENGLISH -> "Speak 🎙️"
                                         AppLanguage.ARABIC -> "تكلم الآن 🎙️"
+                                    },
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // AI Voice Customer Support Hero Card (Sara IA)
+        item {
+            Surface(
+                onClick = { onOpenSupportVoiceCall?.invoke() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 5.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .testTag("home_ai_voice_support_hero_banner"),
+                shape = RoundedCornerShape(20.dp),
+                shadowElevation = 3.dp
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    Color(0xFF0F172A),
+                                    Color(0xFF1E1B4B),
+                                    Color(0xFF31104B)
+                                )
+                            )
+                        )
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.linearGradient(
+                                            colors = listOf(AzizMint, Color(0xFF059669))
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.RecordVoiceOver,
+                                    contentDescription = "Support Vocal IA",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = when (language) {
+                                            AppLanguage.FRENCH -> "Sara IA • Support Vocal 24/7"
+                                            AppLanguage.ENGLISH -> "Sara AI • 24/7 Voice Support"
+                                            AppLanguage.ARABIC -> "سارة AI • الدعم الصوتي الفوري"
+                                        },
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = AzizMint.copy(alpha = 0.25f)
+                                    ) {
+                                        Text(
+                                            text = when (language) {
+                                                AppLanguage.FRENCH -> "EN DIRECT 🔴"
+                                                AppLanguage.ENGLISH -> "LIVE 🔴"
+                                                AppLanguage.ARABIC -> "مباشر 🔴"
+                                            },
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizMint
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = when (language) {
+                                        AppLanguage.FRENCH -> "Parlez en direct avec l'IA, elle vous répond à voix haute !"
+                                        AppLanguage.ENGLISH -> "Speak live with AI, it answers you out loud!"
+                                        AppLanguage.ARABIC -> "تحدث مع الدعم الفني بالصوت وتجيبك سارة فورياً!"
+                                    },
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = AzizMint,
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = when (language) {
+                                        AppLanguage.FRENCH -> "Appeler 📞"
+                                        AppLanguage.ENGLISH -> "Call 📞"
+                                        AppLanguage.ARABIC -> "اتصال 📞"
                                     },
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Black,
@@ -676,41 +806,79 @@ fun HomeScreen(
             }
         }
 
-        // Floating Action Button for AI Voice Assistant
-        FloatingActionButton(
-            onClick = { onOpenAiAssistant?.invoke() },
+        // Floating Action Buttons for Voice AI (Support Call + Shopping Assistant)
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(
                     end = 16.dp,
                     bottom = if (cartItemCount > 0) 80.dp else 24.dp
-                )
-                .testTag("home_fab_ai_voice"),
-            containerColor = Color(0xFF4F46E5),
-            contentColor = Color.White,
-            shape = RoundedCornerShape(20.dp)
+                ),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            // Support Vocal IA (Sara)
+            SmallFloatingActionButton(
+                onClick = { onOpenSupportVoiceCall?.invoke() },
+                containerColor = Color(0xFF0F172A),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.testTag("home_fab_support_voice")
             ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = "AI Voice Assistant",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = when (language) {
-                        AppLanguage.FRENCH -> "ALLO AZIZ AI 🎙️"
-                        AppLanguage.ENGLISH -> "ALLO AZIZ AI 🎙️"
-                        AppLanguage.ARABIC -> "ألو عزيز AI 🎙️"
-                    },
-                    fontWeight = FontWeight.Black,
-                    fontSize = 13.sp,
-                    color = Color.White
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RecordVoiceOver,
+                        contentDescription = "Support Vocal",
+                        tint = AzizMint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Sara IA Support 📞"
+                            AppLanguage.ENGLISH -> "Sara AI Support 📞"
+                            AppLanguage.ARABIC -> "سارة AI دعم 📞"
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+
+            // AI Voice Shopping Assistant
+            FloatingActionButton(
+                onClick = { onOpenAiAssistant?.invoke() },
+                containerColor = Color(0xFF4F46E5),
+                contentColor = Color.White,
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.testTag("home_fab_ai_voice")
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "AI Voice Assistant",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "ALLO AZIZ AI 🎙️"
+                            AppLanguage.ENGLISH -> "ALLO AZIZ AI 🎙️"
+                            AppLanguage.ARABIC -> "ألو عزيز AI 🎙️"
+                        },
+                        fontWeight = FontWeight.Black,
+                        fontSize = 13.sp,
+                        color = Color.White
+                    )
+                }
             }
         }
     }

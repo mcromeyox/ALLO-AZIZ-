@@ -238,7 +238,11 @@ fun StoreDetailScreen(
 
         item {
             Text(
-                text = "قائمة الأطباق والمأكولات 🍽️",
+                text = when (language) {
+                    AppLanguage.FRENCH -> "Menu & Carte des Plats 🍽️"
+                    AppLanguage.ENGLISH -> "Menu & Available Items 🍽️"
+                    AppLanguage.ARABIC -> "قائمة الأطباق والمأكولات 🍽️"
+                },
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -302,7 +306,11 @@ fun StoreDetailScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "عرض السلة وإتمام الطلب 🛒",
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Voir le panier & Commander 🛒"
+                                AppLanguage.ENGLISH -> "View Cart & Checkout 🛒"
+                                AppLanguage.ARABIC -> "عرض السلة وإتمام الطلب 🛒"
+                            },
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp

@@ -164,13 +164,21 @@ fun OrderTrackingScreen(
                 Text("🛵", fontSize = 48.sp)
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "لا يوجد طلب قيد التتبع حالياً",
+                    text = when (language) {
+                        AppLanguage.FRENCH -> "Aucune commande en cours de suivi"
+                        AppLanguage.ENGLISH -> "No active orders being tracked"
+                        AppLanguage.ARABIC -> "لا يوجد طلب قيد التتبع حالياً"
+                    },
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "قم بطلب وجبتك المفضلة وسنبدأ بالتتبع الفوري فوراً!",
+                    text = when (language) {
+                        AppLanguage.FRENCH -> "Commandez vos plats préférés pour les suivre en direct sur la carte !"
+                        AppLanguage.ENGLISH -> "Order your favorite meals to track them live on the map!"
+                        AppLanguage.ARABIC -> "قم بطلب وجبتك المفضلة وسنبدأ بالتتبع الفوري فوراً!"
+                    },
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -930,7 +938,11 @@ fun OrderTrackingScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "تفاصيل الطلب والفاتورة",
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Détails de la commande & Facture"
+                                AppLanguage.ENGLISH -> "Order Details & Receipt"
+                                AppLanguage.ARABIC -> "تفاصيل الطلب والفاتورة"
+                            },
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
@@ -938,22 +950,38 @@ fun OrderTrackingScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "المتجر: ${order.storeName}",
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Commerce : ${order.storeName}"
+                            AppLanguage.ENGLISH -> "Store: ${order.storeName}"
+                            AppLanguage.ARABIC -> "المتجر: ${order.storeName}"
+                        },
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp
                     )
                     Text(
-                        text = "الأصناف: ${order.itemsSummary}",
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Articles : ${order.itemsSummary}"
+                            AppLanguage.ENGLISH -> "Items: ${order.itemsSummary}"
+                            AppLanguage.ARABIC -> "الأصناف: ${order.itemsSummary}"
+                        },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "طريقة الدفع: ${order.paymentMethod}",
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Paiement : ${order.paymentMethod}"
+                            AppLanguage.ENGLISH -> "Payment: ${order.paymentMethod}"
+                            AppLanguage.ARABIC -> "طريقة الدفع: ${order.paymentMethod}"
+                        },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "العنوان: ${order.deliveryAddress}",
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Adresse : ${order.deliveryAddress}"
+                            AppLanguage.ENGLISH -> "Address: ${order.deliveryAddress}"
+                            AppLanguage.ARABIC -> "العنوان: ${order.deliveryAddress}"
+                        },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -964,7 +992,15 @@ fun OrderTrackingScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "المبلغ الإجمالي المدفوع", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        Text(
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Montant total payé"
+                                AppLanguage.ENGLISH -> "Total amount paid"
+                                AppLanguage.ARABIC -> "المبلغ الإجمالي المدفوع"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
                         Text(
                             text = "${order.total} ${AppStrings.currency(language)}",
                             fontWeight = FontWeight.Black,
@@ -988,7 +1024,11 @@ fun OrderTrackingScreen(
                         Text("🧾", fontSize = 15.sp)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "مشاركة / طباعة إيصال الطلب",
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Partager / Imprimer le reçu"
+                                AppLanguage.ENGLISH -> "Share / Print Receipt"
+                                AppLanguage.ARABIC -> "مشاركة / طباعة إيصال الطلب"
+                            },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = AzizOrangePrimary

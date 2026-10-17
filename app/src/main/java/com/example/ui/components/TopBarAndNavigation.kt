@@ -355,15 +355,33 @@ fun AlloAzizTopBar(
                         expanded = showLangMenu,
                         onDismissRequest = { showLangMenu = false }
                     ) {
-                        AppLanguage.values().forEach { lang ->
+                        val orderedLanguages = listOf(AppLanguage.FRENCH, AppLanguage.ARABIC, AppLanguage.ENGLISH)
+                        orderedLanguages.forEach { lang ->
                             DropdownMenuItem(
                                 text = {
-                                    Text(
-                                        text = lang.displayName,
-                                        fontWeight = if (lang == language) FontWeight.Bold else FontWeight.Normal,
-                                        fontSize = 12.sp,
-                                        color = if (lang == language) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface
-                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = lang.displayName,
+                                            fontWeight = if (lang == language) FontWeight.Black else FontWeight.Normal,
+                                            fontSize = 13.sp,
+                                            color = if (lang == language) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (lang == AppLanguage.FRENCH) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(4.dp),
+                                                color = AzizMint.copy(alpha = 0.2f)
+                                            ) {
+                                                Text(
+                                                    text = "Principale ⭐",
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = AzizMint,
+                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
                                 },
                                 onClick = {
                                     onLanguageChange(lang)
