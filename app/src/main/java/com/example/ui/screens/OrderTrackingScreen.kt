@@ -108,6 +108,7 @@ fun OrderTrackingScreen(
     currentRole: com.example.data.model.UserRole = com.example.data.model.UserRole.CUSTOMER,
     currentDeviceLocation: DeviceLocation? = null,
     isGpsLive: Boolean = false,
+    isCourierSimulating: Boolean = false,
     onBack: () -> Unit,
     onSubmitReview: (orderId: String, storeName: String, storeRating: Int, courierRating: Int, tags: List<String>, comment: String) -> Unit,
     onContactSupport: () -> Unit,
@@ -117,7 +118,9 @@ fun OrderTrackingScreen(
     onShareReceipt: ((OrderEntity) -> Unit)? = null,
     onOpenWhatsAppCourier: ((OrderEntity) -> Unit)? = null,
     onAdvanceStage: ((String) -> Unit)? = null,
-    onUpdateCourierPhone: ((String) -> Unit)? = null
+    onUpdateCourierPhone: ((String) -> Unit)? = null,
+    onStartDemoOrder: (() -> Unit)? = null,
+    onToggleCourierSimulation: ((String) -> Unit)? = null
 ) {
     BackHandler { onBack() }
 
@@ -161,34 +164,83 @@ fun OrderTrackingScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("🛵", fontSize = 48.sp)
-                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = AzizOrangePrimary.copy(alpha = 0.12f),
+                    modifier = Modifier.size(80.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text("🛵", fontSize = 42.sp)
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = when (language) {
-                        AppLanguage.FRENCH -> "Aucune commande en cours de suivi"
-                        AppLanguage.ENGLISH -> "No active orders being tracked"
-                        AppLanguage.ARABIC -> "لا يوجد طلب قيد التتبع حالياً"
+                        AppLanguage.FRENCH -> "Suivi des commandes en direct"
+                        AppLanguage.ENGLISH -> "Live Real-Time Order Tracking"
+                        AppLanguage.ARABIC -> "تتبع الطلبات المباشر في الوقت الفعلي"
                     },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp
+                    fontWeight = FontWeight.Black,
+                    fontSize = 18.sp
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = when (language) {
-                        AppLanguage.FRENCH -> "Commandez vos plats préférés pour les suivre en direct sur la carte !"
-                        AppLanguage.ENGLISH -> "Order your favorite meals to track them live on the map!"
-                        AppLanguage.ARABIC -> "قم بطلب وجبتك المفضلة وسنبدأ بالتتبع الفوري فوراً!"
+                        AppLanguage.FRENCH -> "Visualisez le trajet du livreur en temps réel du magasin jusqu'à chez vous sur la carte interactive !"
+                        AppLanguage.ENGLISH -> "View the courier's real-time journey from the store to your doorstep on the interactive map!"
+                        AppLanguage.ARABIC -> "شاهد مسار المندوب في الوقت الفعلي من المتجر إلى موقعك على الخريطة التفاعلية!"
                     },
                     fontSize = 13.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
                 Button(
-                    onClick = onBack,
+                    onClick = { onStartDemoOrder?.invoke() },
                     colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .testTag("start_demo_tracking_btn")
                 ) {
-                    Text("العودة للرئيسية", color = Color.White)
+                    Row(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ElectricScooter,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Lancer la simulation en direct 🛰️"
+                                AppLanguage.ENGLISH -> "Launch Live Tracking Map 🛰️"
+                                AppLanguage.ARABIC -> "بدء تتبع حي مباشر على الخريطة 🛰️"
+                            },
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedButton(
+                    onClick = onBack,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                ) {
+                    Text(
+                        text = when (language) {
+                            AppLanguage.FRENCH -> "Retour aux restaurants"
+                            AppLanguage.ENGLISH -> "Back to restaurants"
+                            AppLanguage.ARABIC -> "العودة للرئيسية وتصفح المأكولات"
+                        },
+                        color = AzizOrangePrimary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -307,6 +359,119 @@ fun OrderTrackingScreen(
                     )
                 }
             )
+        }
+
+        // Real-Time Interactive Courier Movement & Tracking Controls
+        item {
+            ElevatedCard(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = Color(0xFF1E293B)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("interactive_tracking_controls_card")
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isCourierSimulating) AzizMint.copy(alpha = 0.2f) else AzizOrangePrimary.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isCourierSimulating) Icons.Default.ElectricScooter else Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    tint = if (isCourierSimulating) AzizMint else AzizOrangePrimary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (isCourierSimulating) "المندوب يتحرك مباشرة على الخريطة 🛵💨" else "تتبع مسار المندوب التفاعلي 📍",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "السرعة: 38 كم/س • شوارع المحمدية (شارع الحسن الثاني)",
+                                    fontSize = 11.sp,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isCourierSimulating) AzizMint.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = if (isCourierSimulating) "مباشر 🔴" else "جاهز 🛰️",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCourierSimulating) AzizMint else Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onToggleCourierSimulation?.invoke(order.id) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isCourierSimulating) Color(0xFFDC2626) else AzizOrangePrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("toggle_courier_sim_btn")
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isCourierSimulating) "⏸️" else "▶️",
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isCourierSimulating) "إيقاف مؤقت ⏸️" else "محاكاة حركة المندوب 🛵",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                        }
+
+                        if (onAdvanceStage != null && order.status != "DELIVERED") {
+                            OutlinedButton(
+                                onClick = { onAdvanceStage(order.id) },
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
+                                modifier = Modifier.testTag("advance_order_stage_btn")
+                            ) {
+                                Text(
+                                    text = "المرحلة التالية ⏩",
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Google Play Services Real-Time GPS Tracking & Maps Navigation Card

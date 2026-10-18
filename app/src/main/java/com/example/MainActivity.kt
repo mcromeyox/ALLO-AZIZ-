@@ -115,6 +115,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val selectedCity by viewModel.selectedCity.collectAsState()
     val deviceLocation by viewModel.deviceLocation.collectAsState()
     val isGpsLive by viewModel.isLiveLocationTrackingEnabled.collectAsState()
+    val isCourierSimulating by viewModel.isCourierSimulating.collectAsState()
     val isNetworkConnected by viewModel.isNetworkConnected.collectAsState()
     val customerLat by viewModel.customerLat.collectAsState()
     val customerLng by viewModel.customerLng.collectAsState()
@@ -302,7 +303,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onClearMessages = { viewModel.clearAuthMessages() },
                                 onOpenStaffLogin = { viewModel.navigateTo(AppScreen.STAFF_LOGIN) },
                                 onRequestPasswordReset = { id, onOtp -> viewModel.requestPasswordReset(id, onOtp) },
-                                onConfirmPasswordReset = { id, newPass -> viewModel.confirmPasswordReset(id, newPass) }
+                                onConfirmPasswordReset = { id, newPass -> viewModel.confirmPasswordReset(id, newPass) },
+                                onSkipAsGuest = { viewModel.navigateTo(AppScreen.HOME) }
                             )
                         }
 
@@ -429,6 +431,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 currentRole = currentRole,
                                 currentDeviceLocation = deviceLocation,
                                 isGpsLive = isGpsLive,
+                                isCourierSimulating = isCourierSimulating,
                                 onBack = { viewModel.navigateBack() },
                                 onSubmitReview = { orderId, storeName, sRating, cRating, tags, comment ->
                                     viewModel.submitReview(orderId, storeName, sRating, cRating, tags, comment)
@@ -467,6 +470,12 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 },
                                 onUpdateCourierPhone = { phone ->
                                     viewModel.updateCourierPhone(orderToTrack?.id ?: "", phone)
+                                },
+                                onStartDemoOrder = {
+                                    viewModel.startLiveDemoOrderTracking()
+                                },
+                                onToggleCourierSimulation = { orderId ->
+                                    viewModel.toggleLiveCourierSimulation(orderId)
                                 }
                             )
                         }

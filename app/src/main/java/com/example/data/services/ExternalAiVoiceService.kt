@@ -21,6 +21,7 @@ enum class AiVoiceEngine(val displayNameAr: String, val displayNameFr: String, v
 }
 
 sealed class AudioSynthesizedResult {
+    data class Wav(val bytes: ByteArray) : AudioSynthesizedResult()
     data class Pcm24kHz(val bytes: ByteArray) : AudioSynthesizedResult()
     data class Mp3(val bytes: ByteArray) : AudioSynthesizedResult()
 }
@@ -28,7 +29,7 @@ sealed class AudioSynthesizedResult {
 /**
  * Universal External AI Voice Integration Service.
  * Integrates:
- * 1. Google Gemini Audio Foundation Model (gemini-2.5-flash-preview-tts)
+ * 1. Google Gemini Audio Foundation Models (gemini-3.8-flash-tts, gemini-2.5-flash-preview-tts)
  * 2. ElevenLabs Hyper-Realistic Multilingual Voice API
  * 3. Graceful fallback to Android Neural Studio TTS
  */
@@ -48,14 +49,29 @@ object ExternalAiVoiceService {
         persona: VoicePersona = VoicePersona.SARA
     ): Pair<AudioSynthesizedResult, AiVoiceEngine>? = withContext(Dispatchers.IO) {
         val cleanText = text.trim()
-        if (cleanText.isBlank()) return@withContext null
+        // 1. Google Gemini Audio Foundation Model (Studio Human Realism)
+        val geminiKey = try {
+            BuildConfig.GEMINI_API_KEY
+        } catch (_: Throwable) { "" }
 
-        // 1. Try ElevenLabs if preferred or if ElevenLabs key is configured
+        if (geminiKey.isNotBlank() && !geminiKey.contains("DEFAULT_GEMINI") && !geminiKey.contains("PLACEHOLDER")) {
+            try {
+                val audioResult = callGeminiAudioTts(cleanText, geminiKey, persona)
+                if (audioResult != null) {
+                    Log.i(TAG, "Successfully synthesized studio speech with Google Gemini Audio")
+                    return@withContext Pair(audioResult, AiVoiceEngine.GEMINI_2_5_FLASH)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Gemini Audio TTS request failed: ${e.message}")
+            }
+        }
+
+        // 2. Try ElevenLabs if configured and valid
         val elevenLabsKey = try {
             BuildConfig.ELEVENLABS_API_KEY
         } catch (_: Throwable) { "" }
 
-        if (elevenLabsKey.isNotBlank() && !elevenLabsKey.contains("PLACEHOLDER")) {
+        if (elevenLabsKey.isNotBlank() && !elevenLabsKey.contains("PLACEHOLDER") && !elevenLabsKey.contains("sk_a18753be")) {
             try {
                 val mp3Bytes = callElevenLabs(cleanText, elevenLabsKey, persona)
                 if (mp3Bytes != null && mp3Bytes.isNotEmpty()) {
@@ -66,23 +82,7 @@ object ExternalAiVoiceService {
             }
         }
 
-        // 2. Try Google Gemini Audio Foundation Model
-        val geminiKey = try {
-            BuildConfig.GEMINI_API_KEY
-        } catch (_: Throwable) { "" }
-
-        if (geminiKey.isNotBlank() && !geminiKey.contains("DEFAULT_GEMINI") && !geminiKey.contains("PLACEHOLDER")) {
-            try {
-                val pcmBytes = callGeminiAudioTts(cleanText, geminiKey, persona)
-                if (pcmBytes != null && pcmBytes.isNotEmpty()) {
-                    return@withContext Pair(AudioSynthesizedResult.Pcm24kHz(pcmBytes), AiVoiceEngine.GEMINI_2_5_FLASH)
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini Audio TTS request failed: ${e.message}")
-            }
-        }
-
-        // Return null to allow VoiceSpeechHelper to seamlessly use high-definition Neural Device TTS
+        // Fallback to Android Neural Device TTS
         return@withContext null
     }
 
@@ -127,9 +127,23 @@ object ExternalAiVoiceService {
         text: String,
         apiKey: String,
         persona: VoicePersona
-    ): ByteArray? {
+    ): AudioSynthesizedResult? {
         val voiceName = if (persona == VoicePersona.SARA) "Aoede" else "Puck"
-        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=$apiKey"
+        // 1. Try gemini-3.8-flash-tts (Generates native studio audio/wav)
+        val res38 = tryModelTts("gemini-3.8-flash-tts", text, apiKey, voiceName)
+        if (res38 != null) return res38
+
+        // 2. Fallback to gemini-2.5-flash-preview-tts (Generates audio/pcm)
+        return tryModelTts("gemini-2.5-flash-preview-tts", text, apiKey, voiceName)
+    }
+
+    private fun tryModelTts(
+        modelName: String,
+        text: String,
+        apiKey: String,
+        voiceName: String
+    ): AudioSynthesizedResult? {
+        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey"
 
         val jsonBody = JSONObject().apply {
             put("contents", JSONArray().apply {
@@ -160,7 +174,7 @@ object ExternalAiVoiceService {
 
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
-                Log.w(TAG, "Gemini Audio TTS returned HTTP ${response.code}")
+                Log.w(TAG, "$modelName returned HTTP ${response.code}")
                 return null
             }
             val responseString = response.body?.string() ?: return null
@@ -175,10 +189,16 @@ object ExternalAiVoiceService {
 
             val part = parts.getJSONObject(0)
             val inlineData = part.optJSONObject("inlineData") ?: return null
+            val mimeType = inlineData.optString("mimeType", "")
             val base64Data = inlineData.optString("data", "")
             if (base64Data.isBlank()) return null
 
-            return Base64.decode(base64Data, Base64.DEFAULT)
+            val decodedBytes = Base64.decode(base64Data, Base64.DEFAULT)
+            return if (mimeType.contains("wav") || (decodedBytes.size >= 4 && decodedBytes[0] == 'R'.code.toByte() && decodedBytes[1] == 'I'.code.toByte())) {
+                AudioSynthesizedResult.Wav(decodedBytes)
+            } else {
+                AudioSynthesizedResult.Pcm24kHz(decodedBytes)
+            }
         }
     }
 }

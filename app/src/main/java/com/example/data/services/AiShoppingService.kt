@@ -85,7 +85,7 @@ object AiShoppingService {
         apiKey: String,
         products: List<Product>
     ): AiShoppingRecommendation? {
-        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=$apiKey"
+        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$apiKey"
 
         val catalogSummary = products.map { p ->
             JSONObject().apply {

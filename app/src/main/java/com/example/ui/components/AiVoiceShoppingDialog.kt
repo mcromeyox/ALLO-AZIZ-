@@ -93,6 +93,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.example.data.model.AppLanguage
+import com.example.data.model.CatalogData
+import com.example.data.model.StoreCategory
 import com.example.data.services.AiRecommendedItem
 import com.example.data.services.AiShoppingRecommendation
 import com.example.data.system.HapticFeedbackHelper
@@ -238,28 +240,51 @@ fun AiVoiceShoppingDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Surface(
-            modifier = modifier
-                .fillMaxWidth(0.96f)
-                .fillMaxHeight(0.95f)
-                .clip(RoundedCornerShape(32.dp))
-                .shadow(elevation = 32.dp, shape = RoundedCornerShape(32.dp))
-                .testTag("ai_voice_shopping_dialog"),
-            color = Color(0xFF070B14)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.55f))
+                .clickable { onDismissRequest() },
+            contentAlignment = Alignment.BottomCenter
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF070B14),
-                                Color(0xFF0D1424),
-                                Color(0xFF161938)
+            Surface(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.88f)
+                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .clickable(enabled = false) { /* Keep content clicks inside */ }
+                    .shadow(elevation = 24.dp, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .testTag("ai_voice_shopping_dialog"),
+                color = Color(0xFF070B14)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF070B14),
+                                    Color(0xFF0D1424),
+                                    Color(0xFF161938)
+                                )
                             )
                         )
-                    )
-            ) {
+                ) {
+                    // Drag handle pill
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(40.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(alpha = 0.35f))
+                        )
+                    }
                 // 1. Futuristic Header Bar with Persona Switcher
                 Box(
                     modifier = Modifier
@@ -444,10 +469,10 @@ fun AiVoiceShoppingDialog(
                         Spacer(modifier = Modifier.height(2.dp))
                     }
 
-                    // Central Holographic Voice Orb Hero Card
+                    // Central Voice Bar (Compact & Sleek)
                     item {
                         Surface(
-                            shape = RoundedCornerShape(26.dp),
+                            shape = RoundedCornerShape(20.dp),
                             color = Color(0xFF10172B).copy(alpha = 0.95f),
                             border = androidx.compose.foundation.BorderStroke(
                                 1.5.dp,
@@ -460,147 +485,94 @@ fun AiVoiceShoppingDialog(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Column(
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 18.dp, horizontal = 16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Holographic Interactive Mic Orb
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier.size(126.dp)
+                                Surface(
+                                    onClick = { startListeningFlow() },
+                                    shape = CircleShape,
+                                    color = when {
+                                        isListening -> Color(0xFFDC2626)
+                                        isSpeaking -> Color(0xFF059669)
+                                        isProcessing -> Color(0xFF4F46E5)
+                                        else -> AzizOrangePrimary
+                                    },
+                                    shadowElevation = 8.dp,
+                                    modifier = Modifier
+                                        .size(54.dp)
+                                        .scale(pulseScale)
+                                        .testTag("ai_mic_button")
                                 ) {
-                                    // Outer animated ripple ring
                                     Box(
-                                        modifier = Modifier
-                                            .size(120.dp)
-                                            .scale(pulseScale)
-                                            .clip(CircleShape)
-                                            .background(
-                                                when {
-                                                    isListening -> Color(0xFFEF4444).copy(alpha = 0.25f)
-                                                    isSpeaking -> AzizMint.copy(alpha = 0.25f)
-                                                    isProcessing -> Color(0xFF818CF8).copy(alpha = 0.25f)
-                                                    else -> AzizMint.copy(alpha = 0.12f)
-                                                }
-                                            )
-                                    )
-
-                                    // Secondary translucent glow ring
-                                    Box(
-                                        modifier = Modifier
-                                            .size(96.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                when {
-                                                    isListening -> Color(0xFFDC2626).copy(alpha = 0.35f)
-                                                    isSpeaking -> AzizMint.copy(alpha = 0.35f)
-                                                    isProcessing -> Color(0xFF6366F1).copy(alpha = 0.35f)
-                                                    else -> Color(0xFF1E293B)
-                                                }
-                                            )
-                                    )
-
-                                    // Central Interactive Button
-                                    Surface(
-                                        onClick = { startListeningFlow() },
-                                        shape = CircleShape,
-                                        color = when {
-                                            isListening -> Color(0xFFDC2626)
-                                            isSpeaking -> Color(0xFF059669)
-                                            isProcessing -> Color(0xFF4F46E5)
-                                            else -> AzizOrangePrimary
-                                        },
-                                        shadowElevation = 14.dp,
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .testTag("ai_mic_button")
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.fillMaxSize()
                                     ) {
-                                        Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier = Modifier.fillMaxSize()
-                                        ) {
-                                            if (isProcessing) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.size(36.dp),
-                                                    color = Color.White,
-                                                    strokeWidth = 3.dp
-                                                )
-                                            } else {
-                                                Icon(
-                                                    imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
-                                                    contentDescription = "Tap to speak",
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(38.dp)
-                                                )
-                                            }
+                                        if (isProcessing) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(24.dp),
+                                                color = Color.White,
+                                                strokeWidth = 2.5.dp
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
+                                                contentDescription = "Tap to speak",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(28.dp)
+                                            )
                                         }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
 
-                                // Dynamic Status Text with live state
-                                Text(
-                                    text = when {
-                                        isProcessing -> when (language) {
-                                            AppLanguage.FRENCH -> "L'IA analyse vos souhaits avec précision... 🧠⚡"
-                                            AppLanguage.ENGLISH -> "AI is analyzing your voice request... 🧠⚡"
-                                            AppLanguage.ARABIC -> "الذكاء الاصطناعي يحلل طلبك بدقة فائقة... 🧠⚡"
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = when {
+                                            isProcessing -> when (language) {
+                                                AppLanguage.FRENCH -> "Analyse vocale avec précision... 🧠⚡"
+                                                AppLanguage.ENGLISH -> "Analyzing voice with precision... 🧠⚡"
+                                                AppLanguage.ARABIC -> "تحليل طلبك بالذكاء الاصطناعي... 🧠⚡"
+                                            }
+                                            isListening -> when (language) {
+                                                AppLanguage.FRENCH -> "Je vous écoute... Parlez 🎙️"
+                                                AppLanguage.ENGLISH -> "Listening... Speak naturally 🎙️"
+                                                AppLanguage.ARABIC -> "أستمع إليك... اطلب الآن 🎙️"
+                                            }
+                                            isSpeaking -> when (language) {
+                                                AppLanguage.FRENCH -> "${activePersona.displayNameFr.substringBefore(" ")} vous répond (Gemini Audio) 🔊"
+                                                AppLanguage.ENGLISH -> "AI speaking with realistic human voice 🔊"
+                                                AppLanguage.ARABIC -> "${activePersona.displayNameAr.substringBefore(" ")} تتحدث بصوت بشري طبيعي 🔊"
+                                            }
+                                            else -> when (language) {
+                                                AppLanguage.FRENCH -> "Touchez pour commander à la voix 🎙️"
+                                                AppLanguage.ENGLISH -> "Tap to order by natural voice 🎙️"
+                                                AppLanguage.ARABIC -> "المس الميكروفون واطلب ما تريد بالصوت 🎙️"
+                                            }
+                                        },
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = when {
+                                            isListening -> Color(0xFFF87171)
+                                            isSpeaking -> AzizMint
+                                            isProcessing -> Color(0xFFA5B4FC)
+                                            else -> Color.White
                                         }
-                                        isListening -> when (language) {
-                                            AppLanguage.FRENCH -> "Je vous écoute... Parlez naturellement 🎙️"
-                                            AppLanguage.ENGLISH -> "Listening now... Speak naturally 🎙️"
-                                            AppLanguage.ARABIC -> "أستمع إليك الآن... تكلم براحتك 🎙️"
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    LiveAudioSpectrumWave(
+                                        amplitudes = speechAmplitudes,
+                                        color = when {
+                                            isListening -> Color(0xFFF87171)
+                                            isSpeaking -> AzizMint
+                                            isProcessing -> Color(0xFFA5B4FC)
+                                            else -> Color.White.copy(alpha = 0.35f)
                                         }
-                                        isSpeaking -> when (language) {
-                                            AppLanguage.FRENCH -> "${activePersona.displayNameFr.substringBefore(" ")} vous répond à voix haute... 🔊"
-                                            AppLanguage.ENGLISH -> "AI is speaking with natural human voice... 🔊"
-                                            AppLanguage.ARABIC -> "${activePersona.displayNameAr.substringBefore(" ")} تتحدث إليك بصوت طبيعي... 🔊"
-                                        }
-                                        else -> when (language) {
-                                            AppLanguage.FRENCH -> "Touchez le micro et commandez à la voix 🎙️"
-                                            AppLanguage.ENGLISH -> "Tap microphone and order by voice 🎙️"
-                                            AppLanguage.ARABIC -> "اضغط على الميكروفون واطلب مشترياتك بالصوت 🎙️"
-                                        }
-                                    },
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = when {
-                                        isListening -> Color(0xFFF87171)
-                                        isSpeaking -> AzizMint
-                                        isProcessing -> Color(0xFFA5B4FC)
-                                        else -> AzizAmberSecondary
-                                    },
-                                    textAlign = TextAlign.Center
-                                )
-
-                                // Real-time Live Animated Sound Equalizer Waves
-                                Spacer(modifier = Modifier.height(8.dp))
-                                LiveAudioSpectrumWave(
-                                    amplitudes = speechAmplitudes,
-                                    color = when {
-                                        isListening -> Color(0xFFF87171)
-                                        isSpeaking -> AzizMint
-                                        isProcessing -> Color(0xFFA5B4FC)
-                                        else -> Color.White.copy(alpha = 0.3f)
-                                    }
-                                )
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Parlez en Français ou Darija : « 2 Big Mac avec frites », « Tajine d'agneau aux pruneaux », « Courses Marjane »..."
-                                        AppLanguage.ENGLISH -> "Speak freely: \"2 Big Macs with fries\", \"Lamb tajine\", \"Marjane groceries\"..."
-                                        AppLanguage.ARABIC -> "تكلم بالمغربية أو الفصحى: «جوج بيج ماك وبطاطس»، «طاجين لحم بالبرقوق»، «سلة مرجان»..."
-                                    },
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.70f),
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 16.sp
-                                )
+                                    )
+                                }
                             }
                         }
                     }
@@ -712,7 +684,130 @@ fun AiVoiceShoppingDialog(
                         }
                     }
 
-                    // 5. THE AI GENERATED BASKET CARD
+                    // 5. Featured Catalog Products Showcase (Always visible when no current order)
+                    if (recommendation == null || recommendation.items.isEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = when (language) {
+                                            AppLanguage.FRENCH -> "🍽️ Produits disponibles à commander :"
+                                            AppLanguage.ENGLISH -> "🍽️ Products available to order:"
+                                            AppLanguage.ARABIC -> "🍽️ منتجات يمكنك طلبها بالصوت مباشرة:"
+                                        },
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AzizMint
+                                    )
+                                    Text(
+                                        text = "المحمدية 🇲🇦",
+                                        fontSize = 11.sp,
+                                        color = Color.White.copy(alpha = 0.6f)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    CatalogData.products.take(6).forEach { product ->
+                                        Surface(
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = Color(0xFF131A2E),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(12.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(46.dp)
+                                                            .clip(RoundedCornerShape(12.dp))
+                                                            .background(AzizOrangePrimary.copy(alpha = 0.15f)),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text(
+                                                            text = when (product.category) {
+                                                                StoreCategory.BURGER -> "🍔"
+                                                                StoreCategory.PIZZA -> "🍕"
+                                                                StoreCategory.FAST_FOOD -> "🍟"
+                                                                StoreCategory.MOROCCAN -> "🍲"
+                                                                StoreCategory.CAFE -> "☕"
+                                                                StoreCategory.GROCERY -> "🛒"
+                                                                StoreCategory.EXPRESS -> "⚡"
+                                                                else -> "🛍️"
+                                                            },
+                                                            fontSize = 22.sp
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.width(10.dp))
+                                                    Column {
+                                                        Text(
+                                                            text = if (language == AppLanguage.ARABIC) product.nameAr else product.nameFr,
+                                                            fontSize = 13.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = Color.White
+                                                        )
+                                                        Text(
+                                                            text = product.storeName,
+                                                            fontSize = 11.sp,
+                                                            color = Color.White.copy(alpha = 0.6f)
+                                                        )
+                                                        Text(
+                                                            text = "%.0f درهم".format(product.price),
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.Black,
+                                                            color = AzizOrangePrimary
+                                                        )
+                                                    }
+                                                }
+
+                                                // Quick Voice Order Button
+                                                Surface(
+                                                    onClick = {
+                                                        onSubmitQuery("بغيت ${product.nameAr} من ${product.storeName}")
+                                                    },
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    color = AzizOrangePrimary,
+                                                    modifier = Modifier.testTag("voice_order_product_${product.id}")
+                                                ) {
+                                                    Row(
+                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Mic,
+                                                            contentDescription = "Order by Voice",
+                                                            tint = Color.White,
+                                                            modifier = Modifier.size(14.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        Text("اطلب 🎙️", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // 6. THE AI GENERATED BASKET CARD
                     if (recommendation != null && recommendation.items.isNotEmpty()) {
                         item {
                             Surface(
@@ -786,33 +881,39 @@ fun AiVoiceShoppingDialog(
 
                                     Spacer(modifier = Modifier.height(12.dp))
 
-                                    // AI Natural Speech Bubble with Replay Button
+                                    // AI Natural Speech Bubble with Realistic Voice Replay Button
                                     Surface(
                                         shape = RoundedCornerShape(16.dp),
                                         color = Color(0xFF1E293B).copy(alpha = 0.9f),
                                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Row(
-                                            modifier = Modifier.padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(text = activePersona.avatarEmoji, fontSize = 22.sp)
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            val explanation = when (language) {
-                                                AppLanguage.FRENCH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
-                                                AppLanguage.ENGLISH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
-                                                AppLanguage.ARABIC -> recommendation.aiExplanationAr.ifBlank { recommendation.aiExplanationFr }
+                                        Column(modifier = Modifier.padding(12.dp)) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(text = activePersona.avatarEmoji, fontSize = 22.sp)
+                                                Spacer(modifier = Modifier.width(10.dp))
+                                                val explanation = when (language) {
+                                                    AppLanguage.FRENCH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
+                                                    AppLanguage.ENGLISH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
+                                                    AppLanguage.ARABIC -> recommendation.aiExplanationAr.ifBlank { recommendation.aiExplanationFr }
+                                                }
+                                                Text(
+                                                    text = explanation,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = Color(0xFFF1F5F9),
+                                                    lineHeight = 18.sp,
+                                                    modifier = Modifier.weight(1f)
+                                                )
                                             }
-                                            Text(
-                                                text = explanation,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color(0xFFF1F5F9),
-                                                lineHeight = 18.sp,
-                                                modifier = Modifier.weight(1f)
-                                            )
-                                            IconButton(
+
+                                            Spacer(modifier = Modifier.height(10.dp))
+
+                                            // Dedicated Realistic AI Voice Button (Gemini Audio)
+                                            Surface(
                                                 onClick = {
                                                     val audioText = if (language == AppLanguage.FRENCH) {
                                                         recommendation.speechAudioTextFr.ifBlank { recommendation.aiExplanationFr }
@@ -821,14 +922,34 @@ fun AiVoiceShoppingDialog(
                                                     }
                                                     voiceHelper.speak(audioText, language, persona = activePersona)
                                                 },
-                                                modifier = Modifier.size(34.dp)
+                                                shape = RoundedCornerShape(10.dp),
+                                                color = AzizMint.copy(alpha = 0.2f),
+                                                border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.6f)),
+                                                modifier = Modifier.fillMaxWidth().testTag("replay_realistic_speech_btn")
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.VolumeUp,
-                                                    contentDescription = "Replay Speech",
-                                                    tint = AzizMint,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.VolumeUp,
+                                                        contentDescription = "Play Voice",
+                                                        tint = AzizMint,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(6.dp))
+                                                    Text(
+                                                        text = when (language) {
+                                                            AppLanguage.FRENCH -> "Écouter avec voix IA réaliste (Gemini Audio) 🔊"
+                                                            AppLanguage.ENGLISH -> "Listen with realistic AI voice (Gemini Audio) 🔊"
+                                                            AppLanguage.ARABIC -> "استمع للطلب بالصوت البشري الواقعي (Gemini Audio) 🔊"
+                                                        },
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = AzizMint
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1105,6 +1226,7 @@ fun AiVoiceShoppingDialog(
                 }
             }
         }
+    }
 
         if (showVoiceOptionsSheet) {
             Dialog(onDismissRequest = { showVoiceOptionsSheet = false }) {

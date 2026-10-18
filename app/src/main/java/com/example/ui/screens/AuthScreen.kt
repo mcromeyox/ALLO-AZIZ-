@@ -95,7 +95,8 @@ fun AuthScreen(
     onClearMessages: () -> Unit,
     onOpenStaffLogin: () -> Unit = {},
     onRequestPasswordReset: ((identifier: String, onOtp: (String) -> Unit) -> Unit)? = null,
-    onConfirmPasswordReset: ((identifier: String, newPass: String) -> Unit)? = null
+    onConfirmPasswordReset: ((identifier: String, newPass: String) -> Unit)? = null,
+    onSkipAsGuest: (() -> Unit)? = null
 ) {
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Sign In, 1 = Register
 
@@ -173,6 +174,37 @@ fun AuthScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+
+        if (onSkipAsGuest != null) {
+            item {
+                Surface(
+                    onClick = { onSkipAsGuest() },
+                    shape = RoundedCornerShape(14.dp),
+                    color = AzizMint.copy(alpha = 0.12f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.35f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("skip_as_guest_top_btn")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Continuer sans compte (Voir les produits) 🛍️ →"
+                                AppLanguage.ENGLISH -> "Continue as Guest (Browse Products) 🛍️ →"
+                                AppLanguage.ARABIC -> "تصفح كزائر والاطلاع على المتاجر والمنتجات مباشرة 🛍️ ←"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = AzizMint
+                        )
+                    }
+                }
             }
         }
 

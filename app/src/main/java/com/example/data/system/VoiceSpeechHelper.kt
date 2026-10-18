@@ -256,8 +256,9 @@ class VoiceSpeechHelper(context: Context) {
             if (externalAudio != null) {
                 _activeEngine.value = externalAudio.second
                 when (val result = externalAudio.first) {
+                    is AudioSynthesizedResult.Wav -> playCloudAudioFile(result.bytes, ".wav")
                     is AudioSynthesizedResult.Pcm24kHz -> playCloudPcm(result.bytes)
-                    is AudioSynthesizedResult.Mp3 -> playCloudMp3(result.bytes)
+                    is AudioSynthesizedResult.Mp3 -> playCloudAudioFile(result.bytes, ".mp3")
                 }
             } else {
                 // 2. High-Quality On-Device Neural TTS Fallback
@@ -267,10 +268,10 @@ class VoiceSpeechHelper(context: Context) {
         }
     }
 
-    private suspend fun playCloudMp3(mp3Bytes: ByteArray) = withContext(Dispatchers.IO) {
+    private suspend fun playCloudAudioFile(bytes: ByteArray, extension: String) = withContext(Dispatchers.IO) {
         try {
-            val tempFile = File.createTempFile("ai_speech_", ".mp3", appContext.cacheDir)
-            FileOutputStream(tempFile).use { it.write(mp3Bytes) }
+            val tempFile = File.createTempFile("ai_speech_", extension, appContext.cacheDir)
+            FileOutputStream(tempFile).use { it.write(bytes) }
 
             val mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
@@ -289,7 +290,7 @@ class VoiceSpeechHelper(context: Context) {
             delay(if (durationMs > 0) durationMs else 2500L)
             tempFile.delete()
         } catch (e: Exception) {
-            Log.w("VoiceSpeechHelper", "Error playing Cloud MP3 audio: ${e.message}")
+            Log.w("VoiceSpeechHelper", "Error playing Cloud audio ($extension): ${e.message}")
         } finally {
             _isSpeaking.value = false
             _currentUtteranceId.value = null
@@ -323,6 +324,7 @@ class VoiceSpeechHelper(context: Context) {
                 .build()
 
             currentCloudAudioTrack = audioTrack
+            audioTrack.setVolume(1.0f)
             audioTrack.write(pcmData, 0, pcmData.size)
             audioTrack.play()
 

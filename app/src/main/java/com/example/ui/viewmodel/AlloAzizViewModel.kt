@@ -80,7 +80,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     private val repository: AlloAzizRepository
 
     // Screen Navigation
-    private val _currentScreen = MutableStateFlow(AppScreen.AUTH)
+    private val _currentScreen = MutableStateFlow(AppScreen.HOME)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
 
     private val _screenHistory = mutableListOf<AppScreen>()
@@ -1600,6 +1600,84 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     fun setTrackingOrder(orderId: String) {
         _trackingOrderId.value = orderId
         navigateTo(AppScreen.ORDER_TRACKING)
+    }
+
+    private var simulationJob: kotlinx.coroutines.Job? = null
+    private val _isCourierSimulating = MutableStateFlow(false)
+    val isCourierSimulating: StateFlow<Boolean> = _isCourierSimulating.asStateFlow()
+
+    fun startLiveDemoOrderTracking() {
+        viewModelScope.launch {
+            val demoNum = kotlin.random.Random.nextInt(1000, 9999)
+            val demoId = "AZ-$demoNum"
+            val demoOrder = OrderEntity(
+                id = demoId,
+                storeId = "store_mcdo_mohammedia",
+                storeName = "ماكدونالدز ميرامار المحمدية 🍔",
+                itemsSummary = "2x وجبة بيج ماك ماكسي، 9 قطع ناجتس، بطاطس مقلية، 2 كوكاكولا",
+                itemsCount = 5,
+                subtotal = 89.0,
+                deliveryFee = 7.0,
+                discount = 0.0,
+                total = 96.0,
+                status = "ON_THE_WAY",
+                restaurantStatus = "PICKED_UP",
+                driverId = "drv_aziz_01",
+                paymentMethod = "الدفع عند الاستلام (كاش)",
+                deliveryAddress = "شارع الحسن الثاني، إقامة الياسمين، المحمدية 🇲🇦",
+                deliveryNotes = "العمارة B، الطابق 2، شقة 5 - يرجى الاتصال عند الوصول",
+                timestamp = System.currentTimeMillis(),
+                courierName = "الكابتن عزيز برادة 🛵",
+                courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
+                courierRating = 4.95,
+                courierVehicle = "سكوتر ياماها NMAX 155cc",
+                courierProgress = 0.35f,
+                estimatedMinsLeft = 7,
+                hasReviewed = false,
+                customerLat = 33.6865,
+                customerLng = -7.3820,
+                courierLat = 33.6920,
+                courierLng = -7.3880
+            )
+            repository.insertOrder(demoOrder)
+            _trackingOrderId.value = demoId
+            navigateTo(AppScreen.ORDER_TRACKING)
+            _userAlertMessage.value = "تم بدء تتبع مباشر لطلبك على الخريطة في شوارع المحمدية! 🛵💨"
+        }
+    }
+
+    fun toggleLiveCourierSimulation(orderId: String) {
+        if (_isCourierSimulating.value) {
+            simulationJob?.cancel()
+            _isCourierSimulating.value = false
+            _userAlertMessage.value = "تم إيقاف محاكاة حركة المندوب مؤقتاً ⏸️"
+        } else {
+            _isCourierSimulating.value = true
+            _userAlertMessage.value = "تم تفعيل محاكاة حركة المندوب الحية في الوقت الفعلي! 🛵💨"
+            simulationJob = viewModelScope.launch {
+                var currentP = allOrders.value.firstOrNull { it.id == orderId }?.courierProgress ?: 0.3f
+                while (_isCourierSimulating.value && currentP < 0.98f) {
+                    kotlinx.coroutines.delay(1800)
+                    currentP += 0.05f
+                    val clamped = currentP.coerceAtMost(0.98f)
+                    val minsLeft = ((1.0f - clamped) * 12).toInt().coerceAtLeast(1)
+                    val status = when {
+                        clamped >= 0.92f -> "ARRIVED"
+                        clamped >= 0.25f -> "ON_THE_WAY"
+                        else -> "PREPARING"
+                    }
+                    val lat = 33.7020 + (33.6865 - 33.7020) * clamped
+                    val lng = -7.3940 + (-7.3820 - -7.3940) * clamped
+                    repository.updateCourierGps(orderId, lat, lng, clamped, minsLeft)
+                    if (clamped >= 0.92f) {
+                        repository.updateOrderStatus(orderId, "ARRIVED", clamped, 0)
+                        _userAlertMessage.value = "وصل المندوب إلى موقعك الآن! 🔔 يرجى الاستلام"
+                        break
+                    }
+                }
+                _isCourierSimulating.value = false
+            }
+        }
     }
 
     // Real-Time GPS Tracking with Google Play Services Location
