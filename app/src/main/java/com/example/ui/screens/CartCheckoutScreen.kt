@@ -107,8 +107,9 @@ fun CartCheckoutScreen(
     var cardExpiry by remember { mutableStateOf("") }
     var cardCvv by remember { mutableStateOf("") }
 
-    val subtotal = cartItems.sumOf { it.product.price * it.quantity }
-    val deliveryFee = if (cartItems.isNotEmpty()) 10.0 else 0.0
+    val hasEcommerceItems = cartItems.any { it.product.category == com.example.data.model.StoreCategory.ECOMMERCE }
+    val subtotal = cartItems.sumOf { (it.product.price + it.extraOptionsPrice) * it.quantity }
+    val deliveryFee = if (cartItems.isEmpty()) 0.0 else if (hasEcommerceItems) 18.0 else 8.0
     val discount = subtotal * discountPercent
     val total = (subtotal - discount + deliveryFee).coerceAtLeast(0.0)
 
@@ -540,14 +541,20 @@ fun CartCheckoutScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = AppStrings.deliveryFee(language),
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = if (hasEcommerceItems) {
+                                if (language == AppLanguage.ARABIC) "شحن طرد تجارة إلكترونية مؤمن 📦" else "Livraison Colis E-Commerce Assuré 📦"
+                            } else {
+                                AppStrings.deliveryFee(language)
+                            },
+                            fontSize = 12.sp,
+                            fontWeight = if (hasEcommerceItems) FontWeight.Bold else FontWeight.Normal,
+                            color = if (hasEcommerceItems) AzizOrangePrimary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$deliveryFee ${AppStrings.currency(language)}",
                             fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold,
+                            color = if (hasEcommerceItems) AzizOrangePrimary else MaterialTheme.colorScheme.onSurface
                         )
                     }
 

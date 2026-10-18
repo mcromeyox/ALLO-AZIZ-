@@ -52,6 +52,7 @@ enum class StoreCategory(
     MOROCCAN("moroccan", "أطباق مغربية أصيلة", "Plats Marocains", "Moroccan Food", "🍲"),
     CAFE("cafe", "مخابز وقهوة وحلويات", "Boulangerie & Café", "Bakery & Sweets", "☕"),
     GROCERY("grocery", "سوبرماركت وبقالة", "Supermarché", "Groceries", "🛒"),
+    ECOMMERCE("ecommerce", "سوق التجارة الإلكترونية 🛍️", "E-Commerce & High-Tech", "E-Commerce Market", "🛍️"),
     EXPRESS("express", "ألو جيب لي ⚡", "Allo Express ⚡", "Express Courier ⚡", "📦")
 }
 
@@ -92,7 +93,10 @@ data class Store(
     val ownerId: String = "owner_default",
     val bannerUrl: String = "",
     val distanceKm: Double = 1.8,
-    val isPrimeEligible: Boolean = true
+    val isPrimeEligible: Boolean = true,
+    val isVerifiedMerchant: Boolean = false,
+    val isApproved: Boolean = true,
+    val merchantType: String = "STORE"
 )
 
 data class Product(
@@ -113,7 +117,12 @@ data class Product(
     val calories: String = "450 kcal",
     val isAvailable: Boolean = true,
     val imageUrl: String = "",
-    val optionGroups: List<MealOptionGroup> = emptyList()
+    val optionGroups: List<MealOptionGroup> = emptyList(),
+    val isApproved: Boolean = true,
+    val warrantyInfo: String = "",
+    val brand: String = "",
+    val stockCount: Int = 40,
+    val isEcommerce: Boolean = (category == StoreCategory.ECOMMERCE)
 ) {
     val name: String get() = nameAr
     val description: String get() = descriptionAr

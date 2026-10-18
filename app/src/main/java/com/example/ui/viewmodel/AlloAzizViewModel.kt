@@ -1444,8 +1444,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
         val storeName = items.first().product.storeName
         val storeId = items.first().product.storeId
-        val subtotal = items.sumOf { it.product.price * it.quantity }
-        val deliveryFee = 10.0
+        val subtotal = items.sumOf { (it.product.price + it.extraOptionsPrice) * it.quantity }
+        val hasEcommerce = items.any { it.product.category == StoreCategory.ECOMMERCE }
+        val deliveryFee = if (hasEcommerce) 18.0 else 8.0
         val discount = subtotal * _promoDiscountPercent.value
         val total = (subtotal - discount + deliveryFee).coerceAtLeast(0.0)
 

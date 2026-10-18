@@ -6,64 +6,65 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.speech.RecognizerIntent
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.RecordVoiceOver
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -83,8 +84,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -93,24 +92,20 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.example.data.model.AppLanguage
-import com.example.data.model.CatalogData
-import com.example.data.model.StoreCategory
 import com.example.data.services.AiRecommendedItem
 import com.example.data.services.AiShoppingRecommendation
 import com.example.data.system.HapticFeedbackHelper
 import com.example.data.system.VoicePersona
 import com.example.data.system.VoiceSpeechHelper
-import com.example.ui.theme.AzizAmberSecondary
-import com.example.ui.theme.AzizCharcoalDark
 import com.example.ui.theme.AzizMint
 import com.example.ui.theme.AzizOrangePrimary
 import kotlinx.coroutines.delay
 import java.util.Locale
 
 /**
- * Ultra-Professional, Elegant Holographic Voice Shopping Assistant Dialog.
- * 100% Realistic human voice synthesis with neural voices, dual persona switching (Sara & Karim),
- * dynamic acoustic waveform visualizer, and instant single-tap confirmation ("Confirmer").
+ * Ultra-Compact, Non-Intrusive Google Gemini AI Voice Shopping Assistant.
+ * Designed as a sleek floating capsule dock that never obscures products or freezes the UI.
+ * Expands only on demand or when a recommendation is ready, with easy 1-tap minimize & dismiss.
  */
 @Composable
 fun AiVoiceShoppingDialog(
@@ -130,11 +125,21 @@ fun AiVoiceShoppingDialog(
     var textInput by remember { mutableStateOf("") }
     var isMuted by remember { mutableStateOf(false) }
 
-    // TTS Voice Speech Helper with Human Voice Engine
+    // Start minimized as a sleek floating pill dock if there is no finished recommendation yet
+    var isMinimized by remember { mutableStateOf(recommendation == null) }
+    var showTextInput by remember { mutableStateOf(false) }
+
+    // When a recommendation arrives, expand smoothly to show the product card
+    LaunchedEffect(recommendation) {
+        if (recommendation != null && recommendation.items.isNotEmpty()) {
+            isMinimized = false
+        }
+    }
+
+    // TTS Voice Speech Helper with Google Gemini Audio Engine
     val voiceHelper = remember { VoiceSpeechHelper(context) }
     val isSpeaking by voiceHelper.isSpeaking.collectAsState()
     val activePersona by voiceHelper.activePersona.collectAsState()
-    val activeEngine by voiceHelper.activeEngine.collectAsState()
     val speechAmplitudes by voiceHelper.speechAmplitudes.collectAsState()
 
     DisposableEffect(Unit) {
@@ -144,11 +149,11 @@ fun AiVoiceShoppingDialog(
         }
     }
 
-    // Auto-speak recommendation out loud when generated
+    // Auto-speak recommendation out loud with natural Google Audio voice
     LaunchedEffect(recommendation) {
         if (recommendation != null && !isMuted) {
             voiceHelper.playAffirmationChime()
-            delay(280)
+            delay(200)
             val audioText = if (language == AppLanguage.FRENCH) {
                 recommendation.speechAudioTextFr.ifBlank { recommendation.aiExplanationFr }
             } else if (language == AppLanguage.ARABIC) {
@@ -162,7 +167,7 @@ fun AiVoiceShoppingDialog(
         }
     }
 
-    // Speech-to-Text Activity Result Launcher
+    // Google Android Speech Recognition Launcher
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -184,15 +189,13 @@ fun AiVoiceShoppingDialog(
             launchSystemSpeechRecognizer(context, speechRecognizerLauncher, language)
         } else {
             val msg = when (language) {
-                AppLanguage.FRENCH -> "Veuillez activer le microphone pour dicter vos courses 🎙️"
+                AppLanguage.FRENCH -> "Veuillez autoriser le microphone pour dicter vos commandes 🎙️"
                 AppLanguage.ENGLISH -> "Please enable microphone permission to speak with AI 🎙️"
-                AppLanguage.ARABIC -> "يرجى تفعيل الميكروفون للتحدث الصوتي مع الذكاء الاصطناعي 🎙️"
+                AppLanguage.ARABIC -> "يرجى تفعيل إذن الميكروفون للطلب بالصوت عبر الذكاء الاصطناعي 🎙️"
             }
             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
         }
     }
-
-    var showVoiceOptionsSheet by remember { mutableStateOf(false) }
 
     fun startListeningFlow() {
         voiceHelper.stop()
@@ -210,13 +213,7 @@ fun AiVoiceShoppingDialog(
                 launcher = speechRecognizerLauncher,
                 language = language,
                 onFallback = {
-                    showVoiceOptionsSheet = true
-                    val fallbackNotice = when (language) {
-                        AppLanguage.FRENCH -> "💡 Choisissez un exemple ou écrivez pour tester la voix IA !"
-                        AppLanguage.ENGLISH -> "💡 Pick an order or type to test the realistic AI voice!"
-                        AppLanguage.ARABIC -> "💡 اختر نموذجاً صوتياً أو اكتب طلبك لتسمع صوت الذكاء الاصطناعي الطبيعي!"
-                    }
-                    Toast.makeText(context, fallbackNotice, Toast.LENGTH_SHORT).show()
+                    showTextInput = true
                 }
             )
         } else {
@@ -224,1120 +221,552 @@ fun AiVoiceShoppingDialog(
         }
     }
 
-    // Holographic Pulsing Orb animations
-    val infiniteTransition = rememberInfiniteTransition(label = "hologram_voice_anim")
+    // Holographic Pulsing Orb animation
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse_anim")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = if (isListening || isSpeaking) 1.25f else 1.06f,
+        targetValue = if (isListening || isSpeaking) 1.20f else 1.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 850, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 800, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "pulse_scale"
+        label = "pulse"
     )
+
+    // Back handler: minimize first if expanded, or dismiss if already minimized
+    BackHandler {
+        if (!isMinimized && recommendation == null) {
+            isMinimized = true
+        } else {
+            onDismissRequest()
+        }
+    }
 
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.55f))
-                .clickable { onDismissRequest() },
+                // Transparent when minimized so underlying products stay 100% visible and bright!
+                .background(if (isMinimized) Color.Transparent else Color.Black.copy(alpha = 0.22f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    if (!isMinimized) {
+                        isMinimized = true
+                    } else {
+                        onDismissRequest()
+                    }
+                },
             contentAlignment = Alignment.BottomCenter
         ) {
             Surface(
                 modifier = modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.88f)
-                    .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .clickable(enabled = false) { /* Keep content clicks inside */ }
-                    .shadow(elevation = 24.dp, shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .testTag("ai_voice_shopping_dialog"),
-                color = Color(0xFF070B14)
+                    .padding(
+                        horizontal = if (isMinimized) 14.dp else 10.dp,
+                        vertical = if (isMinimized) 12.dp else 8.dp
+                    )
+                    .navigationBarsPadding()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { /* Catch clicks inside capsule */ }
+                    .shadow(
+                        elevation = if (isMinimized) 12.dp else 16.dp,
+                        shape = RoundedCornerShape(if (isMinimized) 30.dp else 24.dp)
+                    )
+                    .testTag("ai_voice_shopping_sheet"),
+                shape = RoundedCornerShape(if (isMinimized) 30.dp else 24.dp),
+                color = Color(0xF20F172A),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.2.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFF4285F4), // Google Blue
+                            Color(0xFF9B51E0), // Gemini Violet
+                            Color(0xFF00C49F)  // Mint Cyan
+                        )
+                    )
+                )
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF070B14),
-                                    Color(0xFF0D1424),
-                                    Color(0xFF161938)
-                                )
-                            )
-                        )
-                ) {
-                    // Drag handle pill
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(40.dp)
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(Color.White.copy(alpha = 0.35f))
-                        )
-                    }
-                // 1. Futuristic Header Bar with Persona Switcher
-                Box(
-                    modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    Color(0xFF0B132B),
-                                    Color(0xFF1C2541),
-                                    Color(0xFF3A0CA3)
-                                )
-                            )
-                        )
-                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                        .animateContentSize()
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    if (isMinimized) {
+                        // ==========================================
+                        // 1. SLEEK FLOATING GEMINI CAPSULE DOCK (62dp)
+                        // Never obscures products, ultra-compact & fast
+                        // ==========================================
                         Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            // Glowing AI Icon Badge
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.linearGradient(
-                                            colors = listOf(AzizMint, Color(0xFF6366F1))
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
-                                    contentDescription = "AI Voice Engine",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "ALLO AZIZ AI",
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.White,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = AzizMint.copy(alpha = 0.25f)
-                                    ) {
-                                        Text(
-                                            text = activeEngine.badge,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = AzizMint
-                                        )
-                                    }
-                                }
-
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(7.dp)
-                                            .clip(CircleShape)
-                                            .background(AzizMint)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = when (language) {
-                                            AppLanguage.FRENCH -> "Moteur IA : ${activeEngine.displayNameFr} (${if (activePersona == VoicePersona.SARA) "Sara" else "Karim"})"
-                                            AppLanguage.ENGLISH -> "AI Voice: ${activeEngine.badge} (${if (activePersona == VoicePersona.SARA) "Sara" else "Karim"})"
-                                            AppLanguage.ARABIC -> "المحرك: ${activeEngine.displayNameAr} (${if (activePersona == VoicePersona.SARA) "سارة" else "كريم"})"
-                                        },
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color.White.copy(alpha = 0.85f)
-                                    )
-                                }
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Persona Selector Button (Sara / Karim)
-                            Surface(
-                                onClick = {
-                                    val next = if (activePersona == VoicePersona.SARA) VoicePersona.KARIM else VoicePersona.SARA
-                                    voiceHelper.setPersona(next)
-                                    HapticFeedbackHelper.vibrateClick(context)
-                                    val announcement = when (language) {
-                                        AppLanguage.FRENCH -> "Voix changée : ${next.displayNameFr}"
-                                        AppLanguage.ENGLISH -> "Voice set to: ${next.displayNameEn}"
-                                        AppLanguage.ARABIC -> "تم تغيير الصوت إلى: ${next.displayNameAr}"
-                                    }
-                                    Toast.makeText(context, announcement, Toast.LENGTH_SHORT).show()
-                                    voiceHelper.speak(announcement, language, persona = next)
-                                },
-                                shape = RoundedCornerShape(12.dp),
-                                color = Color.White.copy(alpha = 0.14f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f)),
-                                modifier = Modifier.testTag("toggle_voice_persona_btn")
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = activePersona.avatarEmoji, fontSize = 13.sp)
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = if (activePersona == VoicePersona.SARA) "Sara" else "Karim",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(6.dp))
-
-                            // Mute / Unmute Voice Toggle
-                            IconButton(
-                                onClick = {
-                                    isMuted = !isMuted
-                                    if (isMuted) voiceHelper.stop()
-                                    HapticFeedbackHelper.vibrateClick(context)
-                                },
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.12f))
-                                    .testTag("ai_voice_mute_toggle")
-                            ) {
-                                Icon(
-                                    imageVector = if (isMuted) Icons.Default.VolumeMute else Icons.Default.VolumeUp,
-                                    contentDescription = "Mute",
-                                    tint = if (isMuted) Color(0xFFEF4444) else AzizMint,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(6.dp))
-
-                            // Close Dialog Button
-                            IconButton(
-                                onClick = onDismissRequest,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.12f))
-                                    .testTag("close_ai_dialog_button")
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // 2. Scrollable Body Content
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    item {
-                        Spacer(modifier = Modifier.height(2.dp))
-                    }
-
-                    // Central Voice Bar (Compact & Sleek)
-                    item {
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = Color(0xFF10172B).copy(alpha = 0.95f),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                when {
-                                    isListening -> Color(0xFFEF4444)
-                                    isSpeaking -> AzizMint
-                                    isProcessing -> Color(0xFF818CF8)
-                                    else -> AzizMint.copy(alpha = 0.4f)
-                                }
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
+                            // Left: Animated Google Gemini Sparkle Orb
                             Row(
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .weight(1f)
+                                    .clickable { isMinimized = false }
                             ) {
                                 Surface(
                                     onClick = { startListeningFlow() },
                                     shape = CircleShape,
-                                    color = when {
-                                        isListening -> Color(0xFFDC2626)
-                                        isSpeaking -> Color(0xFF059669)
-                                        isProcessing -> Color(0xFF4F46E5)
-                                        else -> AzizOrangePrimary
-                                    },
-                                    shadowElevation = 8.dp,
+                                    color = if (isListening) Color(0xFFDC2626) else AzizOrangePrimary,
+                                    shadowElevation = 4.dp,
                                     modifier = Modifier
-                                        .size(54.dp)
+                                        .size(38.dp)
                                         .scale(pulseScale)
-                                        .testTag("ai_mic_button")
                                 ) {
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        if (isProcessing) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(24.dp),
-                                                color = Color.White,
-                                                strokeWidth = 2.5.dp
-                                            )
-                                        } else {
-                                            Icon(
-                                                imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
-                                                contentDescription = "Tap to speak",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(28.dp)
-                                            )
-                                        }
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
+                                            contentDescription = "Speak",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(20.dp)
+                                        )
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
 
                                 Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "✨ Gemini 3.8",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = AzizMint
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        LiveAudioSpectrumWave(
+                                            amplitudes = speechAmplitudes,
+                                            color = when {
+                                                isListening -> Color(0xFFF87171)
+                                                isSpeaking -> AzizMint
+                                                isProcessing -> Color(0xFFA5B4FC)
+                                                else -> Color.White.copy(alpha = 0.35f)
+                                            }
+                                        )
+                                    }
                                     Text(
                                         text = when {
-                                            isProcessing -> when (language) {
-                                                AppLanguage.FRENCH -> "Analyse vocale avec précision... 🧠⚡"
-                                                AppLanguage.ENGLISH -> "Analyzing voice with precision... 🧠⚡"
-                                                AppLanguage.ARABIC -> "تحليل طلبك بالذكاء الاصطناعي... 🧠⚡"
-                                            }
-                                            isListening -> when (language) {
-                                                AppLanguage.FRENCH -> "Je vous écoute... Parlez 🎙️"
-                                                AppLanguage.ENGLISH -> "Listening... Speak naturally 🎙️"
-                                                AppLanguage.ARABIC -> "أستمع إليك... اطلب الآن 🎙️"
-                                            }
-                                            isSpeaking -> when (language) {
-                                                AppLanguage.FRENCH -> "${activePersona.displayNameFr.substringBefore(" ")} vous répond (Gemini Audio) 🔊"
-                                                AppLanguage.ENGLISH -> "AI speaking with realistic human voice 🔊"
-                                                AppLanguage.ARABIC -> "${activePersona.displayNameAr.substringBefore(" ")} تتحدث بصوت بشري طبيعي 🔊"
-                                            }
-                                            else -> when (language) {
-                                                AppLanguage.FRENCH -> "Touchez pour commander à la voix 🎙️"
-                                                AppLanguage.ENGLISH -> "Tap to order by natural voice 🎙️"
-                                                AppLanguage.ARABIC -> "المس الميكروفون واطلب ما تريد بالصوت 🎙️"
-                                            }
+                                            isListening -> if (language == AppLanguage.ARABIC) "أستمع إليك الآن... 🎙️" else "Je vous écoute... 🎙️"
+                                            isProcessing -> if (language == AppLanguage.ARABIC) "جاري التحليل بـ Gemini... 🧠" else "Analyse en cours... 🧠"
+                                            spokenQuery.isNotBlank() -> "🗣️ \"$spokenQuery\""
+                                            recommendation != null -> if (language == AppLanguage.ARABIC) "✅ الطلب جاهز • انقر للعرض" else "✅ Commande prête • Voir"
+                                            else -> if (language == AppLanguage.ARABIC) "المس الميكروفون للتحدث والطلب" else "Touchez le micro pour commander"
                                         },
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = when {
-                                            isListening -> Color(0xFFF87171)
-                                            isSpeaking -> AzizMint
-                                            isProcessing -> Color(0xFFA5B4FC)
-                                            else -> Color.White
-                                        }
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    LiveAudioSpectrumWave(
-                                        amplitudes = speechAmplitudes,
-                                        color = when {
-                                            isListening -> Color(0xFFF87171)
-                                            isSpeaking -> AzizMint
-                                            isProcessing -> Color(0xFFA5B4FC)
-                                            else -> Color.White.copy(alpha = 0.35f)
-                                        }
+                                }
+                            }
+
+                            // Right: Persona, Expand and Close Controls
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Voice persona button
+                                IconButton(
+                                    onClick = {
+                                        val next = if (activePersona == VoicePersona.SARA) VoicePersona.KARIM else VoicePersona.SARA
+                                        voiceHelper.setPersona(next)
+                                        HapticFeedbackHelper.vibrateClick(context)
+                                    },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Text(text = activePersona.avatarEmoji, fontSize = 14.sp)
+                                }
+
+                                // Expand button
+                                IconButton(
+                                    onClick = { isMinimized = false },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                        contentDescription = "Expand",
+                                        tint = AzizMint,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+
+                                // Close button
+                                IconButton(
+                                    onClick = onDismissRequest,
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close",
+                                        tint = Color.White.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }
                         }
-                    }
+                    } else {
+                        // ==========================================
+                        // 2. EXPANDED COMPACT ASSISTANT (Max 300dp)
+                        // Shows Recommendation or Quick Chips without hiding products
+                        // ==========================================
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 310.dp)
+                        ) {
+                            // Top Bar inside expanded view
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Color(0xFF4F46E5).copy(alpha = 0.3f),
+                                        modifier = Modifier.size(26.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                imageVector = Icons.Default.AutoAwesome,
+                                                contentDescription = null,
+                                                tint = AzizMint,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Google Gemini AI",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                }
 
-                    // 3. User Voice Transcript (Live or recorded)
-                    if (spokenQuery.isNotBlank()) {
-                        item {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Mute toggle
+                                    IconButton(
+                                        onClick = {
+                                            isMuted = !isMuted
+                                            if (isMuted) voiceHelper.stop()
+                                            HapticFeedbackHelper.vibrateClick(context)
+                                        },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isMuted) Icons.Default.VolumeMute else Icons.Default.VolumeUp,
+                                            contentDescription = "Mute",
+                                            tint = if (isMuted) Color(0xFFEF4444) else AzizMint,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+
+                                    // Minimize button
+                                    IconButton(
+                                        onClick = { isMinimized = true },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.KeyboardArrowDown,
+                                            contentDescription = "Minimize",
+                                            tint = AzizMint,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    // Close button
+                                    IconButton(
+                                        onClick = onDismissRequest,
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Close",
+                                            tint = Color.White.copy(alpha = 0.8f),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Central Mic / Status Strip
                             Surface(
-                                shape = RoundedCornerShape(18.dp),
-                                color = Color.White.copy(alpha = 0.08f),
+                                shape = RoundedCornerShape(14.dp),
+                                color = Color(0xFF131D33),
                                 border = androidx.compose.foundation.BorderStroke(
                                     1.dp,
-                                    Color.White.copy(alpha = 0.18f)
+                                    if (isListening) Color(0xFFEF4444) else Color.White.copy(alpha = 0.12f)
                                 ),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(14.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = "🗣️", fontSize = 20.sp)
-                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Surface(
+                                        onClick = { startListeningFlow() },
+                                        shape = CircleShape,
+                                        color = when {
+                                            isListening -> Color(0xFFDC2626)
+                                            isSpeaking -> Color(0xFF059669)
+                                            isProcessing -> Color(0xFF4F46E5)
+                                            else -> AzizOrangePrimary
+                                        },
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .scale(pulseScale)
+                                            .testTag("ai_mic_button")
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            if (isProcessing) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(18.dp),
+                                                    color = Color.White,
+                                                    strokeWidth = 2.dp
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = if (isSpeaking) Icons.Default.RecordVoiceOver else Icons.Default.Mic,
+                                                    contentDescription = "Speak",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = when (language) {
-                                                AppLanguage.FRENCH -> "Demande vocale enregistrée :"
-                                                AppLanguage.ENGLISH -> "Detected voice query:"
-                                                AppLanguage.ARABIC -> "طلبك الصوتي المكتشف:"
+                                            text = when {
+                                                isProcessing -> if (language == AppLanguage.ARABIC) "جاري استخراج الأصناف بذكاء Gemini... 🧠" else "Extraction des articles par Gemini... 🧠"
+                                                isListening -> if (language == AppLanguage.ARABIC) "تفضل، أستمع لطلبك... 🎙️" else "Je vous écoute... 🎙️"
+                                                isSpeaking -> if (language == AppLanguage.ARABIC) "إجابة صوتية Google الطبيعية 🔊" else "Réponse audio naturelle Google 🔊"
+                                                else -> if (language == AppLanguage.ARABIC) "المس الميكروفون أو اكتب طلبك" else "Touchez le micro ou écrivez"
                                             },
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = AzizAmberSecondary
+                                            color = if (isListening) Color(0xFFF87171) else Color.White
                                         )
-                                        Text(
-                                            text = "« $spokenQuery »",
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color.White
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        LiveAudioSpectrumWave(
+                                            amplitudes = speechAmplitudes,
+                                            color = if (isListening) Color(0xFFF87171) else AzizMint
                                         )
                                     }
+
+                                    // Keyboard Toggle
                                     IconButton(
-                                        onClick = { startListeningFlow() },
-                                        modifier = Modifier
-                                            .size(34.dp)
-                                            .clip(CircleShape)
-                                            .background(AzizOrangePrimary.copy(alpha = 0.2f))
+                                        onClick = { showTextInput = !showTextInput },
+                                        modifier = Modifier.size(28.dp)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Refresh,
-                                            contentDescription = "Speak again",
-                                            tint = AzizOrangePrimary,
-                                            modifier = Modifier.size(18.dp)
-                                        )
+                                        Text(text = "⌨️", fontSize = 14.sp)
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    // 4. Quick Examples Carousel
-                    item {
-                        Column {
-                            Text(
-                                text = when (language) {
-                                    AppLanguage.FRENCH -> "Suggestions vocales en 1 clic :"
-                                    AppLanguage.ENGLISH -> "Quick 1-tap voice orders:"
-                                    AppLanguage.ARABIC -> "أمثلة لطلبات شائعة بنقرة واحدة:"
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White.copy(alpha = 0.75f),
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                when (language) {
-                                    AppLanguage.FRENCH -> {
-                                        LuxQuickChip("🍔 2 Menus Big Mac & Nuggets") { onSubmitQuery("Je veux deux menus Maxi Big Mac avec boîte de 9 nuggets et sauce barbecue") }
-                                        LuxQuickChip("🍗 Bucket KFC 12 Pièces") { onSubmitQuery("Bucket KFC 12 pièces croustillant avec frites et sauce piquante") }
-                                        LuxQuickChip("🍕 Pizza Super Supreme") { onSubmitQuery("Une grande Pizza Supreme avec croûte farcie au fromage et extra mozzarella") }
-                                        LuxQuickChip("🍲 Tajine Agneau Pruneaux") { onSubmitQuery("Tajine d'agneau royal aux pruneaux et amandes avec pain chaud") }
-                                        LuxQuickChip("🥦 Panier Marjane Frais") { onSubmitQuery("Courses Marjane: lait frais, 30 œufs fermiers et huile d'olive vierge") }
-                                        LuxQuickChip("🥐 Café & Croissants Paul") { onSubmitQuery("Trois croissants pur beurre et tartelette aux fraises de chez Paul") }
-                                        LuxQuickChip("🦐 Plateau Poissons Port") { onSubmitQuery("Plateau de fruits de mer et poissons grillés du port de Mohammedia") }
-                                        LuxQuickChip("💊 Vitamine C Pharmacie") { onSubmitQuery("Vitamine C effervescente et boîte de Doliprane 1000mg de la pharmacie") }
-                                    }
-                                    AppLanguage.ENGLISH -> {
-                                        LuxQuickChip("🍔 2 Big Macs & Nuggets") { onSubmitQuery("Two Big Mac combos with 9 chicken nuggets and BBQ sauce") }
-                                        LuxQuickChip("🍗 KFC 12pc Crispy Bucket") { onSubmitQuery("KFC 12 pieces crispy bucket with fries and spicy dip") }
-                                        LuxQuickChip("🍕 Cheesy Crust Pizza") { onSubmitQuery("Super Supreme pizza with stuffed cheesy crust") }
-                                        LuxQuickChip("🍲 Royal Lamb Tajine") { onSubmitQuery("Authentic lamb tajine with prunes and almonds") }
-                                        LuxQuickChip("🥦 Marjane Grocery Pack") { onSubmitQuery("Fresh milk, 30 eggs and extra virgin olive oil from Marjane") }
-                                        LuxQuickChip("🥐 Paul Bakery Coffee") { onSubmitQuery("Butter croissants and strawberry tart from Paul") }
-                                    }
-                                    AppLanguage.ARABIC -> {
-                                        LuxQuickChip("🍔 جوج وجبات بيج ماك وناجتس") { onSubmitQuery("بغيت جوج وجبات بيج ماك ماكسي مع تسعة قطع ناجتس وصوص باربكيو") }
-                                        LuxQuickChip("🍗 باكت كنتاكي 12 قطعة حار") { onSubmitQuery("باكت كنتاكي كريسبي مقرمش 12 قطعة مع بطاطس وصوص حار") }
-                                        LuxQuickChip("🍕 بيتزا تشيزي كراست سوبريم") { onSubmitQuery("بيتزا سوبر سوبريم كبيرة مع أطراف محشوة بالجبن") }
-                                        LuxQuickChip("🍲 طاجين لحم بالبرقوق واللوز") { onSubmitQuery("طاجين بلدي لحم بالبرقوق واللوز مع خبز الدار الساخن") }
-                                        LuxQuickChip("🥦 سلة مشتريات مرجان") { onSubmitQuery("حليب طازج، 30 بيضة، وزيت زيتون بكر من مرجان ماركت") }
-                                        LuxQuickChip("🥐 قهوة وكرواسون بول") { onSubmitQuery("تلاتة كرواسون زبدة فرنسي وتارت فراولة من بول") }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // 5. Featured Catalog Products Showcase (Always visible when no current order)
-                    if (recommendation == null || recommendation.items.isEmpty()) {
-                        item {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                            ) {
+                            // Optional Text input bar
+                            if (showTextInput) {
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = when (language) {
-                                            AppLanguage.FRENCH -> "🍽️ Produits disponibles à commander :"
-                                            AppLanguage.ENGLISH -> "🍽️ Products available to order:"
-                                            AppLanguage.ARABIC -> "🍽️ منتجات يمكنك طلبها بالصوت مباشرة:"
+                                    OutlinedTextField(
+                                        value = textInput,
+                                        onValueChange = { textInput = it },
+                                        modifier = Modifier.weight(1f),
+                                        placeholder = {
+                                            Text(
+                                                text = if (language == AppLanguage.ARABIC) "اكتب طلبك..." else "Écrivez votre commande...",
+                                                fontSize = 11.sp
+                                            )
                                         },
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = AzizMint
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = AzizOrangePrimary,
+                                            unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                        )
                                     )
-                                    Text(
-                                        text = "المحمدية 🇲🇦",
-                                        fontSize = 11.sp,
-                                        color = Color.White.copy(alpha = 0.6f)
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    CatalogData.products.take(6).forEach { product ->
-                                        Surface(
-                                            shape = RoundedCornerShape(16.dp),
-                                            color = Color(0xFF131A2E),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(12.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier.weight(1f)
-                                                ) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(46.dp)
-                                                            .clip(RoundedCornerShape(12.dp))
-                                                            .background(AzizOrangePrimary.copy(alpha = 0.15f)),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        Text(
-                                                            text = when (product.category) {
-                                                                StoreCategory.BURGER -> "🍔"
-                                                                StoreCategory.PIZZA -> "🍕"
-                                                                StoreCategory.FAST_FOOD -> "🍟"
-                                                                StoreCategory.MOROCCAN -> "🍲"
-                                                                StoreCategory.CAFE -> "☕"
-                                                                StoreCategory.GROCERY -> "🛒"
-                                                                StoreCategory.EXPRESS -> "⚡"
-                                                                else -> "🛍️"
-                                                            },
-                                                            fontSize = 22.sp
-                                                        )
-                                                    }
-                                                    Spacer(modifier = Modifier.width(10.dp))
-                                                    Column {
-                                                        Text(
-                                                            text = if (language == AppLanguage.ARABIC) product.nameAr else product.nameFr,
-                                                            fontSize = 13.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = Color.White
-                                                        )
-                                                        Text(
-                                                            text = product.storeName,
-                                                            fontSize = 11.sp,
-                                                            color = Color.White.copy(alpha = 0.6f)
-                                                        )
-                                                        Text(
-                                                            text = "%.0f درهم".format(product.price),
-                                                            fontSize = 12.sp,
-                                                            fontWeight = FontWeight.Black,
-                                                            color = AzizOrangePrimary
-                                                        )
-                                                    }
-                                                }
-
-                                                // Quick Voice Order Button
-                                                Surface(
-                                                    onClick = {
-                                                        onSubmitQuery("بغيت ${product.nameAr} من ${product.storeName}")
-                                                    },
-                                                    shape = RoundedCornerShape(10.dp),
-                                                    color = AzizOrangePrimary,
-                                                    modifier = Modifier.testTag("voice_order_product_${product.id}")
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Default.Mic,
-                                                            contentDescription = "Order by Voice",
-                                                            tint = Color.White,
-                                                            modifier = Modifier.size(14.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(4.dp))
-                                                        Text("اطلب 🎙️", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                                                    }
-                                                }
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Button(
+                                        onClick = {
+                                            if (textInput.isNotBlank()) {
+                                                onSubmitQuery(textInput)
+                                                textInput = ""
+                                                showTextInput = false
                                             }
-                                        }
+                                        },
+                                        shape = RoundedCornerShape(10.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White, modifier = Modifier.size(14.dp))
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    // 6. THE AI GENERATED BASKET CARD
-                    if (recommendation != null && recommendation.items.isNotEmpty()) {
-                        item {
-                            Surface(
-                                shape = RoundedCornerShape(24.dp),
-                                color = Color(0xFF10172B),
-                                border = androidx.compose.foundation.BorderStroke(1.5.dp, AzizMint),
-                                shadowElevation = 12.dp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("ai_recommendation_card")
-                            ) {
-                                Column(modifier = Modifier.padding(18.dp)) {
-                                    // Header: Store Name, Store Badge, and ETA
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.weight(1f)
-                                        ) {
-                                            Text(text = recommendation.storeBadgeEmoji, fontSize = 24.sp)
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                            Column {
-                                                Text(
-                                                    text = recommendation.targetStoreName,
-                                                    fontSize = 15.sp,
-                                                    fontWeight = FontWeight.Black,
-                                                    color = Color.White,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Timer,
-                                                        contentDescription = null,
-                                                        tint = AzizOrangePrimary,
-                                                        modifier = Modifier.size(13.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(3.dp))
-                                                    Text(
-                                                        text = "Livraison express ~${recommendation.estimatedTimeMins} min",
-                                                        fontSize = 11.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = AzizOrangePrimary
-                                                    )
-                                                }
-                                            }
-                                        }
+                            // User Spoken Transcript
+                            if (spokenQuery.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.White.copy(alpha = 0.08f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "🗣️ $spokenQuery",
+                                        fontSize = 11.sp,
+                                        color = Color.White.copy(alpha = 0.9f),
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
 
-                                        // Precision Badge
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = AzizMint.copy(alpha = 0.2f),
-                                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.45f))
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "⭐ ${recommendation.confidenceScore}% Précis",
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Black,
-                                                    color = AzizMint
-                                                )
-                                            }
-                                        }
-                                    }
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    // AI Natural Speech Bubble with Realistic Voice Replay Button
-                                    Surface(
-                                        shape = RoundedCornerShape(16.dp),
-                                        color = Color(0xFF1E293B).copy(alpha = 0.9f),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Column(modifier = Modifier.padding(12.dp)) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(text = activePersona.avatarEmoji, fontSize = 22.sp)
-                                                Spacer(modifier = Modifier.width(10.dp))
-                                                val explanation = when (language) {
-                                                    AppLanguage.FRENCH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
-                                                    AppLanguage.ENGLISH -> recommendation.aiExplanationFr.ifBlank { recommendation.aiExplanationAr }
-                                                    AppLanguage.ARABIC -> recommendation.aiExplanationAr.ifBlank { recommendation.aiExplanationFr }
-                                                }
-                                                Text(
-                                                    text = explanation,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = Color(0xFFF1F5F9),
-                                                    lineHeight = 18.sp,
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            }
-
-                                            Spacer(modifier = Modifier.height(10.dp))
-
-                                            // Dedicated Realistic AI Voice Button (Gemini Audio)
-                                            Surface(
-                                                onClick = {
-                                                    val audioText = if (language == AppLanguage.FRENCH) {
-                                                        recommendation.speechAudioTextFr.ifBlank { recommendation.aiExplanationFr }
-                                                    } else {
-                                                        recommendation.speechAudioTextAr.ifBlank { recommendation.aiExplanationAr }
-                                                    }
-                                                    voiceHelper.speak(audioText, language, persona = activePersona)
-                                                },
-                                                shape = RoundedCornerShape(10.dp),
-                                                color = AzizMint.copy(alpha = 0.2f),
-                                                border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.6f)),
-                                                modifier = Modifier.fillMaxWidth().testTag("replay_realistic_speech_btn")
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.VolumeUp,
-                                                        contentDescription = "Play Voice",
-                                                        tint = AzizMint,
-                                                        modifier = Modifier.size(18.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(6.dp))
-                                                    Text(
-                                                        text = when (language) {
-                                                            AppLanguage.FRENCH -> "Écouter avec voix IA réaliste (Gemini Audio) 🔊"
-                                                            AppLanguage.ENGLISH -> "Listen with realistic AI voice (Gemini Audio) 🔊"
-                                                            AppLanguage.ARABIC -> "استمع للطلب بالصوت البشري الواقعي (Gemini Audio) 🔊"
-                                                        },
-                                                        fontSize = 12.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = AzizMint
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Detected Notes / Tags
-                                    if (recommendation.detectedNotes.isNotEmpty()) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .horizontalScroll(rememberScrollState()),
-                                             horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                        ) {
-                                            recommendation.detectedNotes.forEach { note ->
-                                                Surface(
-                                                    shape = RoundedCornerShape(8.dp),
-                                                    color = AzizAmberSecondary.copy(alpha = 0.15f),
-                                                    border = androidx.compose.foundation.BorderStroke(1.dp, AzizAmberSecondary.copy(alpha = 0.35f))
-                                                ) {
-                                                    Text(
-                                                        text = note,
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = AzizAmberSecondary,
-                                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(14.dp))
-
-                                    // List of Recommended Items
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        recommendation.items.forEach { item ->
-                                            LuxAiItemRow(
-                                                item = item,
-                                                language = language,
-                                                onIncrease = {
-                                                    HapticFeedbackHelper.vibrateClick(context)
-                                                    onUpdateQuantity(item.product.id, 1)
-                                                },
-                                                onDecrease = {
-                                                    HapticFeedbackHelper.vibrateClick(context)
-                                                    onUpdateQuantity(item.product.id, -1)
-                                                },
-                                                onDelete = {
-                                                    HapticFeedbackHelper.vibrateClick(context)
-                                                    onRemoveItem(item.product.id)
-                                                }
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(14.dp))
-
-                                    val currSuffix = when (language) {
-                                        AppLanguage.FRENCH -> " DH"
-                                        AppLanguage.ENGLISH -> " MAD"
-                                        AppLanguage.ARABIC -> " د.م."
-                                    }
-
-                                    // Financial Breakdown Card
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .background(Color.White.copy(alpha = 0.05f))
-                                            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
-                                            .padding(14.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = when (language) {
-                                                    AppLanguage.FRENCH -> "Sous-total articles :"
-                                                    AppLanguage.ENGLISH -> "Items subtotal:"
-                                                    AppLanguage.ARABIC -> "مجموع المشتريات:"
-                                                },
-                                                fontSize = 12.sp,
-                                                color = Color.White.copy(alpha = 0.7f)
-                                            )
-                                            Text(
-                                                text = String.format(Locale.US, "%.2f%s", recommendation.estimatedTotal, currSuffix),
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = Color.White
-                                            )
-                                        }
-
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = when (language) {
-                                                    AppLanguage.FRENCH -> "Livraison express Aziz :"
-                                                    AppLanguage.ENGLISH -> "Express delivery fee:"
-                                                    AppLanguage.ARABIC -> "رسوم التوصيل السريع:"
-                                                },
-                                                fontSize = 12.sp,
-                                                color = Color.White.copy(alpha = 0.7f)
-                                            )
-                                            Text(
-                                                text = String.format(Locale.US, "%.2f%s", recommendation.deliveryFee, currSuffix),
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = AzizMint
-                                            )
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(1.dp)
-                                                .background(Color.White.copy(alpha = 0.15f))
-                                        )
-
+                            // Recommendation Result OR Fast Voice Suggestions
+                            if (recommendation != null && recommendation.items.isNotEmpty()) {
+                                // Product Recommendation Card
+                                Card(
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f)),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f, fill = false)
+                                ) {
+                                    Column(modifier = Modifier.padding(8.dp)) {
+                                        // Store Name and Grand Total
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = when (language) {
-                                                    AppLanguage.FRENCH -> "Total à payer :"
-                                                    AppLanguage.ENGLISH -> "Grand Total:"
-                                                    AppLanguage.ARABIC -> "الإجمالي النهائي:"
-                                                },
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = Color.White
+                                                text = "${recommendation.storeBadgeEmoji} ${recommendation.targetStoreName}",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f)
                                             )
                                             Text(
-                                                text = String.format(Locale.US, "%.2f%s", recommendation.grandTotal, currSuffix),
-                                                fontSize = 18.sp,
+                                                text = String.format(Locale.US, "%.1f DH", recommendation.grandTotal),
                                                 fontWeight = FontWeight.Black,
-                                                color = AzizOrangePrimary
+                                                fontSize = 12.sp,
+                                                color = AzizMint
                                             )
                                         }
-                                    }
 
-                                    Spacer(modifier = Modifier.height(16.dp))
+                                        Spacer(modifier = Modifier.height(4.dp))
 
-                                    // THE CRITICAL "CONFIRMER" BUTTON (User Request: "والضغط على التاكيد confèrem")
-                                    Button(
-                                        onClick = {
-                                            HapticFeedbackHelper.vibrateSuccess(context)
-                                            onConfirmRecommendation(recommendation)
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(56.dp)
-                                            .shadow(14.dp, RoundedCornerShape(18.dp))
-                                            .testTag("confirm_ai_shopping_list_button"),
-                                        shape = RoundedCornerShape(18.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = AzizMint,
-                                            contentColor = Color.White
-                                        )
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
+                                        // Items List
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(max = 110.dp),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Default.CheckCircle,
-                                                contentDescription = "Confirm",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Text(
-                                                text = when (language) {
-                                                    AppLanguage.FRENCH -> "Confirmer la commande (Confirmer) ✓"
-                                                    AppLanguage.ENGLISH -> "Confirm Basket & Checkout ✓"
-                                                    AppLanguage.ARABIC -> "تأكيد السلة ومتابعة الطلب (Confirmer) ✓"
-                                                },
-                                                fontSize = 15.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = Color.White
-                                            )
+                                            items(recommendation.items) { item ->
+                                                LuxAiItemRow(
+                                                    item = item,
+                                                    language = language,
+                                                    onIncrease = { onUpdateQuantity(item.product.id, 1) },
+                                                    onDecrease = { onUpdateQuantity(item.product.id, -1) },
+                                                    onDelete = { onRemoveItem(item.product.id) }
+                                                )
+                                            }
+                                        }
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        // Confirm & Add to Cart Button
+                                        Button(
+                                            onClick = { onConfirmRecommendation(recommendation) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                                            shape = RoundedCornerShape(10.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .testTag("confirm_ai_recommendation_btn"),
+                                            contentPadding = PaddingValues(vertical = 6.dp)
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ShoppingCart,
+                                                    contentDescription = null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = if (language == AppLanguage.ARABIC) {
+                                                        "تأكيد الطلب وإضافته للسلة 🛒"
+                                                    } else {
+                                                        "Confirmer et ajouter au panier 🛒"
+                                                    },
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 12.sp,
+                                                    color = Color.White
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        }
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-
-                // 6. Bottom Bar: Fallback Text Input
-                Surface(
-                    color = Color(0xFF0D1424),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = textInput,
-                            onValueChange = { textInput = it },
-                            placeholder = {
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Ou écrivez vos courses (ex: 2 Big Mac, pizza...)"
-                                        AppLanguage.ENGLISH -> "Or type your order here..."
-                                        AppLanguage.ARABIC -> "أو اكتب طلبك هنا يدوياً..."
-                                    },
-                                    fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.5f)
-                                )
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("ai_text_input_field"),
-                            shape = RoundedCornerShape(24.dp),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                            keyboardActions = KeyboardActions(onSend = {
-                                if (textInput.isNotBlank()) {
-                                    onSubmitQuery(textInput)
-                                    textInput = ""
-                                }
-                            }),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = AzizOrangePrimary,
-                                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White,
-                                focusedContainerColor = Color.White.copy(alpha = 0.05f),
-                                unfocusedContainerColor = Color.White.copy(alpha = 0.05f)
-                            )
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        IconButton(
-                            onClick = {
-                                if (textInput.isNotBlank()) {
-                                    onSubmitQuery(textInput)
-                                    textInput = ""
-                                } else {
-                                    startListeningFlow()
-                                }
-                            },
-                            modifier = Modifier
-                                .size(46.dp)
-                                .clip(CircleShape)
-                                .background(if (textInput.isNotBlank()) AzizMint else AzizOrangePrimary)
-                                .testTag("send_ai_voice_query_button")
-                        ) {
-                            Icon(
-                                imageVector = if (textInput.isNotBlank()) Icons.AutoMirrored.Filled.Send else Icons.Default.Mic,
-                                contentDescription = "Send",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-        if (showVoiceOptionsSheet) {
-            Dialog(onDismissRequest = { showVoiceOptionsSheet = false }) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth(0.94f)
-                        .fillMaxHeight(0.70f)
-                        .clip(RoundedCornerShape(26.dp)),
-                    color = Color(0xFF0F172A),
-                    border = androidx.compose.foundation.BorderStroke(1.5.dp, AzizMint)
-                ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = "🎙️", fontSize = 22.sp)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Commandes vocales prêtes"
-                                        AppLanguage.ENGLISH -> "Instant Voice Orders"
-                                        AppLanguage.ARABIC -> "أوامر صوتية فورية جاهزة"
-                                    },
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                            IconButton(onClick = { showVoiceOptionsSheet = false }, modifier = Modifier.size(30.dp)) {
-                                Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = when (language) {
-                                AppLanguage.FRENCH -> "Touchez une phrase pour la dicter instantanément à l'IA :"
-                                AppLanguage.ENGLISH -> "Tap any phrase to instantly dictate it to the AI:"
-                                AppLanguage.ARABIC -> "اضغط على أي جملة لتمليها فورياً على الذكاء الاصطناعي:"
-                            },
-                            fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.75f)
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        val quickVoiceOrders = when (language) {
-                            AppLanguage.FRENCH -> listOf(
-                                "🍔 2 Menus Maxi Big Mac avec sauce barbecue",
-                                "🍗 Bucket KFC 12 pièces croustillant avec sauce piquante",
-                                "🍕 Pizza Super Supreme avec croûte farcie au fromage",
-                                "🍲 Tajine d'agneau royal aux pruneaux et pain chaud",
-                                "🥦 Courses Marjane (Lait, 30 œufs, huile d'olive vierge)",
-                                "🥐 3 Croissants pur beurre et tartelette Paul",
-                                "🦐 Plateau fruits de mer et poissons du port de Mohammedia",
-                                "💊 Vitamine C effervescente et Doliprane 1000mg",
-                                "🛵 Coursier Aziz Jib Liya express"
-                            )
-                            AppLanguage.ENGLISH -> listOf(
-                                "🍔 2 Big Mac combos with BBQ sauce",
-                                "🍗 KFC 12 pieces crispy bucket with fries",
-                                "🍕 Super Supreme pizza with cheesy crust",
-                                "🍲 Authentic lamb tajine with prunes and almonds",
-                                "🥦 Marjane grocery pack (Milk, 30 eggs, olive oil)",
-                                "🥐 Paul bakery croissants and strawberry tart",
-                                "🦐 Fresh seafood platter from Mohammedia port",
-                                "💊 Vitamin C and Paracetamol from pharmacy",
-                                "🛵 Express courier Aziz Jib Liya"
-                            )
-                            AppLanguage.ARABIC -> listOf(
-                                "🍔 جوج وجبات بيج ماك ماكسي مع صوص باربكيو",
-                                "🍗 باكت كنتاكي 12 قطعة مقرمش مع صوص حار",
-                                "🍕 بيتزا سوبر سوبريم مع أطراف محشوة بالجبن",
-                                "🍲 طاجين لحم بلدي بالبرقوق واللوز مع خبز ساخن",
-                                "🥦 سلة مرجان (حليب، 30 بيضة، زيت زيتون بكر)",
-                                "🥐 تلاتة كرواسون زبدة وتارت فراولة من بول",
-                                "🦐 بلاطو فواكه البحر والسمك المشوي من المرسى",
-                                "💊 فيتامين سي ودولبران من الصيدلية",
-                                "🛵 كابتن عزيز جيب ليا إكسبريس"
-                            )
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            quickVoiceOrders.forEach { phrase ->
-                                Surface(
-                                    onClick = {
-                                        showVoiceOptionsSheet = false
-                                        onSubmitQuery(phrase)
-                                    },
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = Color(0xFF1E293B),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                            } else {
+                                // Fast Voice Suggestions Chips
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(Icons.Default.RecordVoiceOver, contentDescription = null, tint = AzizMint, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Text(text = phrase, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                    val chips = if (language == AppLanguage.ARABIC) {
+                                        listOf(
+                                            "🍔 2 بيج ماك وبطاطس" to "بغيت جوج وجبات بيج ماك ماكسي وبطاطس",
+                                            "🍗 باكت كنتاكي 12 قطعة" to "باكت كنتاكي كريسبي مقرمش 12 قطعة مع بطاطس",
+                                            "🍕 بيتزا سوبر سوبريم" to "بيتزا سوبر سوبريم كبيرة مع جبن موزاريلا",
+                                            "🍲 طاجين لحم بالبرقوق" to "طاجين بلدي لحم بالبرقوق واللوز مع خبز سخون",
+                                            "🥦 مقاضي من مرجان" to "حليب طازج، 30 بيضة، وزيت زيتون من مرجان"
+                                        )
+                                    } else {
+                                        listOf(
+                                            "🍔 2 Menus Big Mac" to "Deux menus Big Mac avec frites et Coca",
+                                            "🍗 Bucket KFC 12 pcs" to "Bucket KFC 12 pièces croustillant avec frites",
+                                            "🍕 Pizza Super Supreme" to "Grande pizza Super Supreme avec fromage fondu",
+                                            "🍲 Tajine Agneau" to "Tajine royal d'agneau aux pruneaux et amandes",
+                                            "🥦 Courses Marjane" to "Lait frais, 30 œufs fermiers et huile d'olive Marjane"
+                                        )
+                                    }
+
+                                    items(chips) { (label, query) ->
+                                        LuxQuickChip(label) { onSubmitQuery(query) }
                                     }
                                 }
                             }
@@ -1350,7 +779,7 @@ fun AiVoiceShoppingDialog(
 }
 
 /**
- * Luxury Product Item Row inside the AI recommendation list
+ * Compact Product Item Row inside the AI recommendation list
  */
 @Composable
 private fun LuxAiItemRow(
@@ -1361,22 +790,21 @@ private fun LuxAiItemRow(
     onDelete: () -> Unit
 ) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xFF1E293B).copy(alpha = 0.8f),
+        shape = RoundedCornerShape(10.dp),
+        color = Color(0xFF0F172A).copy(alpha = 0.7f),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product Thumbnail / Image
             Box(
                 modifier = Modifier
-                    .size(54.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(AzizOrangePrimary.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
@@ -1388,13 +816,12 @@ private fun LuxAiItemRow(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    Text(text = item.product.emoji, fontSize = 26.sp)
+                    Text(text = item.product.emoji, fontSize = 16.sp)
                 }
             }
 
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-            // Details
             Column(modifier = Modifier.weight(1f)) {
                 val productName = when (language) {
                     AppLanguage.FRENCH -> item.product.nameFr
@@ -1404,74 +831,56 @@ private fun LuxAiItemRow(
                 Text(
                     text = productName,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
+                    fontSize = 11.sp,
                     color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (item.customNote.isNotBlank()) {
-                    Text(
-                        text = item.customNote,
-                        fontSize = 10.sp,
-                        color = AzizAmberSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-
-                val currSuffix = when (language) {
-                    AppLanguage.FRENCH -> " DH"
-                    AppLanguage.ENGLISH -> " MAD"
-                    AppLanguage.ARABIC -> " د.م."
-                }
                 Text(
-                    text = String.format(Locale.US, "%.2f%s", item.subtotal, currSuffix),
-                    fontSize = 12.sp,
+                    text = String.format(Locale.US, "%.1f DH", item.subtotal),
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = AzizMint
                 )
             }
 
-            // Stepper Quantity Controls
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(8.dp))
                     .background(Color.White.copy(alpha = 0.1f))
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
+                    .padding(horizontal = 2.dp)
             ) {
                 IconButton(
-                    onClick = {
-                        if (item.quantity > 1) onDecrease() else onDelete()
-                    },
-                    modifier = Modifier.size(28.dp)
+                    onClick = { if (item.quantity > 1) onDecrease() else onDelete() },
+                    modifier = Modifier.size(22.dp)
                 ) {
                     Icon(
                         imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.DeleteOutline,
                         contentDescription = "Decrease",
                         tint = if (item.quantity > 1) Color.White else Color(0xFFEF4444),
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
 
                 Text(
                     text = "${item.quantity}",
-                    fontWeight = FontWeight.Black,
-                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 6.dp)
+                    modifier = Modifier.padding(horizontal = 4.dp)
                 )
 
                 IconButton(
                     onClick = onIncrease,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(22.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Increase",
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             }
@@ -1483,38 +892,34 @@ private fun LuxAiItemRow(
 private fun LuxQuickChip(label: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = Color(0xFF1E293B).copy(alpha = 0.9f),
+        shape = RoundedCornerShape(10.dp),
+        color = Color(0xFF1E293B),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
     ) {
         Text(
             text = label,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-            fontSize = 11.sp,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
             color = Color.White
         )
     }
 }
 
-/**
- * Dynamic Multi-band Live Audio Frequency Visualizer Waveform.
- * Amplitudes are driven by the VoiceSpeechHelper simulation or real-time speech peaks.
- */
 @Composable
 private fun LiveAudioSpectrumWave(amplitudes: List<Float>, color: Color) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.5.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.height(28.dp)
+        modifier = Modifier.height(16.dp)
     ) {
         amplitudes.forEach { amp ->
-            val barHeight = (amp * 26f).coerceIn(4f, 26f)
+            val barHeight = (amp * 14f).coerceIn(2.5f, 14f)
             Box(
                 modifier = Modifier
-                    .width(4.dp)
+                    .width(2.5.dp)
                     .height(barHeight.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                    .clip(RoundedCornerShape(1.dp))
                     .background(color)
             )
         }
@@ -1533,9 +938,9 @@ private fun launchSystemSpeechRecognizer(
         AppLanguage.ARABIC -> "ar-MA"
     }
     val promptMsg = when (language) {
-        AppLanguage.FRENCH -> "Dictez votre commande (ex: 2 Big Mac avec frites et McFlurry...)"
-        AppLanguage.ENGLISH -> "Dictate your order (e.g., Big Mac, pizza, tajine, groceries...)"
-        AppLanguage.ARABIC -> "تكلم واطلب مشترياتك (مثال: وجبة بيج ماك وماك فلوري، طاجين، سلة مرجان...)"
+        AppLanguage.FRENCH -> "Dictez votre commande (ex: 2 Big Mac avec frites)..."
+        AppLanguage.ENGLISH -> "Dictate your order (e.g., Big Mac, pizza, groceries)..."
+        AppLanguage.ARABIC -> "تكلم واطلب مشترياتك (مثال: وجبة بيج ماك، طاجين، بيتزا...)"
     }
     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)

@@ -1,8 +1,66 @@
 package com.example.data.model
 
+/**
+ * Complete, Comprehensive Culinary Catalog for ALLO AZIZ in Mohammedia.
+ * Contains all popular dishes, sandwiches, pizzas, burgers, tacos, moroccan specialties,
+ * and delivery apps favorites with their authentic sauces and customization options.
+ */
 object CatalogData {
 
-    // Common meal customization option groups
+    // ==========================================
+    // 1. COMPREHENSIVE SAUCE CATALOG & OPTIONS
+    // ==========================================
+    val allFamousSauces = listOf(
+        MealOptionItem("sauce_algerienne", "الصلصة الجزائرية الحارة اللذيذة 🌶️", "Sauce Algérienne relevée", "Spicy Algerian Sauce", 0.0),
+        MealOptionItem("sauce_fromagere", "صلصة الجبن الفرنسية الذائبة للتاكوس 🧀", "Sauce Fromagère Maison", "Homemade Cheese Sauce", 0.0),
+        MealOptionItem("sauce_samourai", "صلصة الساموراي الحارة بالنار 🔥", "Sauce Samouraï Piquante", "Samurai Hot Sauce", 0.0),
+        MealOptionItem("sauce_biggy", "صلصة بيجي برجر الشهيرة 🍔", "Sauce Biggy Burger", "Biggy Burger Sauce", 0.0),
+        MealOptionItem("sauce_andalouse", "الصلصة الأندلسية الخاصة", "Sauce Andalouse", "Andalouse Sauce", 0.0),
+        MealOptionItem("sauce_bbq", "صلصة باربكيو مدخنة", "Sauce Barbecue Fumée", "Smoky BBQ Sauce", 0.0),
+        MealOptionItem("sauce_toum", "صلصة الثومية اللبنانية البيضاء 🧄", "Crème d'Ail Toum Libanais", "Lebanese Garlic Cream", 0.0),
+        MealOptionItem("sauce_cheddar", "شيدر أمريكي ذائب ساخن 🧀", "Sauce Cheddar Fondu", "Melted Cheddar Sauce", 0.0),
+        MealOptionItem("sauce_poivre", "صلصة الفلفل الأسود الكريمية", "Sauce Poivre Noir Crémeuse", "Creamy Peppercorn Sauce", 0.0),
+        MealOptionItem("sauce_curry", "صلصة الكاري الهندية الحلوة", "Sauce Curry Doux", "Mild Sweet Curry", 0.0),
+        MealOptionItem("sauce_harissa", "هريسة مغربية بلدية بزيت الزيتون 🇲🇦", "Harissa Beldia & Huile d'Olive", "Moroccan Harissa & Olive Oil", 0.0),
+        MealOptionItem("sauce_ranch", "صلصة رانش أمريكية بالأعشاب", "Sauce Ranch aux Fines Herbes", "Ranch Herb Dressing", 0.0),
+        MealOptionItem("sauce_sweet_chili", "سويت تشيلي تايلاندي حلو وحار", "Sauce Sweet Chili Thaï", "Sweet Chili Sauce", 0.0),
+        MealOptionItem("sauce_honey_mustard", "صلصة الخردل بالعسل الطبيعي 🍯", "Sauce Moutarde au Miel", "Honey Mustard Sauce", 0.0),
+        MealOptionItem("sauce_tartare", "صلصة التارتار بالليمون للأكلات البحرية 🐟", "Sauce Tartare Citronnée", "Tartar Sauce", 0.0)
+    )
+
+    val tacosOptionGroups = listOf(
+        MealOptionGroup(
+            id = "opt_tacos_sauces",
+            titleAr = "اختر صلصات التاكوس (مجاناً حتى 2 صلصات)",
+            titleFr = "Choisissez vos sauces (Jusqu'à 2 gratuites)",
+            titleEn = "Choose Tacos Sauces (Up to 2 free)",
+            isRequired = true,
+            isMultiSelect = true,
+            options = listOf(
+                MealOptionItem("tc_fromagere", "صلصة الجبن الفرنسية الذائبة 🧀", "Sauce Fromagère Maison", "Homemade Cheese Sauce", 0.0),
+                MealOptionItem("tc_algerienne", "صلصة ألجيريان حارة ومكرملة 🌶️", "Sauce Algérienne", "Algerian Spicy Sauce", 0.0),
+                MealOptionItem("tc_samourai", "صلصة ساموراي حارة جداً 🔥", "Sauce Samouraï", "Samurai Hot Sauce", 0.0),
+                MealOptionItem("tc_biggy", "صلصة بيجي برجر الحلوة", "Sauce Biggy Burger", "Biggy Sweet Sauce", 0.0),
+                MealOptionItem("tc_andalouse", "صلصة أندلسية كلاسيكية", "Sauce Andalouse", "Andalouse Sauce", 0.0),
+                MealOptionItem("tc_bbq", "صلصة باربكيو مدخنة", "Sauce BBQ Fumée", "BBQ Sauce", 0.0)
+            )
+        ),
+        MealOptionGroup(
+            id = "opt_tacos_extras",
+            titleAr = "إضافات ومكونات خاصة",
+            titleFr = "Suppléments gourmands",
+            titleEn = "Gourmet Extras",
+            isRequired = false,
+            isMultiSelect = true,
+            options = listOf(
+                MealOptionItem("ext_gratine", "جراتيناج خارجي بالفرن (موزاريلا + شيدر) 🧀", "Gratinage Four Mozza & Cheddar", "Baked Mozzarella & Cheddar Gratin", 8.0),
+                MealOptionItem("ext_jalapeno", "فلفل هلابينو مخلل حار 🌶️", "Piments Jalapenos", "Spicy Jalapenos", 4.0),
+                MealOptionItem("ext_bacon", "بيكون بقري مقدد مقرمش 🥓", "Bacon de bœuf croustillant", "Crispy Beef Bacon", 7.0),
+                MealOptionItem("ext_double_cheese", "شريحة جبن إضافية", "Double tranche de fromage", "Double Cheese Slice", 5.0)
+            )
+        )
+    )
+
     val burgerOptions = listOf(
         MealOptionGroup(
             id = "opt_size",
@@ -11,21 +69,24 @@ object CatalogData {
             titleEn = "Meal Size",
             isRequired = true,
             options = listOf(
-                MealOptionItem("size_std", "عادي (Standard)", "Standard", "Standard", 0.0),
+                MealOptionItem("size_std", "عادي (بطاطس ومشروب عادي)", "Menu Standard (Frites + Boisson)", "Standard (Fries + Drink)", 0.0),
                 MealOptionItem("size_maxi", "ماكسي كبير (+ بطاطس ومشروب كبير)", "Maxi Grand (+ Frites & Boisson)", "Maxi Grand (+ Large Fries & Drink)", 12.0)
             )
         ),
         MealOptionGroup(
             id = "opt_sauces",
-            titleAr = "اختر الصوص المفضل (مجاناً)",
+            titleAr = "اختر الصلصة المفضلة (مجاناً)",
             titleFr = "Choisissez votre sauce (Gratuit)",
             titleEn = "Choose Sauce (Free)",
             isRequired = false,
+            isMultiSelect = true,
             options = listOf(
-                MealOptionItem("sauce_special", "صوص ألو عزيز الخاص 🌶️", "Sauce Spéciale Aziz", "Aziz Secret Sauce", 0.0),
-                MealOptionItem("sauce_mayo_garlic", "مايونيز بالثوم والأعشاب", "Mayo Ail & Fines Herbes", "Garlic Herb Mayo", 0.0),
+                MealOptionItem("sauce_biggy", "صلصة بيجي برجر الشهيرة 🍔", "Sauce Biggy Burger", "Biggy Burger Sauce", 0.0),
+                MealOptionItem("sauce_algerienne", "صلصة ألجيريان حارة 🌶️", "Sauce Algérienne", "Algerian Sauce", 0.0),
+                MealOptionItem("sauce_samourai", "صلصة ساموراي حارة 🔥", "Sauce Samouraï", "Samurai Sauce", 0.0),
                 MealOptionItem("sauce_bbq", "صوص باربكيو مدخن", "Sauce Barbecue Fumée", "Smoky BBQ Sauce", 0.0),
-                MealOptionItem("sauce_cheddar", "صوص الجبن الشيدر الذائب 🧀", "Sauce Cheddar Fondue", "Melted Cheddar Sauce", 0.0)
+                MealOptionItem("sauce_cheddar", "صوص الجبن الشيدر الذائب 🧀", "Sauce Cheddar Fondue", "Melted Cheddar Sauce", 0.0),
+                MealOptionItem("sauce_special", "صوص ألو عزيز الخاص 🌶️", "Sauce Spéciale Aziz", "Aziz Secret Sauce", 0.0)
             )
         ),
         MealOptionGroup(
@@ -72,6 +133,18 @@ object CatalogData {
             )
         ),
         MealOptionGroup(
+            id = "opt_pizza_sauce",
+            titleAr = "الصلصة المرافقة للبيتزا",
+            titleFr = "Sauce d'accompagnement",
+            titleEn = "Dipping Sauce",
+            isRequired = false,
+            options = listOf(
+                MealOptionItem("pz_sauce_harissa", "زيت زيتون حار بالأعشاب 🌶️", "Huile pimentée aux herbes", "Hot Chili Herb Oil", 0.0),
+                MealOptionItem("pz_sauce_ail", "صلصة الثوم والأعشاب الإيطالية", "Sauce Ail & Fines Herbes", "Garlic Herb Dip", 0.0),
+                MealOptionItem("pz_sauce_bbq", "صلصة باربكيو مدخنة", "Sauce Barbecue", "BBQ Dip", 0.0)
+            )
+        ),
+        MealOptionGroup(
             id = "opt_pizza_extras",
             titleAr = "إضافات ومكونات إضافية",
             titleFr = "Suppléments pizza",
@@ -87,6 +160,39 @@ object CatalogData {
         )
     )
 
+    val shawarmaOptions = listOf(
+        MealOptionGroup(
+            id = "opt_sh_sauce",
+            titleAr = "صلصات الشاورما الأصيلة (مجاناً)",
+            titleFr = "Sauces authentiques chawarma",
+            titleEn = "Authentic Shawarma Sauces",
+            isRequired = true,
+            isMultiSelect = true,
+            options = listOf(
+                MealOptionItem("sh_toum", "كريم الثومية اللبنانية الأصيلة 🧄", "Crème d'Ail Toum traditionnel", "Authentic Garlic Cream", 0.0),
+                MealOptionItem("sh_tahina", "طحينة السمسم بالليمون", "Sauce Tahina au sésame", "Sesame Tahini Sauce", 0.0),
+                MealOptionItem("sh_harissa", "شطة حارة بلدية 🌶️", "Harissa piquante", "Spicy Chili Paste", 0.0),
+                MealOptionItem("sh_algerienne", "صلصة ألجيريان", "Sauce Algérienne", "Algerian Sauce", 0.0)
+            )
+        ),
+        MealOptionGroup(
+            id = "opt_sh_extras",
+            titleAr = "إضافات الشاورما",
+            titleFr = "Extras Chawarma",
+            titleEn = "Shawarma Extras",
+            isRequired = false,
+            isMultiSelect = true,
+            options = listOf(
+                MealOptionItem("ext_double_meat", "لحم مضاعف إضافي", "Double ration de viande", "Extra Meat Portion", 12.0),
+                MealOptionItem("ext_cheese", "جبنة موزاريلا ذائبة 🧀", "Mozzarella fondue", "Melted Mozzarella", 6.0),
+                MealOptionItem("ext_pickles", "مخلل خيار ولفت مقرمش", "Cornichons croquants", "Extra Pickles", 3.0)
+            )
+        )
+    )
+
+    // ==========================================
+    // 2. STORES & RESTAURANTS
+    // ==========================================
     val stores = listOf(
         Store(
             id = "store_mcdonalds",
@@ -106,6 +212,26 @@ object CatalogData {
             ownerId = "owner_mcdo",
             bannerUrl = "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
             distanceKm = 1.4,
+            isPrimeEligible = true
+        ),
+        Store(
+            id = "store_otacos",
+            name = "أو تاكوس المحمدية (O'Tacos)",
+            nameAr = "أو تاكوس الأصلي - شارع الحسن الثاني",
+            nameFr = "O'Tacos French Tacos Mohammedia",
+            category = StoreCategory.FAST_FOOD,
+            rating = 4.9,
+            reviewCount = 1680,
+            deliveryTimeMins = 16,
+            deliveryFee = 7.0,
+            minOrder = 30.0,
+            address = "شارع الحسن الثاني، قبالة محطة القطار، المحمدية",
+            emoji = "🌮",
+            isFeatured = true,
+            badge = "تاكوس فرنسي بالصلصة الحصرية 🔥",
+            ownerId = "owner_otacos",
+            bannerUrl = "https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 1.8,
             isPrimeEligible = true
         ),
         Store(
@@ -129,6 +255,46 @@ object CatalogData {
             isPrimeEligible = true
         ),
         Store(
+            id = "store_burger_king",
+            name = "برجر كينج المحمدية (Burger King)",
+            nameAr = "برجر كينج - كورنيش المحمدية",
+            nameFr = "Burger King Corniche Mohammedia",
+            category = StoreCategory.BURGER,
+            rating = 4.8,
+            reviewCount = 1120,
+            deliveryTimeMins = 19,
+            deliveryFee = 8.0,
+            minOrder = 35.0,
+            address = "كورنيش المحمدية، بالقرب من الميناء",
+            emoji = "👑",
+            isFeatured = true,
+            badge = "مشوي على اللهب 100% 🥩",
+            ownerId = "owner_bk",
+            bannerUrl = "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 2.2,
+            isPrimeEligible = true
+        ),
+        Store(
+            id = "store_shawarma",
+            name = "شاورما الشام الملكية",
+            nameAr = "شاورما الشام الأصلية - حي الوفاء",
+            nameFr = "Shawarma Al Sham & Grillades",
+            category = StoreCategory.FAST_FOOD,
+            rating = 4.9,
+            reviewCount = 1530,
+            deliveryTimeMins = 15,
+            deliveryFee = 6.0,
+            minOrder = 25.0,
+            address = "شارع المقاومة، حي الوفاء، المحمدية",
+            emoji = "🥙",
+            isFeatured = true,
+            badge = "خبز صاج وثومية أصلية 🧄",
+            ownerId = "owner_shawarma",
+            bannerUrl = "https://images.unsplash.com/photo-1561651823-34feb02250e4?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 1.6,
+            isPrimeEligible = true
+        ),
+        Store(
             id = "store_pizzahut",
             name = "بيتزا هت المحمدية (Pizza Hut)",
             nameAr = "بيتزا هت المحمدية المركز",
@@ -146,26 +312,6 @@ object CatalogData {
             ownerId = "owner_pizzahut",
             bannerUrl = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&auto=format&fit=crop&q=80",
             distanceKm = 2.8,
-            isPrimeEligible = true
-        ),
-        Store(
-            id = "store_paul",
-            name = "بول كافيه (Paul Bakery & Café)",
-            nameAr = "مقهى ومخبز بول - حديقة الزهور",
-            nameFr = "Paul Boulangerie & Café Parc Mohammedia",
-            category = StoreCategory.CAFE,
-            rating = 4.9,
-            reviewCount = 760,
-            deliveryTimeMins = 15,
-            deliveryFee = 8.0,
-            minOrder = 40.0,
-            address = "بجوار حديقة المدن المتوأمة، المحمدية",
-            emoji = "🥐",
-            isFeatured = true,
-            badge = "فطور وحلويات فرنسية ☕",
-            ownerId = "owner_paul",
-            bannerUrl = "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80",
-            distanceKm = 1.6,
             isPrimeEligible = true
         ),
         Store(
@@ -209,23 +355,43 @@ object CatalogData {
             isPrimeEligible = true
         ),
         Store(
-            id = "store_burger",
-            name = "برجر كرافت المحمدية",
-            nameAr = "برجر كرافت سماش - حي الوفاء",
-            nameFr = "Craft Burger Mohammedia El Wafa",
-            category = StoreCategory.BURGER,
-            rating = 4.8,
-            reviewCount = 940,
-            deliveryTimeMins = 18,
+            id = "store_paul",
+            name = "بول كافيه (Paul Bakery & Café)",
+            nameAr = "مقهى ومخبز بول - حديقة الزهور",
+            nameFr = "Paul Boulangerie & Café Parc Mohammedia",
+            category = StoreCategory.CAFE,
+            rating = 4.9,
+            reviewCount = 760,
+            deliveryTimeMins = 15,
             deliveryFee = 8.0,
-            minOrder = 35.0,
-            address = "شارع المقاومة، حي الوفاء، المحمدية",
-            emoji = "🍔",
+            minOrder = 40.0,
+            address = "بجوار حديقة المدن المتوأمة، المحمدية",
+            emoji = "🥐",
+            isFeatured = true,
+            badge = "فطور وحلويات فرنسية ☕",
+            ownerId = "owner_paul",
+            bannerUrl = "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 1.6,
+            isPrimeEligible = true
+        ),
+        Store(
+            id = "store_sushi",
+            name = "طوكيو سوشي بار (Tokyo Sushi)",
+            nameAr = "طوكيو سوشي ووك - ميرامار",
+            nameFr = "Tokyo Sushi Bar & Wok Mohammedia",
+            category = StoreCategory.FAST_FOOD,
+            rating = 4.8,
+            reviewCount = 590,
+            deliveryTimeMins = 22,
+            deliveryFee = 9.0,
+            minOrder = 50.0,
+            address = "شارع الجيش الملكي، المحمدية",
+            emoji = "🍣",
             isFeatured = false,
-            badge = "توصيل سريع ⚡",
-            ownerId = "owner_burger",
-            bannerUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80",
-            distanceKm = 1.9,
+            badge = "سوشي ياباني ونودلز ووك 🥢",
+            ownerId = "owner_sushi",
+            bannerUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 2.3,
             isPrimeEligible = true
         ),
         Store(
@@ -287,12 +453,186 @@ object CatalogData {
             bannerUrl = "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=800&auto=format&fit=crop&q=80",
             distanceKm = 0.5,
             isPrimeEligible = false
+        ),
+        // ==========================================
+        // E-COMMERCE & MARKETPLACE STORES (Verified Merchants)
+        // ==========================================
+        Store(
+            id = "store_tech_express",
+            name = "تيك زون إلكترونيات المحمدية (TechZone)",
+            nameAr = "تيك زون للإلكترونيات والهواتف الذكية",
+            nameFr = "TechZone Électronique & High-Tech Mohammedia",
+            category = StoreCategory.ECOMMERCE,
+            rating = 4.9,
+            reviewCount = 740,
+            deliveryTimeMins = 30,
+            deliveryFee = 18.0,
+            minOrder = 50.0,
+            address = "شارع الحسن الثاني، مجمع التكنولوجيا، المحمدية",
+            emoji = "📱",
+            isFeatured = true,
+            badge = "تاجر موثق ومصادق عليه 🛡️ (ضمان 12 شهر)",
+            ownerId = "merchant_tech",
+            bannerUrl = "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 2.5,
+            isPrimeEligible = true,
+            isVerifiedMerchant = true,
+            isApproved = true,
+            merchantType = "ECOMMERCE"
+        ),
+        Store(
+            id = "store_fashion_boutique",
+            name = "بوتيك كازابلانكا للأزياء والعطور (Élégance)",
+            nameAr = "بوتيك كازابلانكا للأزياء الراقية والعطور",
+            nameFr = "Élégance Boutique & Parfumerie de Luxe",
+            category = StoreCategory.ECOMMERCE,
+            rating = 4.9,
+            reviewCount = 520,
+            deliveryTimeMins = 35,
+            deliveryFee = 18.0,
+            minOrder = 60.0,
+            address = "شارع المقاومة، المحمدية المركز",
+            emoji = "🛍️",
+            isFeatured = true,
+            badge = "ماركات أصلية مصادق عليها 🏷️ (إرجاع مجاني)",
+            ownerId = "merchant_fashion",
+            bannerUrl = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 1.9,
+            isPrimeEligible = true,
+            isVerifiedMerchant = true,
+            isApproved = true,
+            merchantType = "ECOMMERCE"
+        ),
+        Store(
+            id = "store_gaming_hub",
+            name = "برو جيمنج شوب (Pro Gaming Hub)",
+            nameAr = "برو جيمنج لمعدات الألعاب والكمبيوتر",
+            nameFr = "Pro Gaming Hub Accessoires PC & Consoles",
+            category = StoreCategory.ECOMMERCE,
+            rating = 4.8,
+            reviewCount = 410,
+            deliveryTimeMins = 30,
+            deliveryFee = 18.0,
+            minOrder = 80.0,
+            address = "قرب كلية العلوم والتقنيات، المحمدية",
+            emoji = "🎮",
+            isFeatured = false,
+            badge = "معدات ألعاب احترافية أصلية ⚡",
+            ownerId = "merchant_gaming",
+            bannerUrl = "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&auto=format&fit=crop&q=80",
+            distanceKm = 2.8,
+            isPrimeEligible = true,
+            isVerifiedMerchant = true,
+            isApproved = true,
+            merchantType = "ECOMMERCE"
         )
     )
 
+    // ==========================================
+    // 3. PRODUCTS & DISHES
+    // ==========================================
     val allProducts: List<Product> get() = products
     val products = listOf(
-        // McDonald's items with real food photos
+        // --- 1. TACOS FRANÇAIS (O'Tacos) ---
+        Product(
+            id = "p_otacos_l",
+            storeId = "store_otacos",
+            storeName = "أو تاكوس (O'Tacos)",
+            nameEn = "French Tacos L (2 Meats: Crispy Chicken & Beef)",
+            nameAr = "طاكوس فرنسي L (لحمين: دجاج كريسبي وكفتة مع بطاطس وصلصة جبن)",
+            nameFr = "Tacos Français Taille L (2 Viandes au choix)",
+            descriptionEn = "Authentic French Tacos with crispy chicken tenders and seasoned minced beef, golden fries inside, smothered in homemade cheese sauce (Sauce Fromagère) and Algerian sauce.",
+            descriptionAr = "طاكوس فرنسي أصيل محشو بقطع الدجاج المقرمشة والكفتة البلدية المتبلة، مع الفريت الذهبي داخل التاكوس وصلصة الجبن السويسرية الذائبة وصلصة ألجيريان.",
+            descriptionFr = "Délicieux Tacos 2 viandes (Poulet Crispy & Viande hachée), frites dorées dedans et onctueuse sauce fromagère maison.",
+            price = 48.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🌮",
+            rating = 4.9,
+            isPopular = true,
+            calories = "890 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1615870216519-2f9fa575fa5c?w=600&auto=format&fit=crop&q=80",
+            optionGroups = tacosOptionGroups
+        ),
+        Product(
+            id = "p_otacos_xl",
+            storeId = "store_otacos",
+            storeName = "أو تاكوس (O'Tacos)",
+            nameEn = "French Tacos Gigant XL (3 Meats + Double Cheese Sauce)",
+            nameAr = "طاكوس جيجانت XL (3 لحوم: كفتة ودجاج وكوردون بلو)",
+            nameFr = "Tacos Gigant XL (3 Viandes + Double Sauce)",
+            descriptionEn = "Giant 3-meat French Tacos with minced beef, crispy chicken, and cordon bleu, loaded with fries and signature cheese sauce.",
+            descriptionAr = "طاكوس عملاق بثلاث لحوم شهية: كفتة طازجة، دجاج كريسبي، وكوردون بلو، مع البطاطس وصلصة الجبن المضاعفة.",
+            descriptionFr = "Le géant 3 viandes (Bœuf, Poulet, Cordon Bleu) avec double dose de sauce fromagère et frites.",
+            price = 62.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🌮",
+            rating = 4.9,
+            isPopular = true,
+            calories = "1250 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?w=600&auto=format&fit=crop&q=80",
+            optionGroups = tacosOptionGroups
+        ),
+        Product(
+            id = "p_otacos_gratin",
+            storeId = "store_otacos",
+            storeName = "أو تاكوس (O'Tacos)",
+            nameEn = "Oven Gratiné Tacos (Mozzarella & Cheddar)",
+            nameAr = "طاكوس جراتينيه بالفرن مع الجبن الشيدر والموزاريلا والبيكون",
+            nameFr = "Tacos Gratiné au Four (Cheddar & Bacon)",
+            descriptionEn = "Baked French Tacos coated with melted mozzarella, red cheddar, crispy beef bacon, and fiery samurai sauce.",
+            descriptionAr = "طاكوس مخبوز في الفرن مغطى بطبقة سخية من الموزاريلا والشيدر المذاب وقطع البيكون البقري وصلصة الساموراي الحارة.",
+            descriptionFr = "Tacos gratiné au four sous une couche de mozzarella fondante, cheddar et éclats de bacon.",
+            price = 56.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🧀",
+            rating = 4.9,
+            isPopular = true,
+            calories = "980 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=600&auto=format&fit=crop&q=80",
+            optionGroups = tacosOptionGroups
+        ),
+
+        // --- 2. SHAWARMA & MEDITERRANEAN ---
+        Product(
+            id = "p_shawarma_arabi",
+            storeId = "store_shawarma",
+            storeName = "شاورما الشام الملكية",
+            nameEn = "Arabic Chicken Shawarma Platter (Saj Bread + Garlic Toum)",
+            nameAr = "وجبة شاورما عربي بالدجاج (خبز صاج مع الثومية والبطاطس والمخلل)",
+            nameFr = "Menu Chawarma Poulet Arabe (Pain Saj & Toum)",
+            descriptionEn = "Spit-roasted marinated chicken sliced in toasted saj bread, served with traditional garlic toum cream, golden fries and pickles.",
+            descriptionAr = "دجاج متبل مشوي على السيخ مقطع في خبز الصاج المحمص، يقدم مقطعاً مع كريم الثومية اللبنانية الغنية، البطاطس المقلية والمخلل المشكل.",
+            descriptionFr = "Émincé de poulet mariné rôti à la broche, pain saj croustillant, crème d'ail toum, frites et cornichons.",
+            price = 38.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🥙",
+            rating = 4.9,
+            isPopular = true,
+            calories = "720 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1561651823-34feb02250e4?w=600&auto=format&fit=crop&q=80",
+            optionGroups = shawarmaOptions
+        ),
+        Product(
+            id = "p_sandwich_americain",
+            storeId = "store_shawarma",
+            storeName = "شاورما الشام الملكية",
+            nameEn = "Moroccan Americano Kefta Baguette Sandwich",
+            nameAr = "ساندويتش أمريكان كفتة بلدي مشوية بالجبن الموزاريلا والفريت",
+            nameFr = "Sandwich Américain Kefta Grillée & Fromage",
+            descriptionEn = "Charcoal-grilled Moroccan beef kefta in fresh baguette with melted mozzarella, golden fries inside, and sauce Algérienne.",
+            descriptionAr = "كفتة بقري بلدي مشوية على الفحم داخل باجيت فرنسي طازج مع الجبن الموزاريلا الذائب، البطاطس المقلية، وصلصة ألجيريان اللذيذة.",
+            descriptionFr = "Baguette fraîche garnie de kefta de bœuf grillée au charbon, frites dedans, fromage et sauce Algérienne.",
+            price = 34.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🥖",
+            rating = 4.8,
+            isPopular = true,
+            calories = "680 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1509722747041-616f39b57569?w=600&auto=format&fit=crop&q=80",
+            optionGroups = shawarmaOptions
+        ),
+
+        // --- 3. MCDONALD'S FAVORITES ---
         Product(
             id = "p_mcdo_bigmac",
             storeId = "store_mcdonalds",
@@ -332,6 +672,25 @@ object CatalogData {
             optionGroups = burgerOptions.take(2)
         ),
         Product(
+            id = "p_mcdo_mcchicken",
+            storeId = "store_mcdonalds",
+            storeName = "ماكدونالدز (McDonald's)",
+            nameEn = "McChicken Classic Meal",
+            nameAr = "وجبة ماك تشيكن كلاسيك بالمايونيز والخس",
+            nameFr = "Menu McChicken Classique",
+            descriptionEn = "Crispy breaded chicken patty topped with creamy mayonnaise and shredded lettuce on toasted sesame bun, with fries and drink.",
+            descriptionAr = "شريحة دجاج كريسبي مقرمشة مغطاة بالمايونيز الكريمي والخس المقرمش داخل خبز السمسم، مع بطاطس ومشروب.",
+            descriptionFr = "Poulet pané croustillant, mayonnaise onctueuse et salade fraîche dans un pain au sésame chaud.",
+            price = 48.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🍔",
+            rating = 4.8,
+            isPopular = true,
+            calories = "740 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1550547660-d9450f859349?w=600&auto=format&fit=crop&q=80",
+            optionGroups = burgerOptions
+        ),
+        Product(
             id = "p_mcdo_mcflurry",
             storeId = "store_mcdonalds",
             storeName = "ماكدونالدز (McDonald's)",
@@ -350,7 +709,47 @@ object CatalogData {
             imageUrl = "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80"
         ),
 
-        // KFC items with real food photos
+        // --- 4. BURGER KING & SMASH BURGERS ---
+        Product(
+            id = "p_bk_whopper",
+            storeId = "store_burger_king",
+            storeName = "برجر كينج (Burger King)",
+            nameEn = "Double Whopper Meal Flame-Grilled Beef",
+            nameAr = "وجبة دبل ووبر اللحم البقري المشوي على اللهب",
+            nameFr = "Menu Double Whopper Bœuf Grillé Flamme",
+            descriptionEn = "Two flame-grilled 100% pure beef patties topped with juicy tomatoes, fresh lettuce, creamy mayonnaise, ketchup, crunchy pickles, and sliced onions.",
+            descriptionAr = "شريحتان من اللحم البقري الصافي المشوي على اللهب الحقيقي مع الطماطم، الخس، المايونيز، الكاتشب، المخلل المقرمش والبصل، مع بطاطس ومشروب.",
+            descriptionFr = "Deux viandes grillées à la flamme, tomates, salade, mayonnaise, cornichons et oignons avec frites et boisson.",
+            price = 58.0,
+            category = StoreCategory.BURGER,
+            emoji = "👑",
+            rating = 4.9,
+            isPopular = true,
+            calories = "920 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=600&auto=format&fit=crop&q=80",
+            optionGroups = burgerOptions
+        ),
+        Product(
+            id = "p_smash_burger",
+            storeId = "store_burger_king",
+            storeName = "برجر كينج (Burger King)",
+            nameEn = "Double Smash Angus Burger with Melted Cheddar",
+            nameAr = "دبل سماش برجر أنجوس بالجبن الشيدر الذائب وصوص بيجي",
+            nameFr = "Double Smash Burger Black Angus & Cheddar",
+            descriptionEn = "Two smashed Black Angus beef patties with caramelized crispy edges, double melted aged cheddar, sweet pickles and special Biggy sauce on brioche bun.",
+            descriptionAr = "شريحتا لحم أنجوس فاخر مسطحة ومحمرة بأطراف مقرمشة مع دبل جبن شيدر ذائب وصوص بيجي برجر داخل خبز بريوش طري.",
+            descriptionFr = "Deux steaks Black Angus smashés aux bords croustillants, double cheddar coulant et sauce Biggy dans un pain brioché.",
+            price = 54.0,
+            category = StoreCategory.BURGER,
+            emoji = "🍔",
+            rating = 4.9,
+            isPopular = true,
+            calories = "860 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=600&auto=format&fit=crop&q=80",
+            optionGroups = burgerOptions
+        ),
+
+        // --- 5. KFC FRIED CHICKEN ---
         Product(
             id = "p_kfc_bucket",
             storeId = "store_kfc",
@@ -368,6 +767,25 @@ object CatalogData {
             isPopular = true,
             calories = "1200 kcal",
             imageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=600&auto=format&fit=crop&q=80",
+            optionGroups = burgerOptions.take(2)
+        ),
+        Product(
+            id = "p_kfc_tenders",
+            storeId = "store_kfc",
+            storeName = "كنتاكي (KFC)",
+            nameEn = "Bucket 10 Crispy Tenders + 3 Dips (Samouraï, BBQ, Cheddar)",
+            nameAr = "باكت 10 قطع ستربس تندرز دجاج كريسبي مع 3 صوصات",
+            nameFr = "Boîte 10 Tenders Pur Filet + 3 Sauces",
+            descriptionEn = "10 tender 100% white meat chicken tenders, extra crunchy, served with Samurai spicy sauce, smoky BBQ, and melted cheddar dip.",
+            descriptionAr = "10 أصابع صدور دجاج مخلية فائقة القرمشة بدون عظم، تقدم مع 3 صوصات: ساموراي حار، باربكيو مدخن، وشيدر ذائب.",
+            descriptionFr = "10 savoureux tenders pur filet de poulet marinés et panés avec 3 sauces gourmandes au choix.",
+            price = 68.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🍗",
+            rating = 4.9,
+            isPopular = true,
+            calories = "650 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1569058242253-92a9c755a0ec?w=600&auto=format&fit=crop&q=80",
             optionGroups = burgerOptions.take(2)
         ),
         Product(
@@ -390,7 +808,7 @@ object CatalogData {
             optionGroups = burgerOptions
         ),
 
-        // Pizza Hut items with real food photos
+        // --- 6. PIZZAS & ITALIAN ---
         Product(
             id = "p_ph_supreme",
             storeId = "store_pizzahut",
@@ -410,8 +828,141 @@ object CatalogData {
             imageUrl = "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=600&auto=format&fit=crop&q=80",
             optionGroups = pizzaOptions
         ),
+        Product(
+            id = "p_pizza_4fromages",
+            storeId = "store_pizzahut",
+            storeName = "بيتزا هت (Pizza Hut)",
+            nameEn = "Italian 4 Cheeses Pizza (Mozzarella, Gorgonzola, Emmental, Chèvre)",
+            nameAr = "بيتزا الأجبان الأربعة الإيطالية الأصلية",
+            nameFr = "Pizza Royale 4 Fromages Affinés",
+            descriptionEn = "Rich Italian tomato sauce topped with creamy mozzarella, tangy gorgonzola, nutty emmental, and french goat cheese drizzled with oregano.",
+            descriptionAr = "صلصة طماطم إيطالية غنية تعلوها تشكيلة 4 أجبان فاخرة: موزاريلا طازجة، جورجونزولا، إيمنتال، وجبن الماعز الفرنسي مع الزعتر البري.",
+            descriptionFr = "Un délice de 4 fromages fondants : Mozzarella, Gorgonzola, Emmental et fromage de chèvre.",
+            price = 72.0,
+            category = StoreCategory.PIZZA,
+            emoji = "🧀",
+            rating = 4.9,
+            isPopular = true,
+            calories = "840 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1573821663912-569905455b1c?w=600&auto=format&fit=crop&q=80",
+            optionGroups = pizzaOptions
+        ),
 
-        // Paul Bakery items with real food photos
+        // --- 7. MOROCCAN AUTHENTIC TRADITIONAL ---
+        Product(
+            id = "p_tajine_meat",
+            storeId = "store_tajine",
+            storeName = "طاجين البركة - القصبة",
+            nameEn = "Royal Lamb Tajine with Caramelized Prunes & Almonds",
+            nameAr = "طاجين اللحم بالبرقوق والمشمش المعسل واللوز الملكي",
+            nameFr = "Tajine d'Agneau aux Pruneaux Royal",
+            descriptionEn = "Tender slow-cooked lamb with sweet caramelized prunes, toasted almonds, and fragrant Moroccan saffron spices.",
+            descriptionAr = "لحم ضأن طري مطهو على الفحم ببطء مع برقوق معسل باللوز المحمص والزعفران الحر والسمسم.",
+            descriptionFr = "Agneau fondant mijoté aux pruneaux caramélisés, amandes grillées et safran pur.",
+            price = 65.0,
+            category = StoreCategory.MOROCCAN,
+            emoji = "🍲",
+            rating = 4.9,
+            isPopular = true,
+            calories = "620 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=600&auto=format&fit=crop&q=80"
+        ),
+        Product(
+            id = "p_tajine_poulet",
+            storeId = "store_tajine",
+            storeName = "طاجين البركة - القصبة",
+            nameEn = "Free-range Chicken Tajine with Preserved Lemon & Red Olives",
+            nameAr = "طاجين الدجاج البلدي بالليمون المصير والزيتون الأحمر والفريت",
+            nameFr = "Tajine de Poulet Beldi au Citron Confit & Olives",
+            descriptionEn = "Traditional Moroccan chicken tajine simmered in ginger, garlic, fresh coriander, preserved lemons, and cured red olives.",
+            descriptionAr = "دجاج بلدي مغربي مطهو بالدغميرة العريقة، الزنجبيل الطري، الثوم والكزبرة مع الليمون الحامض المصير والزيتون الأحمر والبطاطس المقرمشة.",
+            descriptionFr = "Poulet mijoté à la marocaine avec sauce daghmira onctueuse, citrons confits et olives rouges.",
+            price = 55.0,
+            category = StoreCategory.MOROCCAN,
+            emoji = "🍗",
+            rating = 4.9,
+            isPopular = true,
+            calories = "560 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1584947897593-306915228581?w=600&auto=format&fit=crop&q=80"
+        ),
+        Product(
+            id = "p_couscous_royale",
+            storeId = "store_tajine",
+            storeName = "طاجين البركة - القصبة",
+            nameEn = "Grand Royal Couscous (7 Vegetables + Beef & Tfaya)",
+            nameAr = "كسكس ملكي مغربي بالسبع خضار والتفاية واللحم البقري",
+            nameFr = "Couscous Royal aux Sept Légumes & Tfaya",
+            descriptionEn = "Steamed semolina topped with tender beef, chickpeas, sweet caramelized onion & raisin tfaya, and 7 garden vegetables.",
+            descriptionAr = "سميد ناعم مبخر على البخار مع لحم بقري شهي، حمص، تفاية بصل وزبيب معسلة، وسبع خضار موسمية طازجة.",
+            descriptionFr = "Semoule fine à la vapeur, viande de bœuf, pois chiches, tfaya caramélisée et 7 légumes frais.",
+            price = 60.0,
+            category = StoreCategory.MOROCCAN,
+            emoji = "🥣",
+            rating = 5.0,
+            isPopular = true,
+            calories = "580 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80"
+        ),
+
+        // --- 8. SEAFOOD PORT OF MOHAMMEDIA ---
+        Product(
+            id = "p_fish_plate",
+            storeId = "store_seafood",
+            storeName = "شواية الميناء للأسماك الطازجة",
+            nameEn = "Mixed Grilled Seafood Platter (Sea Bass, Jumbo Shrimp, Calamari)",
+            nameAr = "طبق فواكه البحر المشكلة المشوية (سلطان إبراهيم، روبيان، كلمار مع صلصة الشرمولة والتارتار)",
+            nameFr = "Plateau de Poissons et Fruits de Mer Grillés",
+            descriptionEn = "Fresh calamari, jumbo shrimp, sea bass fillet, and sardines with charmoula marinade, lemon, tartar sauce and garlic fries.",
+            descriptionAr = "تشكيلة أسماك طازجة مشوية على الفحم: كلمار، قمرون جامبو، سمك الدرعي، مع تتبيلة الشرمولة المغربية وصلصة التارتار والليمون.",
+            descriptionFr = "Calamars, crevettes géantes, bar grillé avec marinade chermoula traditionnelle et sauce tartare.",
+            price = 85.0,
+            category = StoreCategory.MOROCCAN,
+            emoji = "🦐",
+            rating = 4.9,
+            isPopular = true,
+            calories = "540 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&auto=format&fit=crop&q=80"
+        ),
+
+        // --- 9. ASIAN SUSHI & WOK ---
+        Product(
+            id = "p_sushi_platter",
+            storeId = "store_sushi",
+            storeName = "طوكيو سوشي بار (Tokyo Sushi)",
+            nameEn = "Tokyo California & Salmon Maki Platter (18 pcs)",
+            nameAr = "بلاطو سوشي مشكل 18 قطعة (كاليفورنيا رول، ماكي سلمون طازج، أفوكادو، وجبنة فيلادلفيا)",
+            nameFr = "Plateau Sushi Mixte 18 Pièces (California & Maki)",
+            descriptionEn = "18 freshly rolled sushi pieces: fresh salmon maki, tuna avocado roll, crispy shrimp tempura california with wasabi, pickled ginger and sweet soy sauce.",
+            descriptionAr = "18 قطعة سوشي طازجة محضرة فوراً: ماكي السلمون النرويجي، كاليفورنيا بالروبيان كريسبي والأفوكادو، تقدم مع صوص الصويا، الوسابي والزنجبيل المخلل.",
+            descriptionFr = "Assortiment de 18 sushis frais : maki saumon, california rolls tempura crevette, sauce soja et wasabi.",
+            price = 89.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🍣",
+            rating = 4.8,
+            isPopular = true,
+            calories = "490 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&auto=format&fit=crop&q=80"
+        ),
+        Product(
+            id = "p_wok_noodles",
+            storeId = "store_sushi",
+            storeName = "طوكيو سوشي بار (Tokyo Sushi)",
+            nameEn = "Wok Stir-Fried Noodles with Crispy Chicken & Veggies",
+            nameAr = "نودلز صينية مقلية بالووك مع الدجاج المقرمش والخضار وصلصة الصويا والسمسم",
+            nameFr = "Nouilles Wok Sautées au Poulet Croustillant",
+            descriptionEn = "Egg noodles wok-tossed on high flame with seasoned chicken strips, crunchy bell peppers, cabbage, bean sprouts and teriyaki soy glaze.",
+            descriptionAr = "نودلز بيض مقلية على لهب الووك العالي مع شرائح الدجاج المتبلة، الخضار المقرمشة، السمسم وصوص الترياكي الآسيوي.",
+            descriptionFr = "Nouilles sautées au wok au poulet tendre, légumes croquants et sauce soja caramélisée.",
+            price = 46.0,
+            category = StoreCategory.FAST_FOOD,
+            emoji = "🥢",
+            rating = 4.8,
+            isPopular = true,
+            calories = "520 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&auto=format&fit=crop&q=80"
+        ),
+
+        // --- 10. PAUL BAKERY, DESSERTS & COFFEE ---
         Product(
             id = "p_paul_croissant",
             storeId = "store_paul",
@@ -431,83 +982,25 @@ object CatalogData {
             imageUrl = "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&auto=format&fit=crop&q=80"
         ),
         Product(
-            id = "p_paul_tart",
+            id = "p_tiramisu",
             storeId = "store_paul",
             storeName = "بول كافيه (Paul Bakery & Café)",
-            nameEn = "Fresh Strawberry Tartlet",
-            nameAr = "تارت الفراولة الطازجة بكريمة الفانيلا",
-            nameFr = "Tartelette aux Fraises Fraîches",
-            descriptionEn = "Crisp sweet shortcrust pastry filled with vanilla bean pastry cream and overflowing with fresh strawberries.",
-            descriptionAr = "عجينة تارت مقرمشة وهشة محشوة بكريمة الباتيسيير بفانيليا مدغشقر ومغطاة بحبات الفراولة الطازجة.",
-            descriptionFr = "Pâte sablée croquante, crème pâtissière à la vanille et fraises fraîches de saison.",
-            price = 32.0,
+            nameEn = "Homemade Nutella & Speculoos Tiramisu",
+            nameAr = "تيراميسو إيطالي طازج بنوتيلا وبسكويت اللوتس سبيكولوس",
+            nameFr = "Tiramisu Maison Nutella & Spéculoos",
+            descriptionEn = "Layered creamy mascarpone cheese with espresso soaked ladyfingers, rich Nutella swirl and crunchy Belgian speculoos crumble.",
+            descriptionAr = "طبقات كريمة جبن الماسكاربوني المخفوق مع بسكويت مغموس في الإسبريسو، صوص النوتيلا اللذيذ وبسكويت اللوتس المقرمش.",
+            descriptionFr = "Crème mascarpone onctueuse, biscuit imbibé au café, cœur Nutella et éclats de spéculoos croquants.",
+            price = 26.0,
             category = StoreCategory.CAFE,
-            emoji = "🍓",
+            emoji = "🍰",
             rating = 4.9,
             isPopular = true,
-            calories = "310 kcal",
-            imageUrl = "https://images.unsplash.com/photo-1519869325930-281384150729?w=600&auto=format&fit=crop&q=80"
+            calories = "340 kcal",
+            imageUrl = "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600&auto=format&fit=crop&q=80"
         ),
 
-        // Moroccan authentic items with real food photos
-        Product(
-            id = "p_tajine_meat",
-            storeId = "store_tajine",
-            storeName = "طاجين فاس الملكي",
-            nameEn = "Royal Lamb Tajine with Prunes",
-            nameAr = "طاجين اللحم بالبرقوق والمشمش الملكي",
-            nameFr = "Tajine d'Agneau aux Pruneaux Royal",
-            descriptionEn = "Tender slow-cooked lamb with sweet caramelized prunes, toasted almonds, and fragrant Moroccan saffron spices.",
-            descriptionAr = "لحم ضأن طري مطهو على الفحم ببطء مع برقوق معسل باللوز المحمص والزعفران الحر والسمسم.",
-            descriptionFr = "Agneau fondant mijoté aux pruneaux caramélisés, amandes grillées et safran pur.",
-            price = 65.0,
-            category = StoreCategory.MOROCCAN,
-            emoji = "🍲",
-            rating = 4.9,
-            isPopular = true,
-            calories = "620 kcal",
-            imageUrl = "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?w=600&auto=format&fit=crop&q=80"
-        ),
-        Product(
-            id = "p_couscous_royale",
-            storeId = "store_tajine",
-            storeName = "طاجين فاس الملكي",
-            nameEn = "Grand Royal Couscous (7 Vegetables)",
-            nameAr = "كسكس ملكي مغربي بالسبع خضار",
-            nameFr = "Couscous Royal aux Sept Légumes",
-            descriptionEn = "Steamed semolina topped with tender beef, chickpeas, raisins, and fresh garden vegetables in rich broth.",
-            descriptionAr = "سميد ناعم مبخر على البخار مع لحم بقري شهي، حمص، تفاية بصل وزبيب، وسبع خضار موسمية طازجة.",
-            descriptionFr = "Semoule fine à la vapeur, viande de bœuf, pois chiches, tfaya et 7 légumes frais.",
-            price = 60.0,
-            category = StoreCategory.MOROCCAN,
-            emoji = "🥣",
-            rating = 5.0,
-            isPopular = true,
-            calories = "580 kcal",
-            imageUrl = "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80"
-        ),
-
-        // Seafood Port items with real food photos
-        Product(
-            id = "p_fish_plate",
-            storeId = "store_seafood",
-            storeName = "شواية الميناء للأسماك الطازجة",
-            nameEn = "Mixed Grilled Seafood Platter",
-            nameAr = "طبق فواكه البحر المشكلة المشوية (سلطان إبراهيم، روبيان، كلمار)",
-            nameFr = "Plateau de Poissons et Fruits de Mer Grillés",
-            descriptionEn = "Fresh calamari, jumbo shrimp, sea bass fillet, and sardines with charmoula marinade, lemon and garlic fries.",
-            descriptionAr = "تشكيلة أسماك طازجة مشوية على الفحم: كلمار، قمرون جامبو، سمك الدرعي، مع تتبيلة الشرمولة المغربية والليمون.",
-            descriptionFr = "Calamars, crevettes géantes, bar grillé avec marinade chermoula traditionnelle.",
-            price = 85.0,
-            category = StoreCategory.MOROCCAN,
-            emoji = "🦐",
-            rating = 4.9,
-            isPopular = true,
-            calories = "540 kcal",
-            imageUrl = "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=600&auto=format&fit=crop&q=80"
-        ),
-
-        // Marjane Groceries items with real food photos
+        // --- 11. MARJANE SUPERMARKET GROCERIES ---
         Product(
             id = "p_marjane_pack",
             storeId = "store_marjane",
@@ -527,7 +1020,7 @@ object CatalogData {
             imageUrl = "https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80"
         ),
 
-        // Pharmacy items with real food photos
+        // --- 12. PHARMACY & EXPRESS PICKUP ---
         Product(
             id = "p_pharma_care",
             storeId = "store_pharmacy",
@@ -546,8 +1039,6 @@ object CatalogData {
             calories = "Health",
             imageUrl = "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&auto=format&fit=crop&q=80"
         ),
-
-        // Express Parcels
         Product(
             id = "p_express_service",
             storeId = "store_express",
@@ -565,6 +1056,157 @@ object CatalogData {
             isPopular = true,
             calories = "Instant",
             imageUrl = "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=600&auto=format&fit=crop&q=80"
+        ),
+
+        // ==========================================
+        // 13. E-COMMERCE & HIGH-TECH MARKETPLACE (Verified Merchants)
+        // ==========================================
+        Product(
+            id = "p_airpods_pro",
+            storeId = "store_tech_express",
+            storeName = "تيك زون إلكترونيات المحمدية (TechZone)",
+            nameEn = "Wireless Earbuds Pro 2 (Active Noise Cancellation ANC)",
+            nameAr = "سماعات إيربودز برو 2 اللاسلكية الأصلية (ANC عزل الضوضاء + علبة شحن MagSafe)",
+            nameFr = "Écouteurs Sans Fil Pro 2 ANC Réduction de Bruit",
+            descriptionEn = "Premium wireless earbuds with active noise cancellation, spatial audio, touch controls, transparency mode, and 30h battery life with MagSafe case.",
+            descriptionAr = "سماعات بلوتوث لاسلكية بريميوم مع ميزة العزل النشط للضوضاء ANC، صوت محيطي ثلاثي الأبعاد، ميكروفون نقي للمكالمات وبطارية تدوم 30 ساعة.",
+            descriptionFr = "Écouteurs Bluetooth haute fidélité avec réduction active du bruit ambiant, son spatial et étui de recharge MagSafe.",
+            price = 280.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "🎧",
+            rating = 4.9,
+            isPopular = true,
+            calories = "Tech",
+            imageUrl = "https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "ضمان رسمي 12 شهراً مع استبدال فوري",
+            brand = "TechZone Pro",
+            stockCount = 25
+        ),
+        Product(
+            id = "p_smartwatch_ultra",
+            storeId = "store_tech_express",
+            storeName = "تيك زون إلكترونيات المحمدية (TechZone)",
+            nameEn = "Smartwatch Ultra AMOLED Waterproof Fitness Tracker",
+            nameAr = "ساعة يد ذكية الترا AMOLED مع قياس النبض ومقاومة الماء وشاحن مغناطيسي",
+            nameFr = "Montre Connectée Ultra Écran AMOLED Étanche",
+            descriptionEn = "Ultra durable aerospace titanium smartwatch with vibrant AMOLED display, heart rate, sleep monitor, GPS tracking, and bluetooth calling.",
+            descriptionAr = "ساعة ذكية مقاومة للصدمات والماء بهيكل تيتانيوم صلب، شاشة أموليد ساطعة، قياس ضربات القلب والأكسجين، وإجراء المكالمات بالبلوتوث.",
+            descriptionFr = "Montre intelligente étanche IP68, écran HD AMOLED, suivi santé, sommeil, sport et appels Bluetooth.",
+            price = 240.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "⌚",
+            rating = 4.9,
+            isPopular = true,
+            calories = "Tech",
+            imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "ضمان 12 شهر مع دعم تطبيق Android / iOS",
+            brand = "UltraWatch",
+            stockCount = 30
+        ),
+        Product(
+            id = "p_fast_charger_65w",
+            storeId = "store_tech_express",
+            storeName = "تيك زون إلكترونيات المحمدية (TechZone)",
+            nameEn = "65W GaN Fast Charger Multi-Port USB-C for iPhone & Android",
+            nameAr = "شاحن سريع 65W GaN ثلاثي المنافذ Type-C لهواتف آيفون وسامسونج واللابتوب",
+            nameFr = "Chargeur Rapide 65W GaN 3 Ports Type-C & USB",
+            descriptionEn = "Compact GaN III fast charger with 2 USB-C and 1 USB-A ports, fast charges iPhone from 0 to 60% in 30 minutes, supports laptops.",
+            descriptionAr = "شاحن جاليوم نيتريد GaN فائق السرعة والأمان بثلاثة منافذ، يشحن الهواتف من 0 إلى 60% في 25 دقيقة مع حماية ذكية ضد الحرارة.",
+            descriptionFr = "Technologie GaN compacte 65W, recharge ultra rapide pour smartphones, tablettes et ordinateurs.",
+            price = 120.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "🔌",
+            rating = 4.8,
+            isPopular = false,
+            calories = "Tech",
+            imageUrl = "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "ضمان أمان معتمد 12 شهر",
+            brand = "GaN Power",
+            stockCount = 45
+        ),
+        Product(
+            id = "p_hoodie_oversize",
+            storeId = "store_fashion_boutique",
+            storeName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)",
+            nameEn = "Heavyweight Oversize Cotton Hoodie 450g Luxury Streetwear",
+            nameAr = "هودي أوفرسايز قطن ثقيل بريميوم 450g بتطريز مونوغرام فاخر",
+            nameFr = "Sweat à Capuche Hoodie Oversize Coton 450g",
+            descriptionEn = "Heavyweight 100% combed cotton fleece hoodie with premium relaxed drop-shoulder cut, double-lined hood, and kangaroo pocket.",
+            descriptionAr = "هودي عصري واسع أوفرسايز مصنوع من قطن نقي ثقيل 450 غرام فائق النعومة، مع كابيشون مبطن وجيب كانغرو مريح.",
+            descriptionFr = "Hoodie streetwear coupe oversize moderne, coton lourd brossé doux et finitions haut de gamme.",
+            price = 195.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "🧥",
+            rating = 4.9,
+            isPopular = true,
+            calories = "Fashion",
+            imageUrl = "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "ضمان الجودة مع إرجاع وتبديل مجاني للمقاس",
+            brand = "Urban Casa",
+            stockCount = 40
+        ),
+        Product(
+            id = "p_parfum_oud_royal",
+            storeId = "store_fashion_boutique",
+            storeName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)",
+            nameEn = "Royal Oud Intense Luxury Unisex Perfume (100ml)",
+            nameAr = "عطر عود رويال الفاخر 100ml للجنسين (ثبات 24 ساعة برائحة العود والعنبر)",
+            nameFr = "Eau de Parfum Oud Royal Intense 100ml",
+            descriptionEn = "Prestigious oriental fragrance blending rich cambodian oud, smoky amber, french rose, and warm vanilla with 24-hour long lasting sillage.",
+            descriptionAr = "عطر شرقي ملكي ساحر يجمع بين دهن العود الكمبودي النادر، العنبر المدخن، الورد والباتشولي، بتركيز بارفام يدوم طوال اليوم.",
+            descriptionFr = "Fragrance envoûtante mêlant oud noble, ambre chaud et vanille bourbon, tenue exceptionnelle.",
+            price = 320.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "🧴",
+            rating = 5.0,
+            isPopular = true,
+            calories = "Luxury",
+            imageUrl = "https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "عطر أصلي 100% مختوم ومصادق عليه",
+            brand = "Parfumerie Royale",
+            stockCount = 20
+        ),
+        Product(
+            id = "p_gaming_headset_71",
+            storeId = "store_gaming_hub",
+            storeName = "برو جيمنج شوب (Pro Gaming Hub)",
+            nameEn = "Pro Gaming 7.1 Surround Sound Headset with Noise-Cancelling Mic",
+            nameAr = "سماعة ألعاب محيطية 7.1 Surround بإضاءة RGB ومايك عازل للضوضاء للـ PS5 والـ PC",
+            nameFr = "Casque Gamer 7.1 Surround RGB avec Micro Anti-Bruit",
+            descriptionEn = "Immersive 7.1 virtual surround sound gaming headset with 50mm neodymium drivers, ultra soft memory foam earcups, dynamic RGB lighting and clear mic.",
+            descriptionAr = "سماعة جيمنج احترافية بصوت محيطي 7.1 يمكنك من تحديد أماكن الأقدام بدقة، وسائد أذن ميموري فوم مريحة لساعات اللعب الطويلة، ومايك نقي.",
+            descriptionFr = "Casque gaming immersif avec spatialisation 7.1, haut-parleurs 50mm, coussinets à mémoire de forme et éclairage RGB.",
+            price = 290.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "🎮",
+            rating = 4.8,
+            isPopular = true,
+            calories = "Gaming",
+            imageUrl = "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "ضمان احترافي 12 شهراً",
+            brand = "HyperGaming",
+            stockCount = 18
+        ),
+        Product(
+            id = "p_leather_bag_artisan",
+            storeId = "store_fashion_boutique",
+            storeName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)",
+            nameEn = "Handcrafted Authentic Moroccan Full-Grain Leather Backpack",
+            nameAr = "حقيبة ظهر جلد طبيعي مغربي أصيل يدوية الصنع لجهاز اللابتوب والسفر",
+            nameFr = "Sac à Dos en Cuir Véritable Artisanal Marocain",
+            descriptionEn = "100% full-grain tanned genuine Moroccan leather backpack handcrafted by master artisans, fits 15.6-inch laptop with reinforced brass buckles.",
+            descriptionAr = "حقيبة ظهر فخمة مصنوعة يدوياً من الجلد المغربي الطبيعي الأصيل 100%، تتسع للابتوب 15.6 إنش مع جيوب مبطنة وسحابات نحاسية عتيقة مقاومة للتآكل.",
+            descriptionFr = "Cuir pleine fleur tanné traditionnellement, coutures renforcées et compartiment pour ordinateur portable.",
+            price = 350.0,
+            category = StoreCategory.ECOMMERCE,
+            emoji = "🎒",
+            rating = 4.9,
+            isPopular = true,
+            calories = "Artisan",
+            imageUrl = "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80",
+            warrantyInfo = "ضمان جودة الجلد الطبيعي الأصيل مدى الحياة",
+            brand = "Artisanat Maroc",
+            stockCount = 15
         )
     )
 }

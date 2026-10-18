@@ -243,31 +243,55 @@ object AiShoppingService {
     ): AiShoppingRecommendation {
         val q = query.lowercase(Locale.ROOT).trim()
 
-        // 1. Detect requested custom notes / preferences
+        // 1. Detect requested custom sauces and culinary notes
         val detectedNotes = mutableListOf<String>()
+        if (q.contains("algerienne") || q.contains("algérienne") || q.contains("الجزائرية") || q.contains("ألجيريان")) {
+            detectedNotes.add("Sauce Algérienne 🌶️")
+        }
+        if (q.contains("fromagere") || q.contains("fromagère") || q.contains("فرماجير") || q.contains("صلصة الجبن")) {
+            detectedNotes.add("Sauce Fromagère Maison 🧀")
+        }
+        if (q.contains("samourai") || q.contains("samouraï") || q.contains("ساموراي")) {
+            detectedNotes.add("Sauce Samouraï Piquante 🔥")
+        }
+        if (q.contains("biggy") || q.contains("بيجي")) {
+            detectedNotes.add("Sauce Biggy Burger 🍔")
+        }
+        if (q.contains("andalouse") || q.contains("أندلسية") || q.contains("اندلسية")) {
+            detectedNotes.add("Sauce Andalouse")
+        }
+        if (q.contains("bbq") || q.contains("barbecue") || q.contains("باربكيو")) {
+            detectedNotes.add("Sauce Barbecue Fumée")
+        }
+        if (q.contains("toum") || q.contains("ثومية") || q.contains("تومية") || q.contains("creme d'ail") || q.contains("crème d'ail")) {
+            detectedNotes.add("Crème d'Ail Toum Libanais 🧄")
+        }
+        if (q.contains("cheddar") || q.contains("شيدر")) {
+            detectedNotes.add("Sauce Cheddar Fondu 🧀")
+        }
+        if (q.contains("poivre") || q.contains("فلفل اسود") || q.contains("فلفل أسود")) {
+            detectedNotes.add("Sauce Poivre Noir")
+        }
+        if (q.contains("curry") || q.contains("كاري")) {
+            detectedNotes.add("Sauce Curry Doux")
+        }
+        if (q.contains("harissa") || q.contains("هريسة") || q.contains("حار") || q.contains("piquant") || q.contains("har") || q.contains("7ar")) {
+            detectedNotes.add("Harissa Beldia Piquante 🇲🇦")
+        }
+        if (q.contains("sweet chili") || q.contains("سويت تشيلي")) {
+            detectedNotes.add("Sauce Sweet Chili Thaï")
+        }
         if (q.contains("sans oignon") || q.contains("bla bsel") || q.contains("bla bsal") || q.contains("بدون بصل") || q.contains("بلا بصل")) {
             detectedNotes.add("Sans oignon")
         }
-        if (q.contains("piquant") || q.contains("har") || q.contains("7ar") || q.contains("حار") || q.contains("spicy") || q.contains("épicé") || q.contains("sauce piquante") || q.contains("samourai")) {
-            detectedNotes.add("Sauce piquante 🔥")
-        }
-        if (q.contains("extra fromage") || q.contains("fermaj zayed") || q.contains("فرماج زايد") || q.contains("جبن إضافي") || q.contains("cheesy")) {
+        if (q.contains("extra fromage") || q.contains("fermaj zayed") || q.contains("فرماج زايد") || q.contains("جبن إضافي")) {
             detectedNotes.add("Extra fromage fondu 🧀")
         }
-        if (q.contains("bien cuit") || q.contains("mehmmer") || q.contains("محمر مزيان") || q.contains("crispy") || q.contains("مقرمش") || q.contains("tayeb mzyan")) {
+        if (q.contains("bien cuit") || q.contains("mehmmer") || q.contains("محمر مزيان") || q.contains("crispy") || q.contains("مقرمش")) {
             detectedNotes.add("Bien cuit & croustillant")
         }
-        if (q.contains("urgent") || q.contains("daba") || q.contains("دابا") || q.contains("سريع") || q.contains("vite") || q.contains("express")) {
-            detectedNotes.add("Priorité Express ⚡")
-        }
-        if (q.contains("frais") || q.contains("tari") || q.contains("طازج") || q.contains("fresh")) {
-            detectedNotes.add("100% Frais du jour")
-        }
-        if (q.contains("sauce barbecue") || q.contains("bbq") || q.contains("باربكيو")) {
-            detectedNotes.add("Sauce BBQ fumée")
-        }
 
-        // Global default quantity if specified (e.g. "2 pizzas", "3 tajines", "joj", "tleta")
+        // Global default quantity
         val defaultQty = when {
             q.contains("زوج") || q.contains("جوج") || q.contains("joj") || q.contains("deux") || q.contains("two") || q.contains(" 2 ") || q.startsWith("2 ") -> 2
             q.contains("تلاتة") || q.contains("ثلاثة") || q.contains("tleta") || q.contains("trois") || q.contains("three") || q.contains(" 3 ") || q.startsWith("3 ") -> 3
@@ -280,182 +304,235 @@ object AiShoppingService {
         var storeEmoji = "🍔"
         var explanationFr = ""
         var explanationAr = ""
+        val notesStr = if (detectedNotes.isNotEmpty()) detectedNotes.joinToString(" • ") else "Préparation soignée avec frites et sauces"
 
-        // Multi-item checks:
-        val hasBigMac = q.contains("big mac") || q.contains("بيج ماك") || q.contains("burger") || q.contains("برجر") || q.contains("همبرغر") || q.contains("sandwiche") || q.contains("وجبة")
+        // 1. E-Commerce Marketplace Items (High-Tech, Fashion, Perfume, Gaming)
+        val hasAirpods = q.contains("airpod") || q.contains("ecouteur") || q.contains("écouteur") || q.contains("سماعات") || q.contains("ايربودز") || q.contains("إيربودز") || q.contains("earbuds")
+        val hasSmartwatch = q.contains("smartwatch") || q.contains("montre") || q.contains("ساعة") || q.contains("ساعه") || q.contains("ultra")
+        val hasCharger = q.contains("chargeur") || q.contains("شاحن") || q.contains("fast charge") || q.contains("gan") || q.contains("cable")
+        val hasHoodie = q.contains("hoodie") || q.contains("sweat") || q.contains("هودي") || q.contains("لباس") || q.contains("ملابس") || q.contains("veste")
+        val hasParfum = q.contains("parfum") || q.contains("عطر") || q.contains("عود") || q.contains("oud") || q.contains("روائح")
+        val hasGaming = q.contains("casque gamer") || q.contains("gaming") || q.contains("جيمنج") || q.contains("العاب") || q.contains("ألعاب") || q.contains("headset")
+        val hasLeather = q.contains("sac") || q.contains("حقيبة") || q.contains("جلد") || q.contains("cuir") || q.contains("محفظة")
+
+        // 2. Food & Restaurant items
+        val hasTacos = q.contains("tacos") || q.contains("طاكوس") || q.contains("تاكوس") || q.contains("otacos") || q.contains("o'tacos")
+        val hasShawarma = q.contains("shawarma") || q.contains("chawarma") || q.contains("شاورما") || q.contains("ساندويتش") || q.contains("americain") || q.contains("أمريكان")
+        val hasBurgerKing = q.contains("whopper") || q.contains("ووبر") || q.contains("burger king") || q.contains("برجر كينج") || q.contains("smash") || q.contains("سماش")
+        val hasBigMac = q.contains("big mac") || q.contains("بيج ماك") || q.contains("burger") || q.contains("برجر") || q.contains("همبرغر") || q.contains("mcdo")
         val hasNuggets = q.contains("nugget") || q.contains("ناجتس") || q.contains("ناغتس") || q.contains("قطع دجاج")
-        val hasMcFlurry = q.contains("mcflurry") || q.contains("ماك فلوري") || q.contains("glace") || q.contains("آيس كريم") || q.contains("ايس كريم") || q.contains("dessert")
+        val hasKfc = q.contains("bucket") || q.contains("باكت") || q.contains("kfc") || q.contains("كنتاكي") || q.contains("zinger") || q.contains("زنجر") || q.contains("tenders") || q.contains("تندرز")
+        val hasPizza = q.contains("pizza") || q.contains("بيتزا") || q.contains("بيدزا") || q.contains("4 fromages") || q.contains("أجبان") || q.contains("supreme")
+        val hasTajine = q.contains("tajine") || q.contains("طاجين") || q.contains("couscous") || q.contains("كسكس") || q.contains("لحم") || q.contains("برقوق")
+        val hasFish = q.contains("poisson") || q.contains("fruit de mer") || q.contains("crevette") || q.contains("حوت") || q.contains("سمك") || q.contains("قمرون") || q.contains("شواية")
+        val hasSushi = q.contains("sushi") || q.contains("سوشي") || q.contains("maki") || q.contains("california") || q.contains("wok") || q.contains("نودلز") || q.contains("nouilles")
+        val hasCroissant = q.contains("croissant") || q.contains("كرواسون") || q.contains("tiramisu") || q.contains("تيراميسو") || q.contains("paul") || q.contains("بول") || q.contains("قهوة")
+        val hasGrocery = q.contains("marjane") || q.contains("مرجان") || q.contains("حليب") || q.contains("بيض") || q.contains("زيت") || q.contains("courses")
+        val hasPharma = q.contains("pharmacie") || q.contains("صيدلية") || q.contains("دواء") || q.contains("vitamine") || q.contains("فيتامين") || q.contains("doliprane")
 
-        val hasKfcBucket = q.contains("bucket") || q.contains("باكت") || q.contains("باكيت") || q.contains("سطل") || q.contains("دجاج كنتاكي") || q.contains("kfc") || q.contains("poulet croustillant") || q.contains("دجاج مقلي")
-        val hasZinger = q.contains("zinger") || q.contains("زنجر") || q.contains("مايتي") || q.contains("mighty")
+        var isEcommerceOrder = false
 
-        val hasPizza = q.contains("pizza") || q.contains("بيتزا") || q.contains("بيدزا") || q.contains("supreme") || q.contains("سوبريم") || q.contains("pepperoni") || q.contains("croûte") || q.contains("margherita")
-        val hasCroissant = q.contains("croissant") || q.contains("كرواسون") || q.contains("مخبز") || q.contains("paul") || q.contains("بول") || q.contains("viennoiserie") || q.contains("petit déjeuner") || q.contains("فطور") || q.contains("ftour") || q.contains("قهوة")
-        val hasTart = q.contains("tart") || q.contains("تارت") || q.contains("fraise") || q.contains("فراولة") || q.contains("gâteau") || q.contains("حلوى") || q.contains("patisserie")
-
-        val hasTajine = q.contains("tajine") || q.contains("طاجين") || q.contains("لحم") || q.contains("pruneaux") || q.contains("برقوق") || q.contains("l7am") || q.contains("barkouk")
-        val hasCouscous = q.contains("couscous") || q.contains("كسكس") || q.contains("كسكسو") || q.contains("خضار") || q.contains("seksou")
-
-        val hasFish = q.contains("poisson") || q.contains("fruit de mer") || q.contains("crevette") || q.contains("calamar") || q.contains("حوت") || q.contains("سمك") || q.contains("فواكه البحر") || q.contains("شواية") || q.contains("قمرون") || q.contains("7out")
-        val hasGrocery = q.contains("marjane") || q.contains("مرجان") || q.contains("lait") || q.contains("حليب") || q.contains("oeuf") || q.contains("œuf") || q.contains("بيض") || q.contains("huile") || q.contains("زيت") || q.contains("courses") || q.contains("épicerie") || q.contains("سلة") || q.contains("hlib") || q.contains("bayd")
-        val hasPharma = q.contains("pharmacie") || q.contains("صيدلية") || q.contains("médicament") || q.contains("دواء") || q.contains("vitamine") || q.contains("فيتامين") || q.contains("paracétamol") || q.contains("doliprane") || q.contains("دولبران") || q.contains("صداع")
-        val hasCourier = q.contains("coursier") || q.contains("كابتن") || q.contains("مندوب") || q.contains("colis") || q.contains("طرد") || q.contains("مفاتيح") || q.contains("ألو جيب لي") || q.contains("express") || q.contains("jib liya") || q.contains("swart")
-
-        // 1. McDonald's match
-        if (hasBigMac || hasNuggets || hasMcFlurry) {
-            mainStoreName = "McDonald's Miramar Mohammedia"
-            storeEmoji = "🍔"
-            val notesStr = if (detectedNotes.isNotEmpty()) detectedNotes.joinToString(" • ") else "Menu Maxi avec Frites et Boisson fraîche"
-
-            if (hasBigMac || (!hasNuggets && !hasMcFlurry)) {
-                products.find { it.id == "p_mcdo_bigmac" }?.let {
-                    val qty = if (q.contains("2 big mac") || q.contains("deux big mac") || q.contains("جوج بيج ماك") || q.contains("joj big mac")) 2 else defaultQty
-                    matchedItems.add(AiRecommendedItem(it, qty, notesStr, it.price * qty))
+        // Match Logic:
+        // A. E-COMMERCE SECTOR MATCH
+        if (hasAirpods || hasSmartwatch || hasCharger || hasGaming) {
+            isEcommerceOrder = true
+            mainStoreName = "تيك زون إلكترونيات المحمدية (TechZone)"
+            storeEmoji = "📱"
+            if (hasAirpods || (!hasSmartwatch && !hasCharger && !hasGaming)) {
+                products.find { it.id == "p_airpods_pro" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, defaultQty, "ضمان 12 شهراً • تغليف طرد آمن", it.price * defaultQty))
                 }
+            }
+            if (hasSmartwatch) {
+                products.find { it.id == "p_smartwatch_ultra" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, 1, "ضمان رسمي • شاحن مغناطيسي أصلي", it.price))
+                }
+            }
+            if (hasCharger) {
+                products.find { it.id == "p_fast_charger_65w" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, 1, "شاحن سريع GaN ثلاثي المنافذ", it.price))
+                }
+            }
+            if (hasGaming) {
+                products.find { it.id == "p_gaming_headset_71" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, 1, "سماعة محيطية 7.1 RGB احترافية", it.price))
+                }
+            }
+            explanationFr = "Sélection High-Tech vérifiée chez TechZone avec garantie 12 mois et livraison colis sécurisée !"
+            explanationAr = "تم اختيار منتجات إلكترونية معتمدة من تيك زون مع ضمان 12 شهراً وشحن طرد مؤمن!"
+        }
+        else if (hasHoodie || hasParfum || hasLeather) {
+            isEcommerceOrder = true
+            mainStoreName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)"
+            storeEmoji = "🛍️"
+            if (hasHoodie) {
+                products.find { it.id == "p_hoodie_oversize" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, defaultQty, "قطن ثقيل 450g • إرجاع مجاني للمقاس", it.price * defaultQty))
+                }
+            }
+            if (hasParfum) {
+                products.find { it.id == "p_parfum_oud_royal" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, 1, "عطر أصلي مختوم ثبات 24 ساعة", it.price))
+                }
+            }
+            if (hasLeather || matchedItems.isEmpty()) {
+                products.find { it.id == "p_leather_bag_artisan" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, 1, "جلد طبيعي مغربي أصيل 100%", it.price))
+                }
+            }
+            explanationFr = "Articles de mode et parfumerie de luxe authentifiés avec emballage soigné !"
+            explanationAr = "منتجات أزياء وعطور أصلية فاخرة مصادق عليها مع تغليف بريميوم أنيق!"
+        }
+        // B. TACOS & SHAWARMA MATCH
+        else if (hasTacos) {
+            mainStoreName = "أو تاكوس (O'Tacos)"
+            storeEmoji = "🌮"
+            products.find { it.id == "p_otacos_l" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            }
+            explanationFr = "J'ai préparé votre délicieux Tacos Français avec vos sauces favorites et frites dorées !"
+            explanationAr = "اخترت لك طاكوس فرنسي شهي بصلصة الجبن والصلصات المختارة مع البطاطس المقرمشة!"
+        }
+        else if (hasShawarma) {
+            mainStoreName = "شاورما الشام الملكية"
+            storeEmoji = "🥙"
+            products.find { it.id == "p_shawarma_arabi" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            }
+            explanationFr = "Menu Chawarma Arabe sur pain saj avec crème d'ail toum authentique et frites !"
+            explanationAr = "وجبة شاورما عربي بالدجاج على خبز الصاج مع الثومية الأصلية والبطاطس والمخلل!"
+        }
+        // C. BURGER KING & SMASH
+        else if (hasBurgerKing) {
+            mainStoreName = "برجر كينج (Burger King)"
+            storeEmoji = "👑"
+            products.find { it.id == "p_bk_whopper" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            }
+            explanationFr = "Menu Double Whopper bœuf 100% grillé à la flamme avec frites et boisson !"
+            explanationAr = "وجبة دبل ووبر اللحم البقري المشوي على اللهب مع البطاطس المقرمشة والمشروب!"
+        }
+        // D. MCDONALD'S
+        else if (hasBigMac || hasNuggets) {
+            mainStoreName = "ماكدونالدز (McDonald's)"
+            storeEmoji = "🍔"
+            products.find { it.id == "p_mcdo_bigmac" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             if (hasNuggets) {
                 products.find { it.id == "p_mcdo_nuggets" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, 1, "Sauce Barbecue & Curry doux", it.price))
+                    matchedItems.add(AiRecommendedItem(it, 1, "Sauce Barbecue & Curry", it.price))
                 }
             }
-            if (hasMcFlurry) {
-                products.find { it.id == "p_mcdo_mcflurry" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, 1, "Coulis caramel chaud et éclats Oreo", it.price))
-                }
-            }
-
-            explanationFr = "J'ai préparé pour vous le célèbre Menu Big Mac croustillant avec vos frites dorées et boisson !"
-            explanationAr = "اخترت لك وجبة ماكدونالدز الشهية بيج ماك ساخنة مع البطاطس المقرمشة والمشروب المنعش!"
+            explanationFr = "Menu Big Mac croustillant avec vos frites dorées et boisson fraîche !"
+            explanationAr = "اخترت لك وجبة بيج ماك ماكسي الساخنة مع البطاطس المقرمشة والمشروب المنعش!"
         }
-        // 2. KFC match
-        else if (hasKfcBucket || hasZinger) {
-            mainStoreName = "KFC Bd Hassan II Mohammedia"
+        // E. KFC
+        else if (hasKfc) {
+            mainStoreName = "كنتاكي (KFC)"
             storeEmoji = "🍗"
-            val notesStr = if (detectedNotes.isNotEmpty()) detectedNotes.joinToString(" • ") else "Recette secrète croustillante avec frites"
-
-            if (hasKfcBucket) {
-                products.find { it.id == "p_kfc_bucket" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-                }
-            }
-            if (hasZinger || matchedItems.isEmpty()) {
-                products.find { it.id == "p_kfc_zinger" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, 1, "Double filet piquant et fromage fondant", it.price))
-                }
-            }
-
-            explanationFr = "Votre sélection KFC croustillante préparée avec frites familiales et sauces !"
-            explanationAr = "تم تجهيز وجبة كنتاكي المقرمشة الساخنة مع البطاطس والصوصات المميزة!"
-        }
-        // 3. Pizza Hut match
-        else if (hasPizza) {
-            mainStoreName = "Pizza Hut Mohammedia Centre"
-            storeEmoji = "🍕"
-            val notesStr = if (detectedNotes.isNotEmpty()) detectedNotes.joinToString(" • ") else "Croûte dorée farcie au fromage mozzarella"
-            products.find { it.id == "p_ph_supreme" }?.let {
+            products.find { it.id == "p_kfc_tenders" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            } ?: products.find { it.id == "p_kfc_bucket" }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
-            explanationFr = "J'ai sélectionné la Pizza Super Supreme Cheesy Crust grande taille avec mozzarella fondante !"
-            explanationAr = "اخترت لك بيتزا سوبر سوبريم الكبيرة بأطراف محشوة بجبن الموزاريلا الشهي!"
+            explanationFr = "Sélection de poulet pané croustillant KFC avec sauces savoureuses !"
+            explanationAr = "باكت دجاج كريسبي مقرمش مع البطاطس وتشكيلة الصوصات اللذيذة!"
         }
-        // 4. Paul Bakery & Café match
-        else if (hasCroissant || hasTart) {
-            mainStoreName = "Paul Boulangerie & Café Parc Mohammedia"
-            storeEmoji = "🥐"
-            if (hasCroissant || matchedItems.isEmpty()) {
-                products.find { it.id == "p_paul_croissant" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, "Feuilletage pur beurre et amandes grillées", it.price * defaultQty))
-                }
+        // F. PIZZA
+        else if (hasPizza) {
+            mainStoreName = "بيتزا هت (Pizza Hut)"
+            storeEmoji = "🍕"
+            products.find { it.id == "p_pizza_4fromages" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            } ?: products.find { it.id == "p_ph_supreme" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
-            if (hasTart) {
-                products.find { it.id == "p_paul_tart" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, 1, "Fraises fraîches et crème pâtissière vanille", it.price))
-                }
-            }
-            explanationFr = "Sélection gourmande de viennoiseries et pâtisseries fraîches de chez Paul !"
-            explanationAr = "تشكيلة معجنات وحلويات فرنسية طازجة من مخبز ومقهى بول الفاخر!"
+            explanationFr = "Pizza italienne dorée au four garnie de fromages fondants et sauce tomate !"
+            explanationAr = "بيتزا إيطالية ساخنة من الفرن غنية بالأجبان الذائبة والتوابل الإيطالية!"
         }
-        // 5. Moroccan Tajine & Couscous match
-        else if (hasTajine || hasCouscous) {
-            mainStoreName = "Tajine Al Baraka - Kasbah Mohammedia"
+        // G. SUSHI & ASIAN
+        else if (hasSushi) {
+            mainStoreName = "طوكيو سوشي بار (Tokyo Sushi)"
+            storeEmoji = "🍣"
+            products.find { it.id == "p_sushi_platter" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, "Wasabi, gingembre et sauce soja", it.price * defaultQty))
+            }
+            explanationFr = "Plateau de sushis et makis frais avec sauce soja et wasabi !"
+            explanationAr = "بلاطو سوشي طازج مشكل مع صوص الصويا والوسابي والزنجبيل المخلل!"
+        }
+        // H. MOROCCAN TRADITIONAL
+        else if (hasTajine) {
+            mainStoreName = "طاجين البركة - القصبة"
             storeEmoji = "🍲"
-            if (hasTajine || matchedItems.isEmpty()) {
-                products.find { it.id == "p_tajine_meat" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, "Agneau fondant mijoté avec pain chaud du jour", it.price * defaultQty))
-                }
+            products.find { it.id == "p_tajine_meat" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, "لحم ضأن بالبرقوق واللوز مع خبز ساخن", it.price * defaultQty))
             }
-            if (hasCouscous) {
-                products.find { it.id == "p_couscous_royale" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, 1, "Semoule fine, bouillon riche et 7 légumes frais", it.price))
-                }
-            }
-            explanationFr = "Authentique festin marocain préparé selon les recettes traditionnelles de la Kasbah !"
-            explanationAr = "طاجين مغربي أصيل على أصوله بالبرقوق واللوز مع خبز الدار الساخن من القصبة!"
+            explanationFr = "Authentique tajine marocain mijoté avec pain chaud du jour !"
+            explanationAr = "طاجين بلدي مغربي أصيل بالبرقوق المعسل واللوز مع خبز سخون من القصبة!"
         }
-        // 6. Seafood & Fish from Mohammedia Port
+        // I. SEAFOOD
         else if (hasFish) {
-            mainStoreName = "Grillade du Port Poissons Mohammedia"
+            mainStoreName = "شواية الميناء للأسماك الطازجة"
             storeEmoji = "🦐"
             products.find { it.id == "p_fish_plate" }?.let {
-                matchedItems.add(AiRecommendedItem(it, defaultQty, "Calamars, crevettes et poissons avec chermoula fraîche", it.price * defaultQty))
+                matchedItems.add(AiRecommendedItem(it, defaultQty, "فواكه بحر طازجة وشرمولة وتارتار", it.price * defaultQty))
             }
-            explanationFr = "Plateau de poissons et fruits de mer frais pêchés au port de Mohammedia !"
-            explanationAr = "تشكيلة طازجة من فواكه البحر والأسماك المشوية من ميناء المحمدية مع الشرمولة!"
+            explanationFr = "Plateau de poissons et fruits de mer frais grillés au port de Mohammedia !"
+            explanationAr = "تشكيلة أسماك وفواكه البحر المشوية الطازجة من ميناء المحمدية مع الشرمولة!"
         }
-        // 7. Marjane Groceries
+        // J. GROCERIES
         else if (hasGrocery) {
-            mainStoreName = "Marjane Market Mohammedia"
+            mainStoreName = "مرجان ماركت المحمدية"
             storeEmoji = "🧺"
             products.find { it.id == "p_marjane_pack" }?.let {
-                matchedItems.add(AiRecommendedItem(it, defaultQty, "Lait frais 2L, 30 œufs fermiers, huile d'olive vierge extra", it.price * defaultQty))
+                matchedItems.add(AiRecommendedItem(it, defaultQty, "حليب، بيض بلدي، زيت زيتون", it.price * defaultQty))
             }
-            explanationFr = "Votre panier de courses essentielles sélectionné et emballé avec soin chez Marjane !"
-            explanationAr = "سلة المشتريات اليومية الأساسية من مرجان ماركت طازجة ومختارة بعناية!"
+            explanationFr = "Panier de courses essentielles préparé chez Marjane !"
+            explanationAr = "سلة المشتريات اليومية الأساسية من مرجان ماركت!"
         }
-        // 8. Pharmacy & Care
+        // K. PHARMACY
         else if (hasPharma) {
-            mainStoreName = "Pharmacie Centrale Mohammedia 24/7"
+            mainStoreName = "صيدلية الشفاء إكسبريس"
             storeEmoji = "💊"
             products.find { it.id == "p_pharma_care" }?.let {
-                matchedItems.add(AiRecommendedItem(it, defaultQty, "Vitamine C effervescente, Zinc et paracétamol 1000mg", it.price * defaultQty))
+                matchedItems.add(AiRecommendedItem(it, defaultQty, "أدوية ومستلزمات صحية فورية", it.price * defaultQty))
             }
-            explanationFr = "Kit santé et immunité express préparé avec conseils officinaux."
-            explanationAr = "باقة تقوية المناعة وفيتامين C ومسكن من صيدلية المركز مع توصيل فوري!"
+            explanationFr = "Produits de pharmacie et soins d'urgence prêts pour livraison rapide."
+            explanationAr = "مستلزمات صيدلية المركز الطارئة مع توصيل فوري!"
         }
-        // 9. Express Courier
-        else if (hasCourier) {
-            mainStoreName = "Allo Jibli Mohammedia Express"
-            storeEmoji = "🛵"
-            products.find { it.id == "p_express_service" }?.let {
-                matchedItems.add(AiRecommendedItem(it, 1, "Coursier Aziz dédié pour vos courses et colis urgents", it.price))
-            }
-            explanationFr = "Votre coursier personnel Aziz prend en charge votre mission en moins de 15 minutes !"
-            explanationAr = "تم تخصيص الكابتن عزيز لتوصيل أو شراء ما ترغب فيه بأقصى سرعة!"
-        }
-        // 10. Default Smart Combo
+        // L. DEFAULT
         else {
-            mainStoreName = "McDonald's Miramar Mohammedia"
-            storeEmoji = "🍔"
-            products.find { it.id == "p_mcdo_bigmac" }?.let {
-                matchedItems.add(AiRecommendedItem(it, defaultQty, "Menu Maxi Best Of avec grandes frites et boisson", it.price * defaultQty))
+            mainStoreName = "أو تاكوس (O'Tacos)"
+            storeEmoji = "🌮"
+            products.find { it.id == "p_otacos_l" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            } ?: products.find { it.id == "p_mcdo_bigmac" }?.let {
+                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
-            products.find { it.id == "p_mcdo_nuggets" }?.let {
-                matchedItems.add(AiRecommendedItem(it, 1, "Boîte de 9 nuggets croustillants avec sauces", it.price))
-            }
-            explanationFr = "J'ai préparé pour vous le célèbre Menu Big Mac accompagné de délicieux Chicken McNuggets !"
-            explanationAr = "اخترت لك وجبة بيج ماك ماكسي الشهيرة مع تشيكن ماك ناجتس وبطاطس مقرمشة!"
+            explanationFr = "Sélection gourmande préparée avec soin avec vos sauces favorites !"
+            explanationAr = "تم تجهيز طلبك الشهي مع الصلصات اللذيذة والبطاطس المقرمشة!"
         }
 
         val total = matchedItems.sumOf { it.subtotal }
-        val deliveryFee = 7.0
+        // E-Commerce parcel delivery fee is 18.0 DH (insured parcel), while food is 8.0 DH
+        val deliveryFee = if (isEcommerceOrder) 18.0 else 8.0
         val grandTotal = total + deliveryFee
 
-        // Human conversational voice response (Concierge style with warmth and polite call to action)
         val itemsDescriptionFr = matchedItems.joinToString(" et ") { "${it.quantity} ${it.product.nameFr}" }
         val itemsDescriptionAr = matchedItems.joinToString(" و ") { "${it.quantity} ${it.product.nameAr}" }
 
-        val speechFr = "Parfait ! J'ai bien préparé votre commande chez $mainStoreName, avec $itemsDescriptionFr. Le total s'élève à ${grandTotal.toInt()} dirhams, livraison express incluse. Vous pouvez confirmer en un clic pour que notre coursier Aziz prenne la route !"
-        val speechAr = "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName، مع $itemsDescriptionAr. المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق الكابتن عزيز إليك!"
+        val speechFr = if (isEcommerceOrder) {
+            "Parfait ! J'ai bien sélectionné votre article e-commerce chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} DH avec expédition colis sécurisée et garantie. Vous pouvez valider en un clic !"
+        } else {
+            "Parfait ! J'ai bien préparé votre commande chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} dirhams, livraison incluse. Vous pouvez confirmer en un clic !"
+        }
+
+        val speechAr = if (isEcommerceOrder) {
+            "ممتاز وعلى راسي وعيني! اخترت لك منتجك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم شامل شحن الطرد المؤمن مع الضمان. اضغط على تأكيد الآن لشحنه إليك!"
+        } else {
+            "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق الكابتن عزيز إليك!"
+        }
 
         return AiShoppingRecommendation(
             userPrompt = query,
@@ -466,7 +543,7 @@ object AiShoppingService {
             deliveryFee = deliveryFee,
             grandTotal = grandTotal,
             targetStoreName = mainStoreName,
-            estimatedTimeMins = 18,
+            estimatedTimeMins = if (isEcommerceOrder) 30 else 18,
             confidenceScore = 99,
             speechAudioTextFr = speechFr,
             speechAudioTextAr = speechAr,
