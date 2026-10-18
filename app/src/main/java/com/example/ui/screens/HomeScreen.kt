@@ -775,13 +775,21 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "عرض السلة وإتمام الطلب 🛒",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "Voir le panier et commander 🛒"
+                                    AppLanguage.ENGLISH -> "View Cart & Checkout 🛒"
+                                    AppLanguage.ARABIC -> "عرض السلة وإتمام الطلب 🛒"
+                                },
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "ألو عزيز إكسبريس • المحمدية",
+                                text = when (language) {
+                                    AppLanguage.FRENCH -> "ALLO AZIZ Express • Mohammedia"
+                                    AppLanguage.ENGLISH -> "ALLO AZIZ Express • Mohammedia"
+                                    AppLanguage.ARABIC -> "ألو عزيز إكسبريس • المحمدية"
+                                },
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 11.sp
                             )
