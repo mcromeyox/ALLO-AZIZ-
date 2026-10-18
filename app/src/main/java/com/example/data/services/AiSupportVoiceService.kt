@@ -41,15 +41,15 @@ object AiSupportVoiceService {
         }
 
         // 1. Try Gemini API if key is present
-        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
+        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (_: Throwable) { "" }
         if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER") && !apiKey.contains("YourKey") && !apiKey.contains("DEFAULT_GEMINI")) {
             try {
                 val geminiReply = callGeminiForSupport(query, language, apiKey, activeOrderSummary)
                 if (!geminiReply.isNullOrBlank()) {
                     return@withContext cleanVoiceText(geminiReply)
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini Support API failed, falling back to local support knowledge: ${e.message}")
+            } catch (t: Throwable) {
+                Log.w(TAG, "Gemini Support API failed, falling back to local support knowledge: ${t.message}")
             }
         }
 

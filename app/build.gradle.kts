@@ -25,6 +25,8 @@ android {
     buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"\"")
     buildConfigField("String", "PAYMENT_PROVIDER_KEY", "\"\"")
     buildConfigField("String", "FIREBASE_PROJECT_ID", "\"allo-aziz\"")
+    buildConfigField("String", "GEMINI_API_KEY", "\"\"")
+    buildConfigField("String", "ELEVENLABS_API_KEY", "\"\"")
   }
 
   signingConfigs {

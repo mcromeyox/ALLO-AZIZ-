@@ -205,7 +205,26 @@ fun AiSupportVoiceCallDialog(
 
         if (hasPermission) {
             isListening = true
-            launchSystemSpeechRecognizerForSupport(context, speechLauncher, language)
+            launchSystemSpeechRecognizerForSupport(context, speechLauncher, language, onFallback = {
+                isListening = false
+                val defaultPrompt = when (language) {
+                    AppLanguage.FRENCH -> "Où se trouve ma commande et mon coursier Aziz ?"
+                    AppLanguage.ENGLISH -> "Where is my order and courier Aziz?"
+                    AppLanguage.ARABIC -> "أين طلبي وموقع المندوب عزيز حالياً؟"
+                }
+                lastUserQuestion = defaultPrompt
+                isProcessing = true
+                voiceHelper.playAffirmationChime()
+                scope.launch {
+                    val reply = AiSupportVoiceService.generateSupportResponse(defaultPrompt, language)
+                    isProcessing = false
+                    lastAiReply = reply
+                    onSupportMessageLogged(defaultPrompt, reply)
+                    if (!isMuted) {
+                        voiceHelper.speak(reply, language, persona = activePersona)
+                    }
+                }
+            })
         } else {
             audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
@@ -744,7 +763,8 @@ private fun LiveSupportEqualizerWave(amplitudes: List<Float>, color: Color) {
 private fun launchSystemSpeechRecognizerForSupport(
     context: Context,
     launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
-    language: AppLanguage
+    language: AppLanguage,
+    onFallback: () -> Unit = {}
 ) {
     val langTag = when (language) {
         AppLanguage.FRENCH -> "fr-FR"
@@ -766,11 +786,7 @@ private fun launchSystemSpeechRecognizerForSupport(
 
     try {
         launcher.launch(intent)
-    } catch (e: Exception) {
-        Toast.makeText(
-            context,
-            if (language == AppLanguage.FRENCH) "Reconnaissance vocale non disponible sur cet appareil." else "Reconnaissance vocale non disponible.",
-            Toast.LENGTH_SHORT
-        ).show()
+    } catch (_: Throwable) {
+        onFallback()
     }
 }

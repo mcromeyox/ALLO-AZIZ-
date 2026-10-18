@@ -64,15 +64,15 @@ object AiShoppingService {
         }
 
         // 1. Try Gemini API if key is present
-        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
+        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (_: Throwable) { "" }
         if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER") && !apiKey.contains("YourKey") && !apiKey.contains("DEFAULT_GEMINI")) {
             try {
                 val geminiResult = callGeminiApi(cleanQuery, apiKey, availableProducts)
                 if (geminiResult != null && geminiResult.items.isNotEmpty()) {
                     return@withContext geminiResult
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini API failed, falling back to local NLP engine: ${e.message}")
+            } catch (t: Throwable) {
+                Log.w(TAG, "Gemini API failed, falling back to local NLP engine: ${t.message}")
             }
         }
 
@@ -139,65 +139,73 @@ object AiShoppingService {
             put("generationConfig", JSONObject().apply {
                 put("temperature", 0.1)
                 put("responseMimeType", "application/json")
-                put("maxOutputTokens", 600)
+                put("maxOutputTokens", 2048)
             })
         }
 
-        val request = Request.Builder()
-            .url(endpoint)
-            .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-            .build()
+        try {
+            val request = Request.Builder()
+                .url(endpoint)
+                .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
+                .build()
 
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) return null
-            val responseString = response.body?.string() ?: return null
-            val rootJson = JSONObject(responseString)
-            val candidates = rootJson.optJSONArray("candidates") ?: return null
-            if (candidates.length() == 0) return null
-            val rawText = candidates.getJSONObject(0)
-                .optJSONObject("content")
-                ?.optJSONArray("parts")
-                ?.getJSONObject(0)
-                ?.optString("text", "") ?: return null
-            if (rawText.isBlank()) return null
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return null
+                val responseString = response.body?.string() ?: return null
+                val rootJson = JSONObject(responseString)
+                val candidates = rootJson.optJSONArray("candidates") ?: return null
+                if (candidates.length() == 0) return null
+                val rawText = candidates.getJSONObject(0)
+                    .optJSONObject("content")
+                    ?.optJSONArray("parts")
+                    ?.getJSONObject(0)
+                    ?.optString("text", "") ?: return null
+                if (rawText.isBlank()) return null
 
-            val parsedJson = JSONObject(rawText)
-            val explFr = parsedJson.optString("explanationFr", "Articles sélectionnés selon votre demande vocale.")
-            val explAr = parsedJson.optString("explanationAr", "تم اختيار المنتجات المطابقة لطلبك الصوتي بدقة.")
-            val speechFr = parsedJson.optString("speechAudioFr", explFr)
-            val speechAr = parsedJson.optString("speechAudioAr", explAr)
-            val targetStore = parsedJson.optString("storeName", "ALLO AZIZ Express")
-            val confidence = parsedJson.optInt("confidence", 99)
+                val parsedJson = JSONObject(rawText)
+                val explFr = parsedJson.optString("explanationFr", "Articles sélectionnés selon votre demande vocale.")
+                val explAr = parsedJson.optString("explanationAr", "تم اختيار المنتجات المطابقة لطلبك الصوتي بدقة.")
+                val speechFr = parsedJson.optString("speechAudioFr", explFr)
+                val speechAr = parsedJson.optString("speechAudioAr", explAr)
+                val targetStore = parsedJson.optString("storeName", "ALLO AZIZ Express")
+                val confidence = parsedJson.optInt("confidence", 99)
 
-            val notesArray = parsedJson.optJSONArray("notes")
-            val detectedNotes = mutableListOf<String>()
-            if (notesArray != null) {
-                for (i in 0 until notesArray.length()) {
-                    detectedNotes.add(notesArray.optString(i))
+                val notesArray = parsedJson.optJSONArray("notes")
+                val detectedNotes = mutableListOf<String>()
+                if (notesArray != null) {
+                    for (i in 0 until notesArray.length()) {
+                        detectedNotes.add(notesArray.optString(i))
+                    }
                 }
-            }
 
-            val itemsArray = parsedJson.optJSONArray("items") ?: JSONArray()
-            val recommendedItems = mutableListOf<AiRecommendedItem>()
-            for (i in 0 until itemsArray.length()) {
-                val itemObj = itemsArray.getJSONObject(i)
-                val pid = itemObj.optString("productId")
-                val qty = itemObj.optInt("quantity", 1).coerceAtLeast(1)
-                val note = itemObj.optString("note", "")
-                val product = products.find { it.id == pid }
-                if (product != null) {
-                    recommendedItems.add(
-                        AiRecommendedItem(
-                            product = product,
-                            quantity = qty,
-                            customNote = note,
-                            subtotal = product.price * qty
+                val itemsArray = parsedJson.optJSONArray("items") ?: JSONArray()
+                val recommendedItems = mutableListOf<AiRecommendedItem>()
+                for (i in 0 until itemsArray.length()) {
+                    val itemObj = itemsArray.getJSONObject(i)
+                    val pid = itemObj.optString("productId")
+                    val pName = itemObj.optString("name", pid)
+                    val qty = itemObj.optInt("quantity", 1).coerceAtLeast(1)
+                    val note = itemObj.optString("note", "")
+
+                    // Flexible product lookup (ID, name, or sub-token match)
+                    val product = products.find { it.id == pid }
+                        ?: products.find { it.nameFr.contains(pName, ignoreCase = true) || it.nameAr.contains(pName, ignoreCase = true) }
+                        ?: products.find { it.nameFr.contains(pid, ignoreCase = true) || it.nameAr.contains(pid, ignoreCase = true) }
+                        ?: products.find { it.id.contains(pid, ignoreCase = true) || pid.contains(it.id, ignoreCase = true) }
+
+                    if (product != null) {
+                        recommendedItems.add(
+                            AiRecommendedItem(
+                                product = product,
+                                quantity = qty,
+                                customNote = note,
+                                subtotal = product.price * qty
+                            )
                         )
-                    )
+                    }
                 }
-            }
 
-            if (recommendedItems.isEmpty()) return null
+                if (recommendedItems.isEmpty()) return null
 
             val subtotal = recommendedItems.sumOf { it.subtotal }
             val deliveryFee = 7.0
@@ -218,7 +226,12 @@ object AiShoppingService {
                 storeBadgeEmoji = "🏪"
             )
         }
+    } catch (e: Exception) {
+        Log.w(TAG, "callGeminiApi error: ${e.message}")
+        return null
     }
+    return null
+}
 
     /**
      * High-Precision Moroccan Darija, French & English Offline NLP Shopping Matcher.

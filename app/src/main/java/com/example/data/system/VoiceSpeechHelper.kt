@@ -4,12 +4,17 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import android.util.Log
 import com.example.data.model.AppLanguage
+import com.example.data.services.AiVoiceEngine
+import com.example.data.services.AudioSynthesizedResult
+import com.example.data.services.ExternalAiVoiceService
+import com.example.data.services.GeminiCloudTtsService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,6 +24,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import java.util.Locale
 import kotlin.math.sin
 
@@ -59,13 +67,9 @@ enum class VoicePersona(
 
 /**
  * Ultra-Realistic Human Voice Engine for ALLO AZIZ AI.
- * Features:
- * - High-Fidelity Neural voice selection from Android TextToSpeech engine
- * - Dual persona switching (Sara / Karim)
- * - Human conversational prosody (micro-pauses, currency/number normalization)
- * - Soft acoustic earcons (listening & affirmation tones)
- * - Dynamic real-time speech waveform simulation
- * - Instant barge-in / zero-latency speech interruption
+ * Dual-Engine Architecture:
+ * 1. Cloud AI Engine: Google Gemini Generative Audio (gemini-2.5-flash-preview-tts) with studio fidelity
+ * 2. On-Device Fallback: Android Native Neural TextToSpeech with humanized prosody
  */
 class VoiceSpeechHelper(context: Context) {
 
@@ -75,6 +79,8 @@ class VoiceSpeechHelper(context: Context) {
 
     private val scope = CoroutineScope(Dispatchers.Main + Job())
     private var waveformJob: Job? = null
+    private var currentCloudAudioTrack: AudioTrack? = null
+    private var speakJob: Job? = null
 
     private val _isSpeaking = MutableStateFlow(false)
     val isSpeaking: StateFlow<Boolean> = _isSpeaking.asStateFlow()
@@ -84,6 +90,11 @@ class VoiceSpeechHelper(context: Context) {
 
     private val _activePersona = MutableStateFlow(VoicePersona.SARA)
     val activePersona: StateFlow<VoicePersona> = _activePersona.asStateFlow()
+
+    private val _activeEngine = MutableStateFlow(AiVoiceEngine.DEVICE_NEURAL)
+    val activeEngine: StateFlow<AiVoiceEngine> = _activeEngine.asStateFlow()
+
+    private var currentMediaPlayer: MediaPlayer? = null
 
     // 8-band animated audio frequency visualizer amplitudes
     private val _speechAmplitudes = MutableStateFlow(listOf(0.2f, 0.3f, 0.4f, 0.5f, 0.4f, 0.3f, 0.2f, 0.15f))
@@ -174,9 +185,6 @@ class VoiceSpeechHelper(context: Context) {
         _speechAmplitudes.value = listOf(0.15f, 0.2f, 0.25f, 0.25f, 0.2f, 0.15f, 0.15f, 0.1f)
     }
 
-    /**
-     * Finds and assigns the highest quality neural/natural voice for the target language.
-     */
     private fun selectBestVoiceForLanguage(targetLocale: Locale, persona: VoicePersona) {
         val tts = textToSpeech ?: return
         try {
@@ -192,15 +200,12 @@ class VoiceSpeechHelper(context: Context) {
                         var score = 0
                         val name = voice.name.lowercase()
 
-                        // Favor high quality neural models
                         if (voice.quality >= Voice.QUALITY_VERY_HIGH) score += 60
                         else if (voice.quality >= Voice.QUALITY_HIGH) score += 35
 
-                        // Favor low latency
                         if (voice.latency <= Voice.LATENCY_VERY_LOW) score += 20
                         else if (voice.latency <= Voice.LATENCY_LOW) score += 10
 
-                        // Match persona gender
                         if (targetGender == "female") {
                             if (name.contains("female") || name.contains("femme") || name.contains("-f-") || name.contains("wom")) score += 30
                             if (name.contains("male") && !name.contains("female")) score -= 25
@@ -209,9 +214,7 @@ class VoiceSpeechHelper(context: Context) {
                             if (name.contains("female") || name.contains("femme")) score -= 25
                         }
 
-                        // Prefer neural/network voices if present
                         if (name.contains("neural") || name.contains("network") || name.contains("wavenet")) score += 25
-
                         score
                     }
 
@@ -227,8 +230,9 @@ class VoiceSpeechHelper(context: Context) {
     }
 
     /**
-     * Speaks text aloud in the requested language (French, Arabic, or English)
-     * using humanized conversational prosody and neural voice configuration.
+     * Speaks text aloud in the requested language.
+     * Tries Google Gemini Cloud AI Voice (24kHz studio audio) first for 100% human realism,
+     * and seamlessly falls back to Android Neural TTS if offline or unavailable.
      */
     fun speak(
         text: String,
@@ -237,13 +241,119 @@ class VoiceSpeechHelper(context: Context) {
         persona: VoicePersona? = null
     ) {
         if (text.isBlank()) return
+        stop()
 
+        val active = persona ?: _activePersona.value
+        val naturalText = humanizeTextForSpeech(text, language)
+
+        speakJob = scope.launch {
+            _isSpeaking.value = true
+            _currentUtteranceId.value = utteranceId
+            startWaveformSimulation()
+
+            // 1. Attempt External AI speech synthesis (Google Gemini 2.5 Flash Audio or ElevenLabs)
+            val externalAudio = ExternalAiVoiceService.synthesizeSpeech(naturalText, active)
+            if (externalAudio != null) {
+                _activeEngine.value = externalAudio.second
+                when (val result = externalAudio.first) {
+                    is AudioSynthesizedResult.Pcm24kHz -> playCloudPcm(result.bytes)
+                    is AudioSynthesizedResult.Mp3 -> playCloudMp3(result.bytes)
+                }
+            } else {
+                // 2. High-Quality On-Device Neural TTS Fallback
+                _activeEngine.value = AiVoiceEngine.DEVICE_NEURAL
+                speakViaDeviceTts(naturalText, language, utteranceId, active)
+            }
+        }
+    }
+
+    private suspend fun playCloudMp3(mp3Bytes: ByteArray) = withContext(Dispatchers.IO) {
+        try {
+            val tempFile = File.createTempFile("ai_speech_", ".mp3", appContext.cacheDir)
+            FileOutputStream(tempFile).use { it.write(mp3Bytes) }
+
+            val mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(tempFile.absolutePath)
+                prepare()
+            }
+            currentMediaPlayer = mediaPlayer
+            mediaPlayer.start()
+
+            val durationMs = mediaPlayer.duration.toLong()
+            delay(if (durationMs > 0) durationMs else 2500L)
+            tempFile.delete()
+        } catch (e: Exception) {
+            Log.w("VoiceSpeechHelper", "Error playing Cloud MP3 audio: ${e.message}")
+        } finally {
+            _isSpeaking.value = false
+            _currentUtteranceId.value = null
+            stopWaveformSimulation()
+            try {
+                currentMediaPlayer?.stop()
+                currentMediaPlayer?.release()
+            } catch (_: Exception) {}
+            currentMediaPlayer = null
+        }
+    }
+
+    private suspend fun playCloudPcm(pcmData: ByteArray) = withContext(Dispatchers.Default) {
+        try {
+            val audioTrack = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(24000)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build()
+                )
+                .setBufferSizeInBytes(pcmData.size)
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .build()
+
+            currentCloudAudioTrack = audioTrack
+            audioTrack.write(pcmData, 0, pcmData.size)
+            audioTrack.play()
+
+            // Calculate duration in ms: 24,000 samples/sec * 2 bytes/sample = 48,000 bytes/sec
+            val durationMs = (pcmData.size.toDouble() / 48000.0 * 1000.0).toLong()
+            delay(durationMs)
+        } catch (e: Exception) {
+            Log.w("VoiceSpeechHelper", "Error playing cloud PCM: ${e.message}")
+        } finally {
+            _isSpeaking.value = false
+            _currentUtteranceId.value = null
+            stopWaveformSimulation()
+            try {
+                currentCloudAudioTrack?.stop()
+                currentCloudAudioTrack?.release()
+            } catch (_: Exception) {}
+            currentCloudAudioTrack = null
+        }
+    }
+
+    private fun speakViaDeviceTts(
+        text: String,
+        language: AppLanguage,
+        utteranceId: String,
+        persona: VoicePersona
+    ) {
         if (textToSpeech == null || !isInitialized) {
             initTts()
         }
 
-        val active = persona ?: _activePersona.value
-        applyPersonaConfig(active)
+        applyPersonaConfig(persona)
 
         val targetLocale = when (language) {
             AppLanguage.FRENCH -> Locale.FRENCH
@@ -251,9 +361,7 @@ class VoiceSpeechHelper(context: Context) {
             AppLanguage.ARABIC -> Locale("ar")
         }
 
-        selectBestVoiceForLanguage(targetLocale, active)
-
-        val naturalText = humanizeTextForSpeech(text, language)
+        selectBestVoiceForLanguage(targetLocale, persona)
 
         try {
             val params = Bundle().apply {
@@ -261,13 +369,13 @@ class VoiceSpeechHelper(context: Context) {
             }
 
             textToSpeech?.speak(
-                naturalText,
+                text,
                 TextToSpeech.QUEUE_FLUSH,
                 params,
                 utteranceId
             )
         } catch (e: Exception) {
-            Log.e("VoiceSpeechHelper", "Error in speak()", e)
+            Log.e("VoiceSpeechHelper", "Error in speakViaDeviceTts()", e)
             _isSpeaking.value = false
             stopWaveformSimulation()
         }
@@ -277,15 +385,30 @@ class VoiceSpeechHelper(context: Context) {
      * Stops any ongoing speech immediately (Barge-in capability).
      */
     fun stop() {
+        speakJob?.cancel()
+        speakJob = null
+
+        try {
+            currentCloudAudioTrack?.pause()
+            currentCloudAudioTrack?.flush()
+            currentCloudAudioTrack?.stop()
+            currentCloudAudioTrack?.release()
+        } catch (_: Exception) {}
+        currentCloudAudioTrack = null
+
+        try {
+            currentMediaPlayer?.stop()
+            currentMediaPlayer?.release()
+        } catch (_: Exception) {}
+        currentMediaPlayer = null
+
         try {
             textToSpeech?.stop()
-        } catch (e: Exception) {
-            Log.e("VoiceSpeechHelper", "Error stopping TTS", e)
-        } finally {
-            _isSpeaking.value = false
-            _currentUtteranceId.value = null
-            stopWaveformSimulation()
-        }
+        } catch (_: Exception) {}
+
+        _isSpeaking.value = false
+        _currentUtteranceId.value = null
+        stopWaveformSimulation()
     }
 
     /**
@@ -314,7 +437,6 @@ class VoiceSpeechHelper(context: Context) {
 
             for (i in 0 until numSamples) {
                 val t = i.toDouble() / sampleRate
-                // Window envelope to prevent clicks
                 val envelope = sin(Math.PI * i / numSamples)
                 val sample1 = sin(2 * Math.PI * freq1 * t)
                 val sample2 = sin(2 * Math.PI * freq2 * t)
@@ -409,8 +531,8 @@ class VoiceSpeechHelper(context: Context) {
     }
 
     fun shutdown() {
+        stop()
         try {
-            waveformJob?.cancel()
             textToSpeech?.stop()
             textToSpeech?.shutdown()
         } catch (e: Exception) {

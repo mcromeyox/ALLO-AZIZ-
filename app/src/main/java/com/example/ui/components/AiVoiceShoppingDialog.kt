@@ -34,6 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -131,6 +132,7 @@ fun AiVoiceShoppingDialog(
     val voiceHelper = remember { VoiceSpeechHelper(context) }
     val isSpeaking by voiceHelper.isSpeaking.collectAsState()
     val activePersona by voiceHelper.activePersona.collectAsState()
+    val activeEngine by voiceHelper.activeEngine.collectAsState()
     val speechAmplitudes by voiceHelper.speechAmplitudes.collectAsState()
 
     DisposableEffect(Unit) {
@@ -188,6 +190,8 @@ fun AiVoiceShoppingDialog(
         }
     }
 
+    var showVoiceOptionsSheet by remember { mutableStateOf(false) }
+
     fun startListeningFlow() {
         voiceHelper.stop()
         HapticFeedbackHelper.vibrateClick(context)
@@ -199,7 +203,20 @@ fun AiVoiceShoppingDialog(
         ) == PackageManager.PERMISSION_GRANTED
 
         if (hasPermission) {
-            launchSystemSpeechRecognizer(context, speechRecognizerLauncher, language)
+            launchSystemSpeechRecognizer(
+                context = context,
+                launcher = speechRecognizerLauncher,
+                language = language,
+                onFallback = {
+                    showVoiceOptionsSheet = true
+                    val fallbackNotice = when (language) {
+                        AppLanguage.FRENCH -> "💡 Choisissez un exemple ou écrivez pour tester la voix IA !"
+                        AppLanguage.ENGLISH -> "💡 Pick an order or type to test the realistic AI voice!"
+                        AppLanguage.ARABIC -> "💡 اختر نموذجاً صوتياً أو اكتب طلبك لتسمع صوت الذكاء الاصطناعي الطبيعي!"
+                    }
+                    Toast.makeText(context, fallbackNotice, Toast.LENGTH_SHORT).show()
+                }
+            )
         } else {
             recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
@@ -304,7 +321,7 @@ fun AiVoiceShoppingDialog(
                                         color = AzizMint.copy(alpha = 0.25f)
                                     ) {
                                         Text(
-                                            text = "VOIX 100% NATURELLE 🎙️",
+                                            text = activeEngine.badge,
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
@@ -323,13 +340,13 @@ fun AiVoiceShoppingDialog(
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = when (language) {
-                                            AppLanguage.FRENCH -> "Prosodie humaine & Synthèse neuronale HD"
-                                            AppLanguage.ENGLISH -> "Neural Human Speech & Precision AI"
-                                            AppLanguage.ARABIC -> "صوت طبيعي 100% ودقة ذكية فائقة"
+                                            AppLanguage.FRENCH -> "Moteur IA : ${activeEngine.displayNameFr} (${if (activePersona == VoicePersona.SARA) "Sara" else "Karim"})"
+                                            AppLanguage.ENGLISH -> "AI Voice: ${activeEngine.badge} (${if (activePersona == VoicePersona.SARA) "Sara" else "Karim"})"
+                                            AppLanguage.ARABIC -> "المحرك: ${activeEngine.displayNameAr} (${if (activePersona == VoicePersona.SARA) "سارة" else "كريم"})"
                                         },
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Medium,
-                                        color = Color.White.copy(alpha = 0.82f)
+                                        color = Color.White.copy(alpha = 0.85f)
                                     )
                                 }
                             }
@@ -1088,6 +1105,125 @@ fun AiVoiceShoppingDialog(
                 }
             }
         }
+
+        if (showVoiceOptionsSheet) {
+            Dialog(onDismissRequest = { showVoiceOptionsSheet = false }) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.94f)
+                        .fillMaxHeight(0.70f)
+                        .clip(RoundedCornerShape(26.dp)),
+                    color = Color(0xFF0F172A),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, AzizMint)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = "🎙️", fontSize = 22.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = when (language) {
+                                        AppLanguage.FRENCH -> "Commandes vocales prêtes"
+                                        AppLanguage.ENGLISH -> "Instant Voice Orders"
+                                        AppLanguage.ARABIC -> "أوامر صوتية فورية جاهزة"
+                                    },
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                            IconButton(onClick = { showVoiceOptionsSheet = false }, modifier = Modifier.size(30.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = when (language) {
+                                AppLanguage.FRENCH -> "Touchez une phrase pour la dicter instantanément à l'IA :"
+                                AppLanguage.ENGLISH -> "Tap any phrase to instantly dictate it to the AI:"
+                                AppLanguage.ARABIC -> "اضغط على أي جملة لتمليها فورياً على الذكاء الاصطناعي:"
+                            },
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.75f)
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val quickVoiceOrders = when (language) {
+                            AppLanguage.FRENCH -> listOf(
+                                "🍔 2 Menus Maxi Big Mac avec sauce barbecue",
+                                "🍗 Bucket KFC 12 pièces croustillant avec sauce piquante",
+                                "🍕 Pizza Super Supreme avec croûte farcie au fromage",
+                                "🍲 Tajine d'agneau royal aux pruneaux et pain chaud",
+                                "🥦 Courses Marjane (Lait, 30 œufs, huile d'olive vierge)",
+                                "🥐 3 Croissants pur beurre et tartelette Paul",
+                                "🦐 Plateau fruits de mer et poissons du port de Mohammedia",
+                                "💊 Vitamine C effervescente et Doliprane 1000mg",
+                                "🛵 Coursier Aziz Jib Liya express"
+                            )
+                            AppLanguage.ENGLISH -> listOf(
+                                "🍔 2 Big Mac combos with BBQ sauce",
+                                "🍗 KFC 12 pieces crispy bucket with fries",
+                                "🍕 Super Supreme pizza with cheesy crust",
+                                "🍲 Authentic lamb tajine with prunes and almonds",
+                                "🥦 Marjane grocery pack (Milk, 30 eggs, olive oil)",
+                                "🥐 Paul bakery croissants and strawberry tart",
+                                "🦐 Fresh seafood platter from Mohammedia port",
+                                "💊 Vitamin C and Paracetamol from pharmacy",
+                                "🛵 Express courier Aziz Jib Liya"
+                            )
+                            AppLanguage.ARABIC -> listOf(
+                                "🍔 جوج وجبات بيج ماك ماكسي مع صوص باربكيو",
+                                "🍗 باكت كنتاكي 12 قطعة مقرمش مع صوص حار",
+                                "🍕 بيتزا سوبر سوبريم مع أطراف محشوة بالجبن",
+                                "🍲 طاجين لحم بلدي بالبرقوق واللوز مع خبز ساخن",
+                                "🥦 سلة مرجان (حليب، 30 بيضة، زيت زيتون بكر)",
+                                "🥐 تلاتة كرواسون زبدة وتارت فراولة من بول",
+                                "🦐 بلاطو فواكه البحر والسمك المشوي من المرسى",
+                                "💊 فيتامين سي ودولبران من الصيدلية",
+                                "🛵 كابتن عزيز جيب ليا إكسبريس"
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            quickVoiceOrders.forEach { phrase ->
+                                Surface(
+                                    onClick = {
+                                        showVoiceOptionsSheet = false
+                                        onSubmitQuery(phrase)
+                                    },
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF1E293B),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Default.RecordVoiceOver, contentDescription = null, tint = AzizMint, modifier = Modifier.size(18.dp))
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(text = phrase, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1266,7 +1402,8 @@ private fun LiveAudioSpectrumWave(amplitudes: List<Float>, color: Color) {
 private fun launchSystemSpeechRecognizer(
     context: Context,
     launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
-    language: AppLanguage
+    language: AppLanguage,
+    onFallback: () -> Unit = {}
 ) {
     val langTag = when (language) {
         AppLanguage.FRENCH -> "fr-FR"
@@ -1278,11 +1415,6 @@ private fun launchSystemSpeechRecognizer(
         AppLanguage.ENGLISH -> "Dictate your order (e.g., Big Mac, pizza, tajine, groceries...)"
         AppLanguage.ARABIC -> "تكلم واطلب مشترياتك (مثال: وجبة بيج ماك وماك فلوري، طاجين، سلة مرجان...)"
     }
-    val fallbackMsg = when (language) {
-        AppLanguage.FRENCH -> "Reconnaissance vocale non disponible sur cet appareil. Tapez ci-dessous !"
-        AppLanguage.ENGLISH -> "Voice recognition not available. You can type below!"
-        AppLanguage.ARABIC -> "خدمة التعرف الصوتي غير متوفرة، يمكنك كتابة طلبك في خانة النص أدناه!"
-    }
     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_LANGUAGE, langTag)
@@ -1293,7 +1425,7 @@ private fun launchSystemSpeechRecognizer(
 
     try {
         launcher.launch(intent)
-    } catch (e: Exception) {
-        Toast.makeText(context, fallbackMsg, Toast.LENGTH_LONG).show()
+    } catch (_: Throwable) {
+        onFallback()
     }
 }

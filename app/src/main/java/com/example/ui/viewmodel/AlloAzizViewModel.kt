@@ -228,7 +228,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             try {
                 val recommendation = com.example.data.services.AiShoppingService.analyzeShoppingIntent(clean)
                 _aiRecommendation.value = recommendation
-            } catch (e: Exception) {
+            } catch (t: Throwable) {
                 _aiRecommendation.value = com.example.data.services.AiShoppingService.matchLocalCatalogWithNlp(clean, CatalogData.products)
             } finally {
                 _isAiProcessing.value = false
