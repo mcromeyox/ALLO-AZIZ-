@@ -167,7 +167,7 @@ object AiShoppingService {
                 val explAr = parsedJson.optString("explanationAr", "تم اختيار المنتجات المطابقة لطلبك الصوتي بدقة.")
                 val speechFr = parsedJson.optString("speechAudioFr", explFr)
                 val speechAr = parsedJson.optString("speechAudioAr", explAr)
-                val targetStore = parsedJson.optString("storeName", "ALLO AZIZ Express")
+                val targetStore = parsedJson.optString("storeName", "DELIVIO Express")
                 val confidence = parsedJson.optInt("confidence", 99)
 
                 val notesArray = parsedJson.optJSONArray("notes")
@@ -638,7 +638,7 @@ object AiShoppingService {
         val speechAr = if (isEcommerceOrder) {
             "ممتاز وعلى راسي وعيني! اخترت لك منتجك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم شامل شحن الطرد المؤمن مع الضمان. اضغط على تأكيد الآن لشحنه إليك!"
         } else {
-            "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق الكابتن عزيز إليك!"
+            "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق كابتن ديليفيو DELIVIO إليك!"
         }
 
         return AiShoppingRecommendation(

@@ -111,7 +111,7 @@ fun DriverPartnerDashboard(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "عزيز برادة (كابتن ألو عزيز)",
+                                    text = "عزيز برادة (كابتن ديليفيو DELIVIO)",
                                     fontWeight = FontWeight.Black,
                                     fontSize = 16.sp
                                 )

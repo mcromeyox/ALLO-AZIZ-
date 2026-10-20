@@ -719,9 +719,9 @@ fun SearchScreen(
                             )
                             Text(
                                 text = when (language) {
-                                    AppLanguage.FRENCH -> "ALLO AZIZ Express • Mohammédia"
-                                    AppLanguage.ENGLISH -> "ALLO AZIZ Express • Mohammedia"
-                                    AppLanguage.ARABIC -> "ألو عزيز إكسبريس • المحمدية"
+                                    AppLanguage.FRENCH -> "DELIVIO Express • Mohammédia"
+                                    AppLanguage.ENGLISH -> "DELIVIO Express • Mohammedia"
+                                    AppLanguage.ARABIC -> "ديليفيو إكسبريس • المحمدية"
                                 },
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 11.sp

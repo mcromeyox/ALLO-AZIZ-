@@ -2,7 +2,7 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Modern Green (ALLO AZIZ Brand Identity)
+// Primary Modern Green (DELIVIO Brand Identity)
 val AzizGreenPrimary = Color(0xFF059669) // Modern Emerald Green
 val AzizGreenDark = Color(0xFF047857)
 val AzizGreenLight = Color(0xFF10B981)

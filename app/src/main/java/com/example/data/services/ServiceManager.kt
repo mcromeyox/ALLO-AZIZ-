@@ -8,7 +8,7 @@ import com.google.firebase.FirebaseApp
 /**
  * ServiceManager
  *
- * Implements graceful service abstractions and development fallbacks for ALLO AZIZ.
+ * Implements graceful service abstractions and development fallbacks for DELIVIO.
  * In Development / Preview mode, all external services are optional.
  * When API keys are not provided, the app runs completely on local Room database,
  * interactive simulated map views, and local development authentication.

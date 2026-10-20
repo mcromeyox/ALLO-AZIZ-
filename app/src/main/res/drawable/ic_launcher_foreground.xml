@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/allo_aziz_icon_1790889748679"
+        android:drawable="@drawable/delivio_logo"
         android:gravity="center" />
 </layer-list>

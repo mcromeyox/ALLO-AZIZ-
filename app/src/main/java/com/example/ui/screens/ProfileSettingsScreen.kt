@@ -142,7 +142,7 @@ fun ProfileSettingsScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = currentUser?.name?.ifBlank { "عميل ألو عزيز" } ?: "عميل ألو عزيز",
+                            text = currentUser?.name?.ifBlank { "عميل ديليفيو DELIVIO" } ?: "عميل ديليفيو DELIVIO",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -184,7 +184,7 @@ fun ProfileSettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (isSuperAdmin) "صلاحية استعراض واجهات المنصة لكافة الفئات" else "حساب معتمد وموثق على منصة ألو عزيز",
+                                text = if (isSuperAdmin) "صلاحية استعراض واجهات المنصة لكافة الفئات" else "حساب معتمد وموثق على منصة ديليفيو DELIVIO",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -445,7 +445,7 @@ fun ProfileSettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "محفظة ALLO Pay الرقمية",
+                                text = "محفظة DELIVIO Pay الرقمية",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
@@ -1084,7 +1084,7 @@ fun ProfileSettingsScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("شحن رصيد ALLO Pay 💳", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("شحن رصيد DELIVIO Pay 💳", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             },
             text = {

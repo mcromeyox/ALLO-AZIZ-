@@ -252,7 +252,7 @@ fun StaffLoginScreen(
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary)
                         },
-                        placeholder = { Text("admin@alloaziz.ma أو البريد المهني", fontSize = 12.sp) },
+                        placeholder = { Text("admin@delivio.ma أو البريد المهني", fontSize = 12.sp) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)

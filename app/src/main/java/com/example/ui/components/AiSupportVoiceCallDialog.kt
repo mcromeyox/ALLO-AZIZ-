@@ -117,9 +117,9 @@ fun AiSupportVoiceCallDialog(
     var lastAiReply by remember {
         mutableStateOf(
             when (language) {
-                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante vocale ALLO AZIZ. Je vous écoute, comment puis-je vous aider aujourd'hui ?"
-                AppLanguage.ENGLISH -> "Hello! I am Sara, your ALLO AZIZ AI assistant. How can I assist you today?"
-                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لألو عزيز. تفضل بالسؤال وسأجيبك فوراً!"
+                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante vocale DELIVIO. Je vous écoute, comment puis-je vous aider aujourd'hui ?"
+                AppLanguage.ENGLISH -> "Hello! I am Sara, your DELIVIO AI assistant. How can I assist you today?"
+                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لديليفيو DELIVIO. تفضل بالسؤال وسأجيبك فوراً!"
             }
         )
     }
@@ -209,9 +209,9 @@ fun AiSupportVoiceCallDialog(
             launchSystemSpeechRecognizerForSupport(context, speechLauncher, language, onFallback = {
                 isListening = false
                 val defaultPrompt = when (language) {
-                    AppLanguage.FRENCH -> "Où se trouve ma commande et mon coursier Aziz ?"
-                    AppLanguage.ENGLISH -> "Where is my order and courier Aziz?"
-                    AppLanguage.ARABIC -> "أين طلبي وموقع المندوب عزيز حالياً؟"
+                    AppLanguage.FRENCH -> "Où se trouve ma commande et mon coursier DELIVIO ?"
+                    AppLanguage.ENGLISH -> "Where is my order and DELIVIO courier?"
+                    AppLanguage.ARABIC -> "أين طلبي وموقع كابتن التوصيل حالياً؟"
                 }
                 lastUserQuestion = defaultPrompt
                 isProcessing = true
@@ -642,7 +642,7 @@ fun AiSupportVoiceCallDialog(
                                 "Missing item ⚠️" to "What if an item is missing from my order?"
                             )
                             AppLanguage.ARABIC -> listOf(
-                                "أين طلبي الآن؟ 🛵" to "أين طلبي وموقع المندوب عزيز حالياً؟",
+                                "أين طلبي الآن؟ 🛵" to "أين طلبي وموقع كابتن التوصيل حالياً؟",
                                 "كود خصم حصري 🎁" to "ما هو كود الخصم المتاح اليوم؟",
                                 "طرق الدفع 💳" to "ما هي طرق الدفع المتوفرة لديكم؟",
                                 "وقت التوصيل ⚡" to "كم يستغرق التوصيل بالمحمدية عادةً؟",

@@ -161,7 +161,7 @@ fun PricingTransparencyDialog(
                     PriceBreakdownCard(
                         icon = Icons.Default.Speed,
                         iconColor = AzizAmberSecondary,
-                        title = if (language == AppLanguage.ARABIC) "خدمة ألو جيب لي ⚡ (Express)" else "Allo Express - Courses sur mesure",
+                        title = if (language == AppLanguage.ARABIC) "خدمة ديليفيو إكسبريس ⚡ (DELIVIO Express)" else "DELIVIO Express - Courses sur mesure",
                         price = "12 - 15 د.م",
                         time = if (language == AppLanguage.ARABIC) "15 - 25 دقيقة" else "15-25 min",
                         description = if (language == AppLanguage.ARABIC)
@@ -202,8 +202,8 @@ fun PricingTransparencyDialog(
                                     color = AzizMint
                                 )
                                 Text(
-                                    text = if (language == AppLanguage.ARABIC) "لا نفرض أي رسوم خدمة إضافية غير معلنة. الدفع يتم نقداً أو بالبطاقة أو عبر محفظة ALLO Pay."
-                                    else "Aucun frais de gestion caché. Paiement à la livraison ou par carte sécurisée.",
+                                    text = if (language == AppLanguage.ARABIC) "لا نفرض أي رسوم خدمة إضافية غير معلنة. الدفع يتم نقداً أو بالبطاقة أو عبر محفظة DELIVIO Pay."
+                                    else "Aucun frais de gestion caché. Paiement à la livraison, portefeuille DELIVIO Pay ou par carte sécurisée.",
                                     fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

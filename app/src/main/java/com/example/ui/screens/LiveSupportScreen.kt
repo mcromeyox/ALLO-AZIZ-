@@ -173,20 +173,20 @@ fun LiveSupportScreen(
     val faqs = when (language) {
         AppLanguage.FRENCH -> listOf(
             Pair(
-                "Combien de temps prend la livraison avec ALLO AZIZ ?",
+                "Combien de temps prend la livraison avec DELIVIO ?",
                 "La livraison prend entre 15 et 25 minutes grâce à notre réseau de coursiers déployés partout à Mohammedia et ses environs."
             ),
             Pair(
                 "Le paiement via l'application est-il sécurisé ?",
-                "Oui, tous les paiements par carte bancaire sont 100% sécurisés (cryptage bancaire 256-bit SSL). Nous proposons aussi le paiement en espèces à la livraison et le portefeuille ALLO Pay."
+                "Oui, tous les paiements par carte bancaire sont 100% sécurisés (cryptage bancaire 256-bit SSL). Nous proposons aussi le paiement en espèces à la livraison et le portefeuille DELIVIO Pay."
             ),
             Pair(
-                "Comment contacter le coursier Aziz directement ?",
-                "Dès l'acceptation de la commande, le numéro de téléphone et les boutons d'appel et chat directs avec Aziz apparaissent dans l'écran de suivi en direct."
+                "Comment contacter le coursier directement ?",
+                "Dès l'acceptation de la commande, le numéro de téléphone et les boutons d'appel et chat directs avec le coursier DELIVIO apparaissent dans l'écran de suivi en direct."
             ),
             Pair(
                 "Que faire si un article manque à ma commande ?",
-                "L'équipe support 24/7 vous indemnise immédiatement : soit par réexpédition gratuite et immédiate, soit par recrédit direct sur votre portefeuille ALLO Pay en 1 minute."
+                "L'équipe support 24/7 vous indemnise immédiatement : soit par réexpédition gratuite et immédiate, soit par recrédit direct sur votre portefeuille DELIVIO Pay en 1 minute."
             )
         )
         AppLanguage.ENGLISH -> listOf(
@@ -196,11 +196,11 @@ fun LiveSupportScreen(
             ),
             Pair(
                 "Is payment through the app secure?",
-                "Yes, 100% encrypted with 256-bit SSL banking security. We also accept Cash on Delivery and ALLO Pay wallet."
+                "Yes, 100% encrypted with 256-bit SSL banking security. We also accept Cash on Delivery and DELIVIO Pay wallet."
             ),
             Pair(
                 "How can I contact the courier directly?",
-                "As soon as an order is accepted, you can call or message courier Aziz directly from the live tracking screen."
+                "As soon as an order is accepted, you can call or message the DELIVIO courier directly from the live tracking screen."
             ),
             Pair(
                 "What if an item is missing from my order?",
@@ -209,12 +209,12 @@ fun LiveSupportScreen(
         )
         AppLanguage.ARABIC -> listOf(
             Pair(
-                "كم يستغرق التوصيل مع ألو عزيز عادةً؟",
+                "كم يستغرق التوصيل مع ديليفيو DELIVIO عادةً؟",
                 "يستغرق التوصيل ما بين 15 إلى 25 دقيقة كحد أقصى بفضل شبكة مناديبنا المتواجدين في كافة أرجاء المدينة."
             ),
             Pair(
                 "هل الدفع عبر التطبيق آمن ومضمون؟",
-                "نعم، جميع المعاملات مشفرة بأعلى بروتوكول بنكي ومعتمدة رسمياً، كما نوفر الدفع نقداً ومحفظة ALLO Pay."
+                "نعم، جميع المعاملات مشفرة بأعلى بروتوكول بنكي ومعتمدة رسمياً، كما نوفر الدفع نقداً ومحفظة DELIVIO Pay."
             ),
             Pair(
                 "كيف أتواصل مع المندوب مباشرة؟",
@@ -299,9 +299,9 @@ fun LiveSupportScreen(
                                         context = context,
                                         phoneE164 = saved,
                                         prefilledText = if (language == AppLanguage.FRENCH) {
-                                            "Bonjour, j'ai besoin d'une assistance du support ALLO AZIZ."
+                                            "Bonjour, j'ai besoin d'une assistance du support DELIVIO."
                                         } else {
-                                            "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ألو عزيز."
+                                            "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ديليفيو DELIVIO."
                                         }
                                     )
                                 } else {
@@ -354,9 +354,9 @@ fun LiveSupportScreen(
                     ) {
                         Text(
                             text = when (language) {
-                                AppLanguage.FRENCH -> "Hotline Gratuite : 0800-ALLO-AZIZ (24h/24)"
-                                AppLanguage.ENGLISH -> "Toll-Free Hotline: 0800-ALLO-AZIZ (24/7)"
-                                AppLanguage.ARABIC -> "خط المساعدة المجاني: 0800-ALLO-AZIZ (24h/24)"
+                                AppLanguage.FRENCH -> "Hotline Gratuite : 0800-DELIVIO (24h/24)"
+                                AppLanguage.ENGLISH -> "Toll-Free Hotline: 0800-DELIVIO (24/7)"
+                                AppLanguage.ARABIC -> "خط المساعدة المجاني: 0800-DELIVIO (24h/24)"
                             },
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -734,9 +734,9 @@ fun LiveSupportScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when (language) {
-                            AppLanguage.FRENCH -> "Support WhatsApp ALLO AZIZ 🇲🇦"
-                            AppLanguage.ENGLISH -> "ALLO AZIZ WhatsApp Support 🇲🇦"
-                            AppLanguage.ARABIC -> "دعم ألو عزيز عبر واتساب (WhatsApp 🇲🇦)"
+                            AppLanguage.FRENCH -> "Support WhatsApp DELIVIO 🇲🇦"
+                            AppLanguage.ENGLISH -> "DELIVIO WhatsApp Support 🇲🇦"
+                            AppLanguage.ARABIC -> "دعم ديليفيو DELIVIO عبر واتساب (WhatsApp 🇲🇦)"
                         },
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
@@ -747,9 +747,9 @@ fun LiveSupportScreen(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = when (language) {
-                            AppLanguage.FRENCH -> "Contact direct et immédiat avec le support et la direction d'ALLO AZIZ via WhatsApp."
-                            AppLanguage.ENGLISH -> "Instant contact with ALLO AZIZ customer care via WhatsApp."
-                            AppLanguage.ARABIC -> "تواصل فوري ومباشر مع الدعم الفني وإدارة ألو عزيز عبر تطبيق واتساب."
+                            AppLanguage.FRENCH -> "Contact direct et immédiat avec le support et la direction de DELIVIO via WhatsApp."
+                            AppLanguage.ENGLISH -> "Instant contact with DELIVIO customer care via WhatsApp."
+                            AppLanguage.ARABIC -> "تواصل فوري ومباشر مع الدعم الفني وإدارة ديليفيو DELIVIO عبر تطبيق واتساب."
                         },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -784,9 +784,9 @@ fun LiveSupportScreen(
                                 context = context,
                                 phoneE164 = phoneToUse,
                                 prefilledText = when (language) {
-                                    AppLanguage.FRENCH -> "Bonjour, j'ai besoin d'une assistance du support ALLO AZIZ."
-                                    AppLanguage.ENGLISH -> "Hello, I need assistance from ALLO AZIZ support."
-                                    AppLanguage.ARABIC -> "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ألو عزيز."
+                                    AppLanguage.FRENCH -> "Bonjour, j'ai besoin d'une assistance du support DELIVIO."
+                                    AppLanguage.ENGLISH -> "Hello, I need assistance from DELIVIO support."
+                                    AppLanguage.ARABIC -> "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ديليفيو DELIVIO."
                                 }
                             )
                             showWhatsAppDialog = false

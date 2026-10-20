@@ -178,9 +178,9 @@ object AppStrings {
     }
 
     fun promoCodePrompt(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "كود الخصم (جرب: AZIZ20)"
-        AppLanguage.FRENCH -> "Code Promo (ex: AZIZ20)"
-        AppLanguage.ENGLISH -> "Promo Code (try: AZIZ20)"
+        AppLanguage.ARABIC -> "كود الخصم (جرب: DELIVIO20)"
+        AppLanguage.FRENCH -> "Code Promo (ex: DELIVIO20)"
+        AppLanguage.ENGLISH -> "Promo Code (try: DELIVIO20)"
     }
 
     fun apply(lang: AppLanguage): String = when (lang) {
@@ -215,9 +215,9 @@ object AppStrings {
     }
 
     fun payWallet(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "محفظة ALLO Pay (رصيدك:"
-        AppLanguage.FRENCH -> "Portefeuille ALLO Pay (Solde:"
-        AppLanguage.ENGLISH -> "ALLO Pay Wallet (Balance:"
+        AppLanguage.ARABIC -> "محفظة DELIVIO Pay (رصيدك:"
+        AppLanguage.FRENCH -> "Portefeuille DELIVIO Pay (Solde:"
+        AppLanguage.ENGLISH -> "DELIVIO Pay Wallet (Balance:"
     }
 
     fun payAppleGoogle(lang: AppLanguage): String = when (lang) {
@@ -337,9 +337,9 @@ object AppStrings {
     }
 
     fun courierRating(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "تقييم المندوب عزيز"
-        AppLanguage.FRENCH -> "Note du livreur Aziz"
-        AppLanguage.ENGLISH -> "Courier Aziz Rating"
+        AppLanguage.ARABIC -> "تقييم كابتن التوصيل (ديليفيو)"
+        AppLanguage.FRENCH -> "Note du livreur DELIVIO"
+        AppLanguage.ENGLISH -> "DELIVIO Courier Rating"
     }
 
     fun writeReviewPlaceholder(lang: AppLanguage): String = when (lang) {

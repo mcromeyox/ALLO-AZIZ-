@@ -1120,7 +1120,7 @@ fun HomeScreen(
                             Text("🛡️", fontSize = 22.sp)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "ضمان ألو عزيز للتوصيل السريع",
+                                text = "ضمان ديليفيو DELIVIO للتوصيل السريع",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -1546,7 +1546,7 @@ fun HeroDeliveryBanner(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "كود الخصم: AZIZ20 (خصم 20%)",
+                        text = "كود الخصم: DELIVIO20 (خصم 20%)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1558,7 +1558,7 @@ fun HeroDeliveryBanner(
                     color = AzizOrangePrimary,
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .clickable { onApplyCode("AZIZ20") }
+                        .clickable { onApplyCode("DELIVIO20") }
                         .testTag("apply_hero_promo_button")
                 ) {
                     Text(

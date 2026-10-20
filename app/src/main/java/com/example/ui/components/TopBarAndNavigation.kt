@@ -130,7 +130,7 @@ fun AlloAzizTopBar(
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "ALLO AZIZ",
+                        text = "DELIVIO",
                         fontWeight = FontWeight.Black,
                         fontSize = 15.sp,
                         color = AzizOrangePrimary,
@@ -265,7 +265,7 @@ fun AlloAzizTopBar(
                             AppLanguage.ENGLISH -> "Customer Support Hub 🎧"
                             AppLanguage.ARABIC -> "مركز خدمة العملاء 🎧"
                         }
-                        else -> "ALLO AZIZ"
+                        else -> "DELIVIO"
                     }
                     Text(
                         text = title,

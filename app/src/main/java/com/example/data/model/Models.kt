@@ -53,7 +53,7 @@ enum class StoreCategory(
     CAFE("cafe", "مخابز وقهوة وحلويات", "Boulangerie & Café", "Bakery & Sweets", "☕"),
     GROCERY("grocery", "سوبرماركت وبقالة", "Supermarché", "Groceries", "🛒"),
     ECOMMERCE("ecommerce", "سوق التجارة الإلكترونية 🛍️", "E-Commerce & High-Tech", "E-Commerce Market", "🛍️"),
-    EXPRESS("express", "ألو جيب لي ⚡", "Allo Express ⚡", "Express Courier ⚡", "📦")
+    EXPRESS("express", "ديليفيو إكسبريس ⚡", "DELIVIO Express ⚡", "DELIVIO Express Courier ⚡", "📦")
 }
 
 data class MealOptionItem(
@@ -182,7 +182,7 @@ data class SupportChatMessage(
     val text: String,
     val isUser: Boolean,
     val timestamp: Long = System.currentTimeMillis(),
-    val agentName: String = "سارة - دعم ألو عزيز"
+    val agentName: String = "سارة - دعم ديليفيو DELIVIO"
 )
 
 data class SupportTicket(

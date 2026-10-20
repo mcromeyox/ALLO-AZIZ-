@@ -86,7 +86,7 @@ object CatalogData {
                 MealOptionItem("sauce_samourai", "صلصة ساموراي حارة 🔥", "Sauce Samouraï", "Samurai Sauce", 0.0),
                 MealOptionItem("sauce_bbq", "صوص باربكيو مدخن", "Sauce Barbecue Fumée", "Smoky BBQ Sauce", 0.0),
                 MealOptionItem("sauce_cheddar", "صوص الجبن الشيدر الذائب 🧀", "Sauce Cheddar Fondue", "Melted Cheddar Sauce", 0.0),
-                MealOptionItem("sauce_special", "صوص ألو عزيز الخاص 🌶️", "Sauce Spéciale Aziz", "Aziz Secret Sauce", 0.0)
+                MealOptionItem("sauce_special", "صوص ديليفيو الخاص 🌶️", "Sauce Spéciale DELIVIO", "DELIVIO Secret Sauce", 0.0)
             )
         ),
         MealOptionGroup(
@@ -436,9 +436,9 @@ object CatalogData {
         ),
         Store(
             id = "store_express",
-            name = "ألو جيب لي المحمدية (خدمة التوصيل السريع)",
-            nameAr = "ألو جيب لي المحمدية (توصيل طرود فوري)",
-            nameFr = "Allo Jibli Mohammedia Express",
+            name = "ديليفيو إكسبريس (خدمة التوصيل السريع)",
+            nameAr = "ديليفيو إكسبريس (توصيل طرود فوري)",
+            nameFr = "DELIVIO Express Mohammedia",
             category = StoreCategory.EXPRESS,
             rating = 5.0,
             reviewCount = 490,
@@ -1042,13 +1042,13 @@ object CatalogData {
         Product(
             id = "p_express_service",
             storeId = "store_express",
-            storeName = "خدمة ألو جيب لي (توصيل طرود فوري)",
-            nameEn = "On-Demand Express Courier Pickup",
-            nameAr = "خدمة توصيل طرد أو شراء فوري بالنيابة عنك",
-            nameFr = "Coursier Express sur Mesure",
-            descriptionEn = "Aziz courier will pick up any parcel, keys, documents or medicine and deliver within 20 mins.",
-            descriptionAr = "المندوب عزيز يشتري لك ما ترغب أو ينقل طردك، مفاتيح، أوراق مستعجلة، أو أدوية في 15 دقيقة فقط.",
-            descriptionFr = "Aziz effectue vos achats ou livre vos colis urgents (clés, pharmacie) en 15 min.",
+            storeName = "خدمة ديليفيو إكسبريس (توصيل طرود فوري)",
+            nameEn = "DELIVIO Express Courier Pickup",
+            nameAr = "خدمة ديليفيو للتوصيل الفوري أو الشراء بالنيابة",
+            nameFr = "DELIVIO Coursier Express sur Mesure",
+            descriptionEn = "DELIVIO courier will pick up any parcel, keys, documents or medicine and deliver within 20 mins.",
+            descriptionAr = "مندوب ديليفيو يشتري لك ما ترغب أو ينقل طردك، مفاتيح، أوراق مستعجلة، أو أدوية في 15 دقيقة فقط.",
+            descriptionFr = "Le coursier DELIVIO effectue vos achats ou livre vos colis urgents (clés, pharmacie) en 15 min.",
             price = 20.0,
             category = StoreCategory.EXPRESS,
             emoji = "🛵",

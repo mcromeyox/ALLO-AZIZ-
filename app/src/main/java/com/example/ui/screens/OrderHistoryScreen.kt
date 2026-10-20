@@ -198,7 +198,7 @@ fun OrderHistoryScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("فاتورة رسمية - ألو عزيز", fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    Text("فاتورة رسمية - ديليفيو DELIVIO", fontWeight = FontWeight.Black, fontSize = 16.sp)
                 }
             },
             text = {

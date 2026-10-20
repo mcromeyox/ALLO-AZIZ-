@@ -223,7 +223,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             UserAccountEntity(
                 id = "owner_mcdo",
                 name = "الشيف عمر - مدير ماكدونالدز",
-                email = "partner.mcdo@alloaziz.ma",
+                email = "partner.mcdo@delivio.ma",
                 phone = "+212 522-889900",
                 password = defaultHashedPassword,
                 role = "RESTAURANT_OWNER",
@@ -236,7 +236,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             UserAccountEntity(
                 id = "owner_tajine",
                 name = "الحاج عبد القادر - طاجين فاس",
-                email = "tajine.fes@alloaziz.ma",
+                email = "tajine.fes@delivio.ma",
                 phone = "+212 535-445566",
                 password = defaultHashedPassword,
                 role = "RESTAURANT_OWNER",
@@ -248,8 +248,8 @@ class AlloAzizRepository(private val database: AppDatabase) {
             ),
             UserAccountEntity(
                 id = "drv_aziz",
-                name = "عزيز برادة (الكابتن عزيز)",
-                email = "aziz.courier@alloaziz.ma",
+                name = "عزيز برادة (كابتن ديليفيو)",
+                email = "aziz.courier@delivio.ma",
                 phone = "+212 661-234567",
                 password = defaultHashedPassword,
                 role = "DRIVER",
@@ -289,7 +289,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             UserAccountEntity(
                 id = "usr_support_1",
                 name = "سارة المنصوري (مشرفة الدعم)",
-                email = "sara.support@alloaziz.ma",
+                email = "sara.support@delivio.ma",
                 phone = "+212 520-112233",
                 password = defaultHashedPassword,
                 role = "SUPPORT_AGENT",
@@ -369,7 +369,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             SupportTicketEntity(
                 id = "TCK-802",
                 customerName = "مريم الوهابي (عميل)",
-                subject = "استفسار بخصوص خصم كود AZIZ20",
+                subject = "استفسار بخصوص خصم كود DELIVIO20",
                 status = "RESOLVED",
                 assignedAgent = "سارة المنصوري",
                 lastMessage = "تم تفعيل الخصم 20% بنجاح وشكراً لتعاونكم السريع."
@@ -392,9 +392,9 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.notificationDao().insertNotification(
             NotificationEntity(
                 id = "notif_welcome",
-                titleAr = "مرحباً بك في ألو عزيز! 🎉",
-                titleFr = "Bienvenue sur ALLO AZIZ ! 🎉",
-                titleEn = "Welcome to ALLO AZIZ! 🎉",
+                titleAr = "مرحباً بك في ديليفيو DELIVIO! 🎉",
+                titleFr = "Bienvenue sur DELIVIO ! 🎉",
+                titleEn = "Welcome to DELIVIO! 🎉",
                 bodyAr = "أسرع منصة توصيل تربط العملاء، المطاعم، والسائقين بنظام احترافي متكامل!",
                 bodyFr = "La plateforme de livraison N°1 connectant clients, restaurants et livreurs !",
                 bodyEn = "The #1 delivery ecosystem connecting customers, restaurants and couriers!",
@@ -407,12 +407,12 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.notificationDao().insertNotification(
             NotificationEntity(
                 id = "notif_wallet_gift",
-                titleAr = "كود الخصم الترحيبي: AZIZ20 🏷️",
-                titleFr = "Code promo de bienvenue: AZIZ20 🏷️",
-                titleEn = "Welcome Promo Code: AZIZ20 🏷️",
-                bodyAr = "استخدم كود AZIZ20 عند إتمام الطلب للاستفادة من خصم 20% على وجبتك المفضلة!",
-                bodyFr = "Utilisez le code AZIZ20 pour obtenir 20% de réduction sur votre commande !",
-                bodyEn = "Use code AZIZ20 at checkout for 20% off your order!",
+                titleAr = "كود الخصم الترحيبي: DELIVIO20 🏷️",
+                titleFr = "Code promo de bienvenue: DELIVIO20 🏷️",
+                titleEn = "Welcome Promo Code: DELIVIO20 🏷️",
+                bodyAr = "استخدم كود DELIVIO20 عند إتمام الطلب للاستفادة من خصم 20% على وجبتك المفضلة!",
+                bodyFr = "Utilisez le code DELIVIO20 pour obtenir 20% de réduction sur votre commande !",
+                bodyEn = "Use code DELIVIO20 at checkout for 20% off your order!",
                 timestamp = System.currentTimeMillis() - 1800000,
                 isRead = false,
                 type = "PROMO"
@@ -428,7 +428,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
                 storeRating = 5,
                 courierRating = 5,
                 tagsJson = "[\"توصيل سريع\", \"أكل ساخن ولذيذ\", \"تغليف محكم\"]",
-                comment = "وصل البيج ماك والبطاطس ساخنة ومقرمشة في 17 دقيقة فقط مع الكابتن عزيز! تطبيق مذهل يفوق جميع المنافسين.",
+                comment = "وصل البيج ماك والبطاطس ساخنة ومقرمشة في 17 دقيقة فقط مع كابتن ديليفيو! تطبيق مذهل يفوق جميع المنافسين.",
                 dateString = "اليوم، 13:45"
             )
         )

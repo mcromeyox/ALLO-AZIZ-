@@ -140,7 +140,7 @@ fun OrderTrackingScreen(
     var courierChatInput by remember { mutableStateOf("") }
     val courierChatLog = remember {
         mutableStateListOf(
-            "عزيز المندوب: أهلاً بك! استلمت طلبك الساخن وأنا في الطريق إليك بأقصى سرعة."
+            "كابتن ديليفيو: أهلاً بك! استلمت طلبك الساخن وأنا في الطريق إليك بأقصى سرعة."
         )
     }
 
@@ -355,7 +355,7 @@ fun OrderTrackingScreen(
                     com.example.data.system.ExternalShareHelper.openWhatsApp(
                         context = context,
                         phoneE164 = phone,
-                        prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+                        prefilledText = "السلام عليكم كابتن ديليفيو، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
                     )
                 }
             )
@@ -845,7 +845,7 @@ fun OrderTrackingScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = order.courierName.ifBlank { "الكابتن عزيز برادة" },
+                                    text = order.courierName.ifBlank { "كابتن ديليفيو إكسبريس" },
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -1006,7 +1006,7 @@ fun OrderTrackingScreen(
                                 com.example.data.system.ExternalShareHelper.openWhatsApp(
                                     context = context,
                                     phoneE164 = effectiveCourierPhone,
-                                    prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName}."
+                                    prefilledText = "السلام عليكم كابتن ديليفيو، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName}."
                                 )
                             },
                             shape = RoundedCornerShape(12.dp),
@@ -1062,7 +1062,7 @@ fun OrderTrackingScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = if (order.hasReviewed) "شكراً لدعمك المتجر والمندوب عزيز!" else "شاركنا رأيك في سرعة التوصيل وجودة الطعام",
+                                    text = if (order.hasReviewed) "شكراً لدعمك المتجر وكابتن ديليفيو!" else "شاركنا رأيك في سرعة التوصيل وجودة الطعام",
                                     fontSize = 11.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -1212,7 +1212,7 @@ fun OrderTrackingScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("🛵", fontSize = 20.sp)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "محادثة سريعة مع المندوب عزيز", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(text = "محادثة سريعة مع كابتن ديليفيو", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
@@ -1245,7 +1245,7 @@ fun OrderTrackingScreen(
                     onClick = {
                         if (courierChatInput.isNotBlank()) {
                             courierChatLog.add("أنت: $courierChatInput")
-                            val reply = "عزيز المندوب: تم استلام ملاحظتك، أنا على بعد دقائق قليلة!"
+                            val reply = "كابتن ديليفيو: تم استلام ملاحظتك، أنا على بعد دقائق قليلة!"
                             courierChatLog.add(reply)
                             courierChatInput = ""
                         }
@@ -1294,7 +1294,7 @@ fun OrderTrackingScreen(
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "تواصل مباشر مع كابتن التوصيل أو إدارة ألو عزيز بخصوص طلبك #${order.id}.",
+                        text = "تواصل مباشر مع كابتن التوصيل أو إدارة ديليفيو DELIVIO بخصوص طلبك #${order.id}.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1327,7 +1327,7 @@ fun OrderTrackingScreen(
                         if (phoneToUse.isNotBlank()) {
                             com.example.data.system.ExternalShareHelper.saveWhatsAppNumber(context, phoneToUse)
                             onUpdateCourierPhone?.invoke(phoneToUse)
-                            val prefilled = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+                            val prefilled = "السلام عليكم كابتن ديليفيو، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
                             com.example.data.system.ExternalShareHelper.openWhatsApp(
                                 context = context,
                                 phoneE164 = phoneToUse,
@@ -1596,7 +1596,7 @@ fun LiveTrackingMapCanvas(
                 "ON_THE_WAY" -> "الكابتن في الطريق 🛵"
                 "ARRIVED" -> "الكابتن وصل عند العنوان 🚪"
                 "DELIVERED" -> "تم التسليم بنجاح ✓"
-                else -> "كابتن ألو عزيز 🛵"
+                else -> "كابتن ديليفيو 🛵"
             }
 
             Box(
@@ -1759,7 +1759,7 @@ fun ReviewSubmissionDialog(
 
                 // Courier Rating
                 Text(
-                    text = "${AppStrings.courierRating(language)} (عزيز):",
+                    text = "${AppStrings.courierRating(language)}:",
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp
                 )

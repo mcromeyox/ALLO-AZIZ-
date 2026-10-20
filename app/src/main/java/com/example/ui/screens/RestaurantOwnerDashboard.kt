@@ -251,7 +251,7 @@ fun RestaurantOwnerDashboard(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "لوحة تحكم صاحب المطعم والشريك • ألو عزيز 👑",
+                                    text = "لوحة تحكم صاحب المطعم والشريك • ديليفيو DELIVIO 👑",
                                     fontSize = 11.sp,
                                     color = AzizOrangePrimary,
                                     fontWeight = FontWeight.Bold

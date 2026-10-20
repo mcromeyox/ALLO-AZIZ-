@@ -32,6 +32,7 @@ import com.example.data.model.Store
 import com.example.data.model.StoreCategory
 import com.example.data.model.SupportChatMessage
 import com.example.data.model.UserRole
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,8 +80,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     private val repository: AlloAzizRepository
 
-    // Screen Navigation
-    private val _currentScreen = MutableStateFlow(AppScreen.HOME)
+    // Screen Navigation (Opens directly into Login/Register screen)
+    private val _currentScreen = MutableStateFlow(AppScreen.AUTH)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
 
     private val _screenHistory = mutableListOf<AppScreen>()
@@ -623,8 +624,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             null
         )
 
-        // Seed initial room data
-        viewModelScope.launch {
+        // Seed initial room data asynchronously off main thread for zero-lag launch
+        viewModelScope.launch(Dispatchers.IO) {
             repository.initializeDefaultDataIfEmpty()
             initSupportChat()
         }
@@ -641,7 +642,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 id = "msg_init",
                 text = greeting,
                 isUser = false,
-                agentName = "سارة - دعم ديليفيو"
+                agentName = "سارة - دعم ديليفيو DELIVIO"
             )
         )
     }
@@ -675,11 +676,11 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             when (user.status) {
                 "PENDING_APPROVAL" -> {
                     val roleMsg = if (user.role == "RESTAURANT_OWNER") {
-                        "طلب الانضمام كشريك مطعم (${user.name}) قيد المراجعة والاعتماد من طرف إدارة ALLO AZIZ. ستتمكن من تشغيل متجرك فور اعتماد الحساب."
+                        "طلب الانضمام كشريك مطعم (${user.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو). ستتمكن من تشغيل متجرك فور اعتماد الحساب."
                     } else if (user.role == "DRIVER") {
-                        "طلب الانضمام كسائق مندوب (${user.name}) قيد المراجعة والاعتماد من طرف إدارة ALLO AZIZ. ستتمكن من استقبال الطلبات فور اعتماد الحساب."
+                        "طلب الانضمام كسائق مندوب (${user.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو). ستتمكن من استقبال الطلبات فور اعتماد الحساب."
                     } else {
-                        "حسابك (${user.name}) قيد المراجعة والاعتماد من قبل إدارة ألو عزيز."
+                        "حسابك (${user.name}) قيد المراجعة والاعتماد من قبل إدارة DELIVIO (ديليفيو)."
                     }
                     _authPendingApprovalMessage.value = roleMsg
                     return@launch
@@ -689,7 +690,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     return@launch
                 }
                 "REJECTED" -> {
-                    _authError.value = "عذراً، تم رفض طلب التسجيل من طرف إدارة ALLO AZIZ لعدم استيفاء الشروط. للتواصل مع الدعم: support@alloaziz.ma"
+                    _authError.value = "عذراً، تم رفض طلب التسجيل من طرف إدارة DELIVIO لعدم استيفاء الشروط. للتواصل مع الدعم: support@delivio.ma"
                     return@launch
                 }
                 "DEACTIVATED" -> {
@@ -738,11 +739,11 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 when (existingUser.status) {
                     "PENDING_APPROVAL" -> {
                         val roleMsg = if (existingUser.role == "RESTAURANT_OWNER") {
-                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة ALLO AZIZ."
+                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو)."
                         } else if (existingUser.role == "DRIVER") {
-                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة ALLO AZIZ."
+                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو)."
                         } else {
-                            "حسابك قيد المراجعة والاعتماد من قبل الإدارة."
+                            "حسابك قيد المراجعة والاعتماد من قبل إدارة DELIVIO."
                         }
                         _authPendingApprovalMessage.value = roleMsg
                         return@launch
@@ -752,7 +753,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         return@launch
                     }
                     "REJECTED" -> {
-                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة ALLO AZIZ."
+                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة DELIVIO."
                         return@launch
                     }
                     "DEACTIVATED" -> {
@@ -862,7 +863,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         role: UserRole,
         restaurantName: String = "",
         vehicleType: String = "",
-        plateNumber: String = ""
+        plateNumber: String = "",
+        merchantType: String = "FOOD",
+        iceNumber: String = "",
+        businessAddress: String = "",
+        cinNumber: String = "",
+        driverLicense: String = "",
+        ribNumber: String = ""
     ) {
         viewModelScope.launch {
             clearAuthMessages()
@@ -912,7 +919,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 password = trimmedPass,
                 role = role.name,
                 status = initialStatus,
-                restaurantName = if (role == UserRole.RESTAURANT_OWNER) restaurantName.ifBlank { "مطعم $trimmedName" } else null,
+                restaurantName = if (role == UserRole.RESTAURANT_OWNER) restaurantName.ifBlank { "متجر $trimmedName" } else null,
                 vehicleType = if (role == UserRole.DRIVER) vehicleType.ifBlank { "دراجة نارية / سكوتر" } else null,
                 plateNumber = if (role == UserRole.DRIVER) plateNumber.ifBlank { "أ - 12345" } else null,
                 balance = 0.0,
@@ -928,34 +935,68 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 _currentUserId.value = newAccount.id
                 _currentRole.value = UserRole.CUSTOMER
                 _currentScreen.value = AppScreen.HOME
-                _userAlertMessage.value = "مرحباً بك يا $trimmedName في ألو عزيز! تم إنشاء حسابك بنجاح وبإمكانك الطلب الآن 🛍️"
+                _userAlertMessage.value = "مرحباً بك يا $trimmedName في ديليفيو! تم تفعيل حسابك بنجاح وبإمكانك الطلب الآن 🛍️"
 
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_welcome_${System.currentTimeMillis()}",
-                        titleAr = "مرحباً بك في ألو عزيز! 🇲🇦",
-                        titleFr = "Bienvenue sur ALLO AZIZ !",
-                        titleEn = "Welcome to ALLO AZIZ!",
-                        bodyAr = "تم تفعيل حسابك بنجاح. استمتع بأشهى المأكولات والتوصيل السريع بالمحمدية.",
+                        titleAr = "مرحباً بك في DELIVIO! 🇲🇦",
+                        titleFr = "Bienvenue sur DELIVIO !",
+                        titleEn = "Welcome to DELIVIO!",
+                        bodyAr = "تم تفعيل حسابك بنجاح. استمتع بأشهى المأكولات والتسوق السريع.",
                         bodyFr = "Votre compte a été activé avec succès.",
                         bodyEn = "Your account is now active.",
                         timestamp = System.currentTimeMillis(),
                         type = "WELCOME"
                     )
                 )
-            } else {
-                // Partner (Merchant or Driver): Requires Admin Approval
-                _authSuccessMessage.value = "تم إرسال طلبك بنجاح. سيتم مراجعة طلب الانضمام من طرف إدارة ALLO AZIZ، وسنخبرك عند تفعيل حسابك."
+            } else if (role == UserRole.RESTAURANT_OWNER) {
+                // Partner Merchant (Restaurant or E-commerce store): Requires Admin / Support Approval
+                val mApp = com.example.data.model.MerchantApplication(
+                    id = "app_reg_${System.currentTimeMillis()}",
+                    storeName = restaurantName.ifBlank { "متجر $trimmedName" },
+                    merchantType = merchantType,
+                    ownerName = trimmedName,
+                    iceNumber = iceNumber.ifBlank { "002847193000045" },
+                    phone = trimmedPhone,
+                    address = businessAddress.ifBlank { "المحمدية، المغرب" },
+                    cinUri = if (cinNumber.isNotBlank()) "CIN: $cinNumber" else "بطاقة وطنية موثقة",
+                    licenseUri = "سجل تجاري / رخصة معتمدة",
+                    hygieneUri = "شهادة النظافة والسلامة الصحية",
+                    ribUri = if (ribNumber.isNotBlank()) "RIB: $ribNumber" else "حساب بنكي معتمد",
+                    status = "PENDING_VERIFICATION",
+                    notes = "تسجيل شريك جديد عبر استمارة الانضمام الموحدة"
+                )
+                _merchantApplications.value = listOf(mApp) + _merchantApplications.value
+
+                _authPendingApprovalMessage.value = "تم استلام ملف الشريك التجاري (${restaurantName.ifBlank { trimmedName }}) بنجاح! 📄 حسابك قيد التدقيق الإداري من طرف إدارة DELIVIO أو الدعم الفني، وسيتم تفعيله فور اعتماد الوثائق."
 
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_reg_${System.currentTimeMillis()}",
-                        titleAr = "طلب انضمام شريك جديد بانتظار الاعتماد 🔔",
-                        titleFr = "Nouvelle demande de partenariat",
-                        titleEn = "New Partner Application",
-                        bodyAr = "سجل ${trimmedName} كـ (${role.titleAr}) وهو بانتظار مراجعة واعتماد الإدارة.",
-                        bodyFr = "${trimmedName} a postulé en tant que (${role.titleFr}).",
-                        bodyEn = "${trimmedName} registered as (${role.titleEn}) and awaits activation.",
+                        titleAr = "طلب انضمام شريك متجر/مطعم جديد بانتظار الاعتماد 🔔",
+                        titleFr = "Nouvelle demande de partenaire marchand",
+                        titleEn = "New Merchant Partner Application",
+                        bodyAr = "سجل المتجر (${restaurantName.ifBlank { trimmedName }}) وهو بانتظار مراجعة واعتماد الإدارة.",
+                        bodyFr = "${trimmedName} a postulé pour un commerce (${restaurantName}).",
+                        bodyEn = "${trimmedName} registered store (${restaurantName}) and awaits activation.",
+                        timestamp = System.currentTimeMillis(),
+                        type = "SECURITY"
+                    )
+                )
+            } else {
+                // Driver Partner: Requires Admin / Support Approval
+                _authPendingApprovalMessage.value = "تم استلام ملف السائق (${trimmedName}) بنجاح! 🛵 حسابك قيد التدقيق الإداري من قبل إدارة DELIVIO أو الدعم الفني، وسيتم تفعيله فور اعتماد رخصة السياقة والمركبة."
+
+                repository.addNotification(
+                    NotificationEntity(
+                        id = "notif_reg_drv_${System.currentTimeMillis()}",
+                        titleAr = "طلب انضمام سائق توصيل جديد بانتظار الاعتماد 🔔",
+                        titleFr = "Nouvelle candidature livreur",
+                        titleEn = "New Driver Application",
+                        bodyAr = "سجل الكابتن ${trimmedName} (${vehicleType.ifBlank { "دراجة نارية" }}) وهو بانتظار مراجعة واعتماد الإدارة.",
+                        bodyFr = "Candidature chauffeur de ${trimmedName}.",
+                        bodyEn = "Driver registration for ${trimmedName} awaiting admin approval.",
                         timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
@@ -970,11 +1011,11 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_appr_${System.currentTimeMillis()}",
-                    titleAr = "تم قبول طلب انضمامك إلى ALLO AZIZ بنجاح 🎉",
+                    titleAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح 🎉",
                     titleFr = "Demande acceptée avec succès 🎉",
                     titleEn = "Partner Application Approved 🎉",
-                    bodyAr = "تم قبول طلب انضمامك إلى ALLO AZIZ بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
-                    bodyFr = "Votre demande a été approuvée par l'administration ALLO AZIZ.",
+                    bodyAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
+                    bodyFr = "Votre demande a été approuvée par l'administration DELIVIO.",
                     bodyEn = "Your application was approved. You can now login and start working.",
                     timestamp = System.currentTimeMillis(),
                     type = "APPROVAL"
@@ -990,7 +1031,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_rej_${System.currentTimeMillis()}",
-                    titleAr = "تحديث بخصوص طلب الانضمام إلى ALLO AZIZ",
+                    titleAr = "تحديث بخصوص طلب الانضمام إلى DELIVIO",
                     titleFr = "Mise à jour concernant votre demande",
                     titleEn = "Application Status Update",
                     bodyAr = "نأسف لإبلاغك بأنه تم رفض طلب الانضمام لعدم استيفاء الشروط والمعايير المطلوبة. يمكنك التواصل مع الدعم الفني لمزيد من المعلومات.",
@@ -1606,29 +1647,29 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun applyPromoCode(code: String): Boolean {
         val cleanCode = code.trim().uppercase()
-        if (cleanCode == "AZIZ20") {
-            _appliedPromoCode.value = cleanCode
+        if (cleanCode == "DELIVIO20" || cleanCode == "AZIZ20") {
+            _appliedPromoCode.value = "DELIVIO20"
             _promoDiscountPercent.value = 0.20 // 20%
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود AZIZ20 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code AZIZ20 appliqué ! -20% sur la commande 🎉"
-                AppLanguage.ENGLISH -> "Code AZIZ20 applied! 20% off your order 🎉"
+                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود DELIVIO20 مفعل 🎉"
+                AppLanguage.FRENCH -> "Code DELIVIO20 appliqué ! -20% sur la commande 🎉"
+                AppLanguage.ENGLISH -> "Code DELIVIO20 applied! 20% off your order 🎉"
             }
             return true
-        } else if (cleanCode == "ALLO10") {
-            _appliedPromoCode.value = cleanCode
+        } else if (cleanCode == "DELIVIO10" || cleanCode == "ALLO10") {
+            _appliedPromoCode.value = "DELIVIO10"
             _promoDiscountPercent.value = 0.10 // 10%
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود ALLO10 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code ALLO10 appliqué ! -10% 🎉"
-                AppLanguage.ENGLISH -> "Code ALLO10 applied! 10% off 🎉"
+                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود DELIVIO10 مفعل 🎉"
+                AppLanguage.FRENCH -> "Code DELIVIO10 appliqué ! -10% 🎉"
+                AppLanguage.ENGLISH -> "Code DELIVIO10 applied! 10% off 🎉"
             }
             return true
         } else {
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب AZIZ20"
-                AppLanguage.FRENCH -> "Code promo invalide. Essayez AZIZ20"
-                AppLanguage.ENGLISH -> "Invalid promo code. Try AZIZ20"
+                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب DELIVIO20"
+                AppLanguage.FRENCH -> "Code promo invalide. Essayez DELIVIO20"
+                AppLanguage.ENGLISH -> "Invalid promo code. Try DELIVIO20"
             }
             return false
         }
@@ -1675,7 +1716,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val paymentMethodStr = when (_selectedPaymentMethod.value) {
             PaymentMethodType.CREDIT_CARD -> "بطاقة مصرفية آمنة (Visa/Mastercard)"
             PaymentMethodType.CASH_ON_DELIVERY -> "الدفع عند الاستلام (كاش)"
-            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة ALLO Pay"
+            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة DELIVIO Pay"
             PaymentMethodType.DIGITAL_WALLET -> "Google Pay / Apple Pay"
         }
 
@@ -1813,7 +1854,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         context = getApplication(),
                         orderId = orderId,
                         title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
-                        body = "شكراً لاختيارك ألو عزيز! شاركنا تقييمك للخدمة."
+                        body = "شكراً لاختيارك ديليفيو DELIVIO! شاركنا تقييمك للخدمة."
                     )
                     _userAlertMessage.value = "تم تأكيد تسليم واستلام الطلب بنجاح! 🎉"
                 }
@@ -2045,9 +2086,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 text = responseText,
                 isUser = false,
                 agentName = when (lang) {
-                    AppLanguage.FRENCH -> "Sara (IA Support 24/7)"
-                    AppLanguage.ENGLISH -> "Sara (24/7 AI Support)"
-                    AppLanguage.ARABIC -> "سارة - دعم ألو عزيز"
+                    AppLanguage.FRENCH -> "Sara (IA Support DELIVIO 24/7)"
+                    AppLanguage.ENGLISH -> "Sara (DELIVIO 24/7 AI Support)"
+                    AppLanguage.ARABIC -> "سارة - دعم ديليفيو DELIVIO"
                 }
             )
             _supportMessages.value = _supportMessages.value + botMsg
@@ -2063,9 +2104,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     titleAr = "شحن المحفظة بنجاح 💳",
                     titleFr = "Portefeuille rechargé 💳",
                     titleEn = "Wallet Topped Up 💳",
-                    bodyAr = "تمت إضافة $amount د.م إلى محفظة ALLO Pay بنجاح.",
-                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille ALLO Pay.",
-                    bodyEn = "$amount MAD successfully added to your ALLO Pay balance.",
+                    bodyAr = "تمت إضافة $amount د.م إلى محفظة DELIVIO Pay بنجاح.",
+                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille DELIVIO Pay.",
+                    bodyEn = "$amount MAD successfully added to your DELIVIO Pay balance.",
                     timestamp = System.currentTimeMillis(),
                     type = "WALLET"
                 )
@@ -2107,7 +2148,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         return ExternalShareHelper.openWhatsApp(
             context = context,
             phoneE164 = targetPhone,
-            prefilledText = "السلام عليكم كابتن عزيز، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+            prefilledText = "السلام عليكم كابتن ديليفيو، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
         )
     }
 
@@ -2122,7 +2163,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         return ExternalShareHelper.openWhatsApp(
             context = context,
             phoneE164 = targetPhone,
-            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة ألو عزيز بخصوص تطبيق التوصيل."
+            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة ديليفيو DELIVIO بخصوص تطبيق التوصيل."
         )
     }
 

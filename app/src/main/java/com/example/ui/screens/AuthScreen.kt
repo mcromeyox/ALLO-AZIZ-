@@ -23,17 +23,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.TwoWheeler
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -42,13 +46,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -91,7 +96,22 @@ fun AuthScreen(
     onLoginCredentials: (identifier: String, pass: String) -> Unit,
     onLoginGoogle: (email: String, name: String) -> Unit,
     onTriggerGoogleSignIn: (onFallback: () -> Unit) -> Unit = { it() },
-    onRegister: (name: String, email: String, phone: String, pass: String, role: UserRole, restName: String, vType: String, plate: String) -> Unit,
+    onRegister: (
+        name: String,
+        email: String,
+        phone: String,
+        pass: String,
+        role: UserRole,
+        restaurantName: String,
+        vehicleType: String,
+        plateNumber: String,
+        merchantType: String,
+        iceNumber: String,
+        businessAddress: String,
+        cinNumber: String,
+        driverLicense: String,
+        ribNumber: String
+    ) -> Unit,
     onClearMessages: () -> Unit,
     onOpenStaffLogin: () -> Unit = {},
     onRequestPasswordReset: ((identifier: String, onOtp: (String) -> Unit) -> Unit)? = null,
@@ -99,25 +119,54 @@ fun AuthScreen(
     onLoginWithPhone: ((phoneNumber: String, customerName: String) -> Unit)? = null,
     onSkipAsGuest: (() -> Unit)? = null
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) } // 0 = Sign In, 1 = Register
+    // 0 = تسجيل الدخول (Sign In), 1 = إنشاء حساب جديد (Register)
+    var selectedMainTab by remember { mutableIntStateOf(0) }
+
+    // Register Category Tab: 0 = زبون (Customer), 1 = شريك متجر/مطعم (Merchant Partner), 2 = سائق (Driver Courier)
+    var regCategoryTab by remember { mutableIntStateOf(0) }
+
+    // Role filter for Sign In
+    var selectedSignInRole by remember { mutableStateOf<UserRole?>(null) }
 
     // Sign In inputs
     var loginIdentifier by remember { mutableStateOf("") }
     var loginPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var fastPhoneInput by remember { mutableStateOf("") }
-    var fastCustomerName by remember { mutableStateOf("") }
 
-    // Register inputs
-    var regName by remember { mutableStateOf("") }
-    var regEmail by remember { mutableStateOf("") }
-    var regPhone by remember { mutableStateOf("") }
-    var regPassword by remember { mutableStateOf("") }
-    var regShowPassword by remember { mutableStateOf(false) }
-    var regRole by remember { mutableStateOf(UserRole.CUSTOMER) }
-    var regRestaurantName by remember { mutableStateOf("") }
-    var regVehicleType by remember { mutableStateOf("دراجة نارية / سكوتر") }
-    var regPlateNumber by remember { mutableStateOf("") }
+    // Customer Registration inputs
+    var regCustName by remember { mutableStateOf("") }
+    var regCustPhone by remember { mutableStateOf("") }
+    var regCustEmail by remember { mutableStateOf("") }
+    var regCustPassword by remember { mutableStateOf("") }
+    var regCustShowPassword by remember { mutableStateOf(false) }
+
+    // Business Partner (Restaurant & Store) Registration inputs
+    var regMerchantType by remember { mutableStateOf("FOOD") } // FOOD, ECOMMERCE, GROCERY, PHARMACY
+    var regBusinessStoreName by remember { mutableStateOf("") }
+    var regBusinessOwnerName by remember { mutableStateOf("") }
+    var regBusinessIce by remember { mutableStateOf("") }
+    var regBusinessPhone by remember { mutableStateOf("") }
+    var regBusinessEmail by remember { mutableStateOf("") }
+    var regBusinessAddress by remember { mutableStateOf("") }
+    var regBusinessPassword by remember { mutableStateOf("") }
+    var regBusinessShowPassword by remember { mutableStateOf(false) }
+    var regBusinessCin by remember { mutableStateOf("") }
+    var regBusinessRc by remember { mutableStateOf("") }
+    var regBusinessRib by remember { mutableStateOf("") }
+    var regBusinessHygieneCheck by remember { mutableStateOf(true) }
+
+    // Driver Courier Registration inputs
+    var regDriverName by remember { mutableStateOf("") }
+    var regDriverPhone by remember { mutableStateOf("") }
+    var regDriverEmail by remember { mutableStateOf("") }
+    var regDriverPassword by remember { mutableStateOf("") }
+    var regDriverShowPassword by remember { mutableStateOf(false) }
+    var regDriverVehicleType by remember { mutableStateOf("دراجة نارية / سكوتر") }
+    var regDriverPlate by remember { mutableStateOf("") }
+    var regDriverPermis by remember { mutableStateOf("") }
+    var regDriverCin by remember { mutableStateOf("") }
+    var regDriverZone by remember { mutableStateOf("المحمدية وسواحلها") }
 
     // Google Account Picker Dialog
     var showGooglePickerDialog by remember { mutableStateOf(false) }
@@ -137,20 +186,20 @@ fun AuthScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .testTag("auth_screen_container"),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
+        contentPadding = PaddingValues(horizontal = 18.dp, vertical = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // App Brand Header
         item {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 10.dp, bottom = 8.dp)
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
-                        .clip(RoundedCornerShape(22.dp))
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(20.dp))
                         .background(
                             Brush.linearGradient(
                                 colors = listOf(AzizOrangePrimary, AzizAmberSecondary)
@@ -158,28 +207,29 @@ fun AuthScreen(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "🛵", fontSize = 42.sp)
+                    Text(text = "🛵", fontSize = 38.sp)
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
                     text = "DELIVIO",
                     fontWeight = FontWeight.Black,
-                    fontSize = 30.sp,
+                    fontSize = 28.sp,
                     color = AzizOrangePrimary,
-                    letterSpacing = 1.5.sp
+                    letterSpacing = 1.2.sp
                 )
 
                 Text(
-                    text = "ديليفيو • سرعة، فخامة، وسوق تجارة إلكترونية متكامل 🇲🇦",
-                    fontSize = 13.sp,
+                    text = "المنصة الذكية الموحدة للزبائن والشركاء والسائقين 🇲🇦",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
+        // Quick Guest Browsing Button (For Instant Shopping without account)
         if (onSkipAsGuest != null) {
             item {
                 Surface(
@@ -192,7 +242,7 @@ fun AuthScreen(
                         .testTag("skip_as_guest_top_btn")
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 11.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -203,7 +253,7 @@ fun AuthScreen(
                                 AppLanguage.ARABIC -> "تصفح كزائر والاطلاع على المتاجر والمنتجات مباشرة 🛍️ ←"
                             },
                             fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = AzizMint
                         )
                     }
@@ -211,7 +261,7 @@ fun AuthScreen(
             }
         }
 
-        // Auth Tabs: تسجيل الدخول / إنشاء حساب
+        // Main Mode TabRow (Sign In vs Register)
         item {
             Card(
                 shape = RoundedCornerShape(16.dp),
@@ -220,82 +270,92 @@ fun AuthScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TabRow(
-                    selectedTabIndex = selectedTab,
+                    selectedTabIndex = selectedMainTab,
                     containerColor = Color.Transparent,
                     indicator = { tabPositions ->
                         TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            Modifier.tabIndicatorOffset(tabPositions[selectedMainTab]),
                             color = AzizOrangePrimary,
                             height = 3.dp
                         )
                     }
                 ) {
                     Tab(
-                        selected = selectedTab == 0,
+                        selected = selectedMainTab == 0,
                         onClick = {
-                            selectedTab = 0
+                            selectedMainTab = 0
                             onClearMessages()
                         },
                         text = {
-                            Text(
-                                text = "تسجيل الدخول",
-                                fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 14.sp,
-                                color = if (selectedTab == 0) AzizOrangePrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🔑", fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "تسجيل الدخول",
+                                    fontWeight = if (selectedMainTab == 0) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 13.sp,
+                                    color = if (selectedMainTab == 0) AzizOrangePrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     )
                     Tab(
-                        selected = selectedTab == 1,
+                        selected = selectedMainTab == 1,
                         onClick = {
-                            selectedTab = 1
+                            selectedMainTab = 1
                             onClearMessages()
                         },
                         text = {
-                            Text(
-                                text = "إنشاء حساب جديد",
-                                fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 14.sp,
-                                color = if (selectedTab == 1) AzizOrangePrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("📝", fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "إنشاء حساب جديد",
+                                    fontWeight = if (selectedMainTab == 1) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 13.sp,
+                                    color = if (selectedMainTab == 1) AzizOrangePrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     )
                 }
             }
         }
 
-        // Messages & Alerts
+        // Messages & System Notifications
         if (pendingApprovalMsg != null) {
             item {
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = AzizAmberSecondary.copy(alpha = 0.15f)),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(AzizAmberSecondary, AzizOrangePrimary))),
+                    border = CardDefaults.outlinedCardBorder().copy(
+                        brush = Brush.horizontalGradient(listOf(AzizAmberSecondary, AzizOrangePrimary))
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.Top
                     ) {
                         Icon(
                             imageVector = Icons.Default.HourglassTop,
                             contentDescription = null,
                             tint = AzizOrangePrimary,
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(26.dp)
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
                                 text = "طلب الانضمام قيد المراجعة والاعتماد ⏳",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
+                                fontSize = 13.sp,
                                 color = AzizOrangeDark
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = pendingApprovalMsg,
-                                fontSize = 12.sp,
-                                lineHeight = 17.sp,
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -342,14 +402,60 @@ fun AuthScreen(
             }
         }
 
-        // TAB 0: SIGN IN (Customer Login Only)
-        if (selectedTab == 0) {
-            // 1-Click Fast Phone Login Card (Phone Only - No Gmail required)
+        // ==========================================
+        // TAB 0: SIGN IN (تسجيل الدخول لجميع الأدوار)
+        // ==========================================
+        if (selectedMainTab == 0) {
+            // Role Quick Filter Row (الزبائن، أصحاب المتاجر والمطاعم، السائقين)
+            item {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "تسجيل الدخول المباشر حسب دورك:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val roleFilters = listOf(
+                        null to "الكل / زبائن 🛍️",
+                        UserRole.CUSTOMER to "زبون 🛍️",
+                        UserRole.RESTAURANT_OWNER to "مطعم أو متجر 🏪",
+                        UserRole.DRIVER to "سائق توصيل 🛵"
+                    )
+
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(roleFilters) { (role, label) ->
+                            val isSelected = selectedSignInRole == role
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                                shadowElevation = if (isSelected) 2.dp else 1.dp,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { selectedSignInRole = role }
+                            ) {
+                                Text(
+                                    text = label,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 1-Click Fast Phone Login Card (برقم الهاتف فقط - دون كلمة سر أو جيميل)
             item {
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = AzizMint.copy(alpha = 0.08f)),
-                    border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(AzizMint, AzizOrangePrimary))),
+                    border = CardDefaults.outlinedCardBorder().copy(
+                        brush = Brush.horizontalGradient(listOf(AzizMint, AzizOrangePrimary))
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
@@ -388,7 +494,7 @@ fun AuthScreen(
                         Button(
                             onClick = {
                                 if (onLoginWithPhone != null) {
-                                    onLoginWithPhone(fastPhoneInput, fastCustomerName)
+                                    onLoginWithPhone(fastPhoneInput, "")
                                 } else {
                                     onLoginCredentials(fastPhoneInput, "phone_verified")
                                 }
@@ -416,7 +522,7 @@ fun AuthScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     HorizontalDivider(modifier = Modifier.weight(1f))
@@ -430,7 +536,7 @@ fun AuthScreen(
                 }
             }
 
-            // Google Sign-In Button
+            // Google Sign-In Button (حساب جوجل / جيميل)
             item {
                 OutlinedButton(
                     onClick = {
@@ -441,12 +547,12 @@ fun AuthScreen(
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .height(48.dp)
                         .testTag("google_signin_button"),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
-                    Text(text = "🇬", fontSize = 20.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(text = "🇬", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "تسجيل الدخول بحساب Google (Gmail)",
                         fontSize = 13.sp,
@@ -456,25 +562,7 @@ fun AuthScreen(
                 }
             }
 
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text(
-                        text = "أو بالبريد / رقم الهاتف",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 10.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                }
-            }
-
-            // Credentials Fields
+            // Standard Credentials Fields (بريد أو هاتف + كلمة المرور)
             item {
                 OutlinedTextField(
                     value = loginIdentifier,
@@ -549,7 +637,7 @@ fun AuthScreen(
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .height(48.dp)
                         .testTag("login_submit_button")
                 ) {
                     Text(text = "تسجيل الدخول", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
@@ -563,197 +651,684 @@ fun AuthScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "ليس لديك حساب بعد؟", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = { selectedTab = 1 }) {
+                    TextButton(onClick = { selectedMainTab = 1 }) {
                         Text(text = "إنشاء حساب جديد الآن", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AzizOrangePrimary)
                     }
                 }
             }
         }
 
-        // TAB 1: REGISTER
-        if (selectedTab == 1) {
-            // Role-Specific Notice
-            item {
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (regRole == UserRole.CUSTOMER) AzizMint.copy(alpha = 0.12f) else AzizAmberSecondary.copy(alpha = 0.12f),
-                    border = CardDefaults.outlinedCardBorder().copy(
-                        brush = Brush.horizontalGradient(
-                            if (regRole == UserRole.CUSTOMER) listOf(AzizMint, AzizOrangePrimary)
-                            else listOf(AzizAmberSecondary, AzizOrangePrimary)
-                        )
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (regRole == UserRole.CUSTOMER) "⚡" else "🛡️",
-                            fontSize = 22.sp
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = if (regRole == UserRole.CUSTOMER) {
-                                "تسجيل فوري للزبائن: حسابك يتفعل مباشرة فور التسجيل لتصفح المتاجر وإتمام الطلبات بدون أي انتظار."
-                            } else {
-                                "طلب انضمام شريك: يتم تدقيق واعتماد طلبات المتاجر والسائقين من قبل إدارة ALLO AZIZ، وسنخبرك فور تفعيل حسابك."
-                            },
-                            fontSize = 11.sp,
-                            lineHeight = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-
-            // Role Picker
+        // ==========================================
+        // TAB 1: REGISTER (إنشاء حساب مقسم إلى 3 خانات واضحة)
+        // ==========================================
+        if (selectedMainTab == 1) {
+            // Category Switcher: 3 Dedicated Tabs
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "نوع الحساب المطلوب إنشاؤه:",
+                        text = "اختر فئة الحساب المطلوبة للتسجيل:",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val roles = listOf(
-                        UserRole.CUSTOMER,
-                        UserRole.RESTAURANT_OWNER,
-                        UserRole.DRIVER
-                    )
-
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(roles) { r ->
-                            val isSelected = regRole == r
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
-                                shadowElevation = if (isSelected) 3.dp else 1.dp,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable { regRole = r }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 1. زبون
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (regCategoryTab == 0) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                            shadowElevation = if (regCategoryTab == 0) 3.dp else 1.dp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { regCategoryTab = 0 }
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = r.emoji, fontSize = 16.sp)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = r.titleAr,
-                                        fontSize = 12.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
+                                Text("🛍️", fontSize = 18.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "زبون",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (regCategoryTab == 0) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "تفعيل فوري",
+                                    fontSize = 9.sp,
+                                    color = if (regCategoryTab == 0) Color.White.copy(alpha = 0.85f) else AzizMint
+                                )
+                            }
+                        }
+
+                        // 2. شريك تجاري
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (regCategoryTab == 1) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                            shadowElevation = if (regCategoryTab == 1) 3.dp else 1.dp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { regCategoryTab = 1 }
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("🏪", fontSize = 18.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "شريك متجر/مطعم",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    color = if (regCategoryTab == 1) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "اعتماد إداري",
+                                    fontSize = 9.sp,
+                                    color = if (regCategoryTab == 1) Color.White.copy(alpha = 0.85f) else AzizOrangeDark
+                                )
+                            }
+                        }
+
+                        // 3. سائق
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (regCategoryTab == 2) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                            shadowElevation = if (regCategoryTab == 2) 3.dp else 1.dp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { regCategoryTab = 2 }
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("🛵", fontSize = 18.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "سائق توصيل",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (regCategoryTab == 2) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "اعتماد إداري",
+                                    fontSize = 9.sp,
+                                    color = if (regCategoryTab == 2) Color.White.copy(alpha = 0.85f) else AzizOrangeDark
+                                )
                             }
                         }
                     }
                 }
             }
 
-            // Full Name
-            item {
-                OutlinedTextField(
-                    value = regName,
-                    onValueChange = { regName = it },
-                    label = { Text("الاسم الكامل") },
-                    placeholder = { Text("الاسم الشخصي والعائلي") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("reg_name_input")
-                )
-            }
-
-            // Email (Gmail - Optional if phone provided)
-            item {
-                OutlinedTextField(
-                    value = regEmail,
-                    onValueChange = { regEmail = it },
-                    label = { Text("البريد الإلكتروني (اختياري إذا أدخلت رقم الهاتف)") },
-                    placeholder = { Text("اختياري: yourname@gmail.com") },
-                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("reg_email_input")
-                )
-            }
-
-            // Phone
-            item {
-                OutlinedTextField(
-                    value = regPhone,
-                    onValueChange = { regPhone = it },
-                    label = { Text("رقم الهاتف المحمول") },
-                    placeholder = { Text("+212 6... أو 06...") },
-                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizOrangePrimary) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("reg_phone_input")
-                )
-            }
-
-            // Password
-            item {
-                OutlinedTextField(
-                    value = regPassword,
-                    onValueChange = { regPassword = it },
-                    label = { Text("كلمة المرور") },
-                    placeholder = { Text("اختر كلمة مرور قوية") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
-                    trailingIcon = {
-                        IconButton(onClick = { regShowPassword = !regShowPassword }) {
-                            Icon(
-                                imageVector = if (regShowPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                                contentDescription = "Toggle password"
-                            )
+            // ==========================================
+            // SUB-SECTION 1: تسجيل الزبون (Customer - تفعيل فوري)
+            // ==========================================
+            if (regCategoryTab == 0) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = AzizMint.copy(alpha = 0.12f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.35f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("⚡", fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "تفعيل فوري 100% للزبائن بدون أي انتظار",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = AzizMint
+                                )
+                                Text(
+                                    text = "حسابك يتفعل مباشرة فور التسجيل لتصفح المتاجر والطلب وتتبع الكابتن فوراً.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
-                    },
-                    visualTransformation = if (regShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("reg_password_input")
-                )
-            }
+                    }
+                }
 
-            // Extra fields for Restaurant Owner
-            if (regRole == UserRole.RESTAURANT_OWNER) {
+                // Quick Google Registration
+                item {
+                    OutlinedButton(
+                        onClick = {
+                            onTriggerGoogleSignIn {
+                                showGooglePickerDialog = true
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Text(text = "🇬", fontSize = 18.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "تسجيل فوري بحساب Google (Gmail)",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HorizontalDivider(modifier = Modifier.weight(1f))
+                        Text(
+                            text = "أو أدخل بياناتك للتسجيل المباشر",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                        HorizontalDivider(modifier = Modifier.weight(1f))
+                    }
+                }
+
                 item {
                     OutlinedTextField(
-                        value = regRestaurantName,
-                        onValueChange = { regRestaurantName = it },
-                        label = { Text("اسم المطعم أو المتجر") },
-                        placeholder = { Text("مثال: شواية الميدان، مطعم فاس") },
-                        leadingIcon = { Icon(Icons.Default.Restaurant, contentDescription = null, tint = AzizOrangePrimary) },
+                        value = regCustName,
+                        onValueChange = { regCustName = it },
+                        label = { Text("الاسم الكامل") },
+                        placeholder = { Text("الاسم الشخصي والعائلي") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("reg_cust_name_input")
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regCustPhone,
+                        onValueChange = { regCustPhone = it },
+                        label = { Text("رقم الهاتف المحمول (مطلوب)") },
+                        placeholder = { Text("06... أو 07...") },
+                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizOrangePrimary) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("reg_cust_phone_input")
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regCustEmail,
+                        onValueChange = { regCustEmail = it },
+                        label = { Text("البريد الإلكتروني (اختياري إذا أدخلت الهاتف)") },
+                        placeholder = { Text("اختياري: yourname@gmail.com") },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("reg_cust_email_input")
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regCustPassword,
+                        onValueChange = { regCustPassword = it },
+                        label = { Text("كلمة المرور") },
+                        placeholder = { Text("اختر كلمة مرور") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
+                        trailingIcon = {
+                            IconButton(onClick = { regCustShowPassword = !regCustShowPassword }) {
+                                Icon(
+                                    imageVector = if (regCustShowPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password"
+                                )
+                            }
+                        },
+                        visualTransformation = if (regCustShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().testTag("reg_cust_password_input")
+                    )
+                }
+
+                item {
+                    Button(
+                        onClick = {
+                            onRegister(
+                                regCustName,
+                                regCustEmail,
+                                regCustPhone,
+                                regCustPassword,
+                                UserRole.CUSTOMER,
+                                "",
+                                "",
+                                "",
+                                "FOOD",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("register_customer_button")
+                    ) {
+                        Text(
+                            text = "إنشاء حساب زبون والبدء بالطلب الآن 🚀",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // ==========================================
+            // SUB-SECTION 2: تسجيل شريك تجاري (مطعم أو متجر - يتطلب موافقة المدير)
+            // ==========================================
+            if (regCategoryTab == 1) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = AzizAmberSecondary.copy(alpha = 0.15f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AzizOrangePrimary.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🛡️", fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "يتطلب موافقة المدير العام أو الدعم الفني",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = AzizOrangeDark
+                                )
+                                Text(
+                                    text = "تخضع حسابات المتاجر والمطاعم لتدقيق الوثائق الرسمية، ولا يتم التفعيل إلا بعد اعتماد الإدارة لضمان الجودة والأمان.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Merchant Type Picker
+                item {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("نوع النشاط التجاري:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        val mTypes = listOf(
+                            "FOOD" to "🍽️ مطعم أو مقهى",
+                            "ECOMMERCE" to "🛍️ متجر أزياء وتكنولوجيا",
+                            "GROCERY" to "🧺 بقالة وسوبرماركت",
+                            "PHARMACY" to "💊 صيدلية ومنتجات صحية"
+                        )
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(mTypes) { (type, label) ->
+                                val isSel = regMerchantType == type
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (isSel) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                                    shadowElevation = if (isSel) 2.dp else 1.dp,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { regMerchantType = type }
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSel) Color.White else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regBusinessStoreName,
+                        onValueChange = { regBusinessStoreName = it },
+                        label = { Text("اسم المتجر أو المطعم التجاري") },
+                        placeholder = { Text("مثال: مطعم شواية فاس / بوتيك كازابلانكا") },
+                        leadingIcon = { Icon(Icons.Default.Store, contentDescription = null, tint = AzizOrangePrimary) },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-            }
 
-            // Extra fields for Driver Courier
-            if (regRole == UserRole.DRIVER) {
                 item {
                     OutlinedTextField(
-                        value = regVehicleType,
-                        onValueChange = { regVehicleType = it },
-                        label = { Text("نوع وسيلة النقل") },
-                        placeholder = { Text("سكوتر 150cc / دراجة نارية / سيارة") },
+                        value = regBusinessOwnerName,
+                        onValueChange = { regBusinessOwnerName = it },
+                        label = { Text("اسم المالك أو المسير القانوني") },
+                        placeholder = { Text("الاسم الكامل للمسير") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regBusinessPhone,
+                        onValueChange = { regBusinessPhone = it },
+                        label = { Text("رقم هاتف المنشأة للتواصل والطلبات") },
+                        placeholder = { Text("06... أو 05...") },
+                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizOrangePrimary) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regBusinessEmail,
+                        onValueChange = { regBusinessEmail = it },
+                        label = { Text("البريد الإلكتروني للنشاط (جيميل / بريد مهني)") },
+                        placeholder = { Text("partner@store.com أو جيميل") },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regBusinessAddress,
+                        onValueChange = { regBusinessAddress = it },
+                        label = { Text("عنوان المقر والمدينة") },
+                        placeholder = { Text("مثال: شارع الحسن الثاني، المحمدية") },
+                        leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regBusinessPassword,
+                        onValueChange = { regBusinessPassword = it },
+                        label = { Text("كلمة المرور لتسجيل الدخول للوحة التحكم") },
+                        placeholder = { Text("اختر كلمة مرور آمنة") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
+                        trailingIcon = {
+                            IconButton(onClick = { regBusinessShowPassword = !regBusinessShowPassword }) {
+                                Icon(
+                                    imageVector = if (regBusinessShowPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password"
+                                )
+                            }
+                        },
+                        visualTransformation = if (regBusinessShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Official KYC & Documentation Section
+                item {
+                    Card(
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Shield, contentDescription = null, tint = AzizOrangePrimary, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("ملف التوثيق الرسمي للشركاء (KYC)", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+
+                            OutlinedTextField(
+                                value = regBusinessIce,
+                                onValueChange = { regBusinessIce = it },
+                                label = { Text("رقم التعريف الموحد (ICE) أو السجل التجاري (RC)") },
+                                placeholder = { Text("مثال: 002847193000045") },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            OutlinedTextField(
+                                value = regBusinessCin,
+                                onValueChange = { regBusinessCin = it },
+                                label = { Text("رقم بطاقة التعريف الوطنية للمسير (CIN)") },
+                                placeholder = { Text("مثال: BE123456") },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            OutlinedTextField(
+                                value = regBusinessRib,
+                                onValueChange = { regBusinessRib = it },
+                                label = { Text("رقم الحساب البنكي (RIB - 24 رقم لتحويل المبيعات)") },
+                                placeholder = { Text("24 رقم بنكي مغربي") },
+                                leadingIcon = { Icon(Icons.Default.AccountBalance, contentDescription = null, tint = AzizMint) },
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth().clickable { regBusinessHygieneCheck = !regBusinessHygieneCheck }
+                            ) {
+                                Checkbox(
+                                    checked = regBusinessHygieneCheck,
+                                    onCheckedChange = { regBusinessHygieneCheck = it },
+                                    colors = CheckboxDefaults.colors(checkedColor = AzizMint)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "أقر باستيفاء شروط السلامة والنظافة الصحية والتراخيص التجارية المعمول بها بالمملكة المغربية ✓",
+                                    fontSize = 10.sp,
+                                    lineHeight = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    Button(
+                        onClick = {
+                            onRegister(
+                                regBusinessOwnerName.ifBlank { regBusinessStoreName },
+                                regBusinessEmail,
+                                regBusinessPhone,
+                                regBusinessPassword,
+                                UserRole.RESTAURANT_OWNER,
+                                regBusinessStoreName,
+                                "",
+                                "",
+                                regMerchantType,
+                                regBusinessIce,
+                                regBusinessAddress,
+                                regBusinessCin,
+                                regBusinessRc,
+                                regBusinessRib
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("register_partner_button")
+                    ) {
+                        Text(
+                            text = "إرسال ملف الشريك للاعتماد والمراجعة الإدارية 📄",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // ==========================================
+            // SUB-SECTION 3: تسجيل سائق توصيل (Driver - يتطلب موافقة المدير)
+            // ==========================================
+            if (regCategoryTab == 2) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = AzizAmberSecondary.copy(alpha = 0.15f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AzizOrangePrimary.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🛡️", fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "يتطلب تدقيق واعتماد الإدارة أو الدعم الفني",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = AzizOrangeDark
+                                )
+                                Text(
+                                    text = "يخضع انضمام السائقين لمطابقة رخصة السياقة وأوراق المركبة، ولا يتفعل الحساب للعمل إلا بعد موافقة الإدارة.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Vehicle Type Picker
+                item {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("نوع وسيلة النقل للتوصيل:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        val vTypes = listOf(
+                            "دراجة نارية / سكوتر 150cc",
+                            "دراجة هوائية / كهربائية",
+                            "سيارة خفيفة للتوصيل"
+                        )
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(vTypes) { v ->
+                                val isV = regDriverVehicleType == v
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (isV) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                                    shadowElevation = if (isV) 2.dp else 1.dp,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { regDriverVehicleType = v }
+                                ) {
+                                    Text(
+                                        text = v,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isV) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isV) Color.White else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regDriverName,
+                        onValueChange = { regDriverName = it },
+                        label = { Text("الاسم الكامل للكابتن / السائق") },
+                        placeholder = { Text("الاسم الشخصي والعائلي") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regDriverPhone,
+                        onValueChange = { regDriverPhone = it },
+                        label = { Text("رقم الهاتف المحمول (الواتساب للتواصل)") },
+                        placeholder = { Text("06... أو 07...") },
+                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizOrangePrimary) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regDriverEmail,
+                        onValueChange = { regDriverEmail = it },
+                        label = { Text("البريد الإلكتروني (جيميل)") },
+                        placeholder = { Text("driver@gmail.com") },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regDriverPlate,
+                        onValueChange = { regDriverPlate = it },
+                        label = { Text("رقم لوحة المركبة (الماتريكول)") },
+                        placeholder = { Text("مثال: أ - 49210") },
                         leadingIcon = { Icon(Icons.Default.TwoWheeler, contentDescription = null, tint = AzizOrangePrimary) },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
@@ -763,45 +1338,85 @@ fun AuthScreen(
 
                 item {
                     OutlinedTextField(
-                        value = regPlateNumber,
-                        onValueChange = { regPlateNumber = it },
-                        label = { Text("رقم لوحة المركبة (ماتريكول)") },
-                        placeholder = { Text("مثال: أ - 49210") },
+                        value = regDriverPermis,
+                        onValueChange = { regDriverPermis = it },
+                        label = { Text("رقم رخصة السياقة (Permis de conduire)") },
+                        placeholder = { Text("مثال: 08/123456") },
+                        leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = AzizOrangePrimary) },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-            }
 
-            // Register Submit Button
-            item {
-                Button(
-                    onClick = {
-                        onRegister(
-                            regName,
-                            regEmail,
-                            regPhone,
-                            regPassword,
-                            regRole,
-                            regRestaurantName,
-                            regVehicleType,
-                            regPlateNumber
-                        )
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp)
-                        .testTag("register_submit_button")
-                ) {
-                    Text(
-                        text = if (regRole == UserRole.CUSTOMER) "إنشاء الحساب والبدء الآن 🚀" else "إرسال طلب الانضمام للاعتماد 📝",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = Color.White
+                item {
+                    OutlinedTextField(
+                        value = regDriverCin,
+                        onValueChange = { regDriverCin = it },
+                        label = { Text("رقم البطاقة الوطنية (CIN)") },
+                        placeholder = { Text("مثال: T123456") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
                     )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regDriverPassword,
+                        onValueChange = { regDriverPassword = it },
+                        label = { Text("كلمة المرور لحساب السائق") },
+                        placeholder = { Text("اختر كلمة مرور") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
+                        trailingIcon = {
+                            IconButton(onClick = { regDriverShowPassword = !regDriverShowPassword }) {
+                                Icon(
+                                    imageVector = if (regDriverShowPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password"
+                                )
+                            }
+                        },
+                        visualTransformation = if (regDriverShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    Button(
+                        onClick = {
+                            onRegister(
+                                regDriverName,
+                                regDriverEmail,
+                                regDriverPhone,
+                                regDriverPassword,
+                                UserRole.DRIVER,
+                                "",
+                                regDriverVehicleType,
+                                regDriverPlate,
+                                "DRIVER",
+                                "",
+                                regDriverZone,
+                                regDriverCin,
+                                regDriverPermis,
+                                ""
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("register_driver_button")
+                    ) {
+                        Text(
+                            text = "إرسال ملف السائق للاعتماد والتشغيل 📝",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                    }
                 }
             }
 
@@ -812,18 +1427,18 @@ fun AuthScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "لديك حساب مسجل بالفعل؟", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = { selectedTab = 0 }) {
+                    TextButton(onClick = { selectedMainTab = 0 }) {
                         Text(text = "تسجيل الدخول", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AzizOrangePrimary)
                     }
                 }
             }
         }
 
-        // Discrete Footer for app info and authorized staff portal access (3 taps)
+        // Footer & Secret Portal for Management / Staff (3 taps)
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = "DELIVIO Super-App v3.0 • Premium Delivery & Marketplace 🇲🇦",
+                text = "DELIVIO Super-App v3.2 • Super Admin & Staff Portal 🇲🇦",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
@@ -841,7 +1456,7 @@ fun AuthScreen(
         }
     }
 
-    // Google Sign-In Dialog (Authentic & Professional, No Mock Accounts)
+    // Google Sign-In Dialog
     if (showGooglePickerDialog) {
         var googleEmailInput by remember { mutableStateOf("") }
         var googleNameInput by remember { mutableStateOf("") }
@@ -868,7 +1483,7 @@ fun AuthScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "تسجيل دخول آمن وسريع عبر حسابك في Google. أدخل عنوان Gmail واسمك الشخصي للمتابعة فوراً:",
+                        text = "تسجيل دخول فوري وآمن عبر حسابك في Google. أدخل عنوان Gmail واسمك الشخصي للمتابعة والتفعيل الفوري:",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -919,146 +1534,155 @@ fun AuthScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val trimmedEmail = googleEmailInput.trim()
-                        val trimmedName = googleNameInput.trim()
-                        if (trimmedEmail.isBlank() || !trimmedEmail.contains("@")) {
-                            googleError = "يرجى إدخال بريد إلكتروني صالح (Gmail)"
-                        } else if (trimmedName.isBlank()) {
-                            googleError = "يرجى كتابة اسمك الكامل للمتابعة"
+                        val trimmed = googleEmailInput.trim()
+                        if (trimmed.isBlank() || !trimmed.contains("@")) {
+                            googleError = "يرجى إدخال عنوان بريد إلكتروني صحيح."
                         } else {
                             showGooglePickerDialog = false
-                            onLoginGoogle(trimmedEmail, trimmedName)
+                            onLoginGoogle(
+                                trimmed,
+                                googleNameInput.trim().ifBlank { trimmed.substringBefore("@") }
+                            )
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("متابعة الدخول ✓", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("متابعة الدخول والتفعيل", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showGooglePickerDialog = false }) {
-                    Text("إلغاء", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedButton(
+                    onClick = { showGooglePickerDialog = false },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("إلغاء")
                 }
             }
         )
     }
 
-    // Forgot Password Dialog
+    // Password Reset Dialog
     if (showForgotPasswordDialog) {
         AlertDialog(
             onDismissRequest = { showForgotPasswordDialog = false },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(imageVector = Icons.Default.Security, contentDescription = null, tint = AzizOrangePrimary)
+                    Icon(imageVector = Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "استعادة كلمة المرور", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("استعادة كلمة المرور", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (forgotMessage != null) {
-                        Surface(
+                    Text(
+                        text = "أدخل بريدك الإلكتروني أو رقم هاتفك لإرسال رمز التأكيد (OTP):",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = forgotIdentifier,
+                        onValueChange = { forgotIdentifier = it },
+                        label = { Text("البريد أو رقم الهاتف", fontSize = 12.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    if (!forgotOtpSent) {
+                        Button(
+                            onClick = {
+                                if (forgotIdentifier.trim().isNotBlank() && onRequestPasswordReset != null) {
+                                    onRequestPasswordReset(forgotIdentifier.trim()) { code ->
+                                        forgotDevOtpCode = code
+                                        forgotOtpSent = true
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                             shape = RoundedCornerShape(10.dp),
-                            color = AzizOrangePrimary.copy(alpha = 0.12f),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = forgotMessage!!,
-                                modifier = Modifier.padding(10.dp),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = AzizOrangeDark
-                            )
+                            Text("إرسال رمز التأكيد OTP", color = Color.White)
                         }
                     }
 
-                    if (!forgotOtpSent) {
-                        Text(
-                            text = "أدخل بريدك الإلكتروني أو رقم هاتفك لتلقي رمز التحقق واستعادة حسابك:",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        OutlinedTextField(
-                            value = forgotIdentifier,
-                            onValueChange = { forgotIdentifier = it },
-                            label = { Text("البريد الإلكتروني أو رقم الهاتف") },
-                            placeholder = { Text("example@gmail.com أو 0612345678") },
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
-                            singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
+                    if (forgotOtpSent) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = AzizMint.copy(alpha = 0.12f),
                             modifier = Modifier.fillMaxWidth()
-                        )
-                    } else {
-                        Text(
-                            text = "تم إرسال رمز التحقق. أدخل الرمز وكلمة المرور الجديدة:",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    text = "تم إرسال رمز التحقق بنجاح ✓",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AzizMint
+                                )
+                                Text(
+                                    text = "رمز التأكيد التجريبي للاختبار السريع: $forgotDevOtpCode",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = AzizOrangeDark
+                                )
+                            }
+                        }
+
                         OutlinedTextField(
                             value = forgotEnteredOtp,
                             onValueChange = { forgotEnteredOtp = it },
-                            label = { Text("رمز التحقق (OTP)") },
-                            placeholder = { Text("أدخل الرمز مثل $forgotDevOtpCode") },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
+                            label = { Text("رمز التحقق (OTP)", fontSize = 12.sp) },
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
                         )
+
                         OutlinedTextField(
                             value = forgotNewPassword,
                             onValueChange = { forgotNewPassword = it },
-                            label = { Text("كلمة المرور الجديدة") },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
-                            visualTransformation = PasswordVisualTransformation(),
+                            label = { Text("كلمة المرور الجديدة", fontSize = 12.sp) },
                             singleLine = true,
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
+
+                    if (forgotMessage != null) {
+                        Text(
+                            text = forgotMessage ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 11.sp
                         )
                     }
                 }
             },
             confirmButton = {
-                if (!forgotOtpSent) {
+                if (forgotOtpSent) {
                     Button(
                         onClick = {
-                            if (forgotIdentifier.isNotBlank()) {
-                                if (onRequestPasswordReset != null) {
-                                    onRequestPasswordReset(forgotIdentifier) { code ->
-                                        forgotDevOtpCode = code
-                                        forgotOtpSent = true
-                                        forgotMessage = "وضع التطوير: رمز التحقق المرسل هو $code"
-                                    }
-                                } else {
-                                    forgotDevOtpCode = "842910"
-                                    forgotOtpSent = true
-                                    forgotMessage = "وضع التطوير: رمز التحقق المرسل هو 842910"
-                                }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary)
-                    ) {
-                        Text("إرسال الرمز")
-                    }
-                } else {
-                    Button(
-                        onClick = {
-                            if (forgotEnteredOtp.trim() == forgotDevOtpCode && forgotNewPassword.isNotBlank()) {
-                                onConfirmPasswordReset?.invoke(forgotIdentifier, forgotNewPassword)
+                            if (forgotEnteredOtp.trim() == forgotDevOtpCode && forgotNewPassword.trim().isNotBlank()) {
+                                onConfirmPasswordReset?.invoke(forgotIdentifier.trim(), forgotNewPassword.trim())
                                 showForgotPasswordDialog = false
                             } else {
-                                forgotMessage = "رمز التحقق غير صحيح، يرجى كتابة $forgotDevOtpCode"
+                                forgotMessage = "رمز التحقق غير صحيح أو كلمة المرور فارغة."
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary)
+                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                        shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("حفظ وتغيير كلمة المرور")
+                        Text("تعيين كلمة المرور الجديدة", color = Color.White)
                     }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showForgotPasswordDialog = false }) {
-                    Text("إلغاء")
+                OutlinedButton(
+                    onClick = { showForgotPasswordDialog = false },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("إغلاق")
                 }
             }
         )

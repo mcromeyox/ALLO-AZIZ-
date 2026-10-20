@@ -197,7 +197,7 @@ object FirestoreSyncManager {
         return try {
             val id = doc.getString("id") ?: doc.id
             val storeId = doc.getString("storeId") ?: "store_unknown"
-            val storeName = doc.getString("storeName") ?: "مطعم ألو عزيز"
+            val storeName = doc.getString("storeName") ?: "متجر ديليفيو"
             val itemsSummary = doc.getString("itemsSummary") ?: "وجبة شهية"
             val itemsCount = doc.getLong("itemsCount")?.toInt() ?: 1
             val subtotal = doc.getDouble("subtotal") ?: 0.0
@@ -211,7 +211,7 @@ object FirestoreSyncManager {
             val deliveryAddress = doc.getString("deliveryAddress") ?: "المحمدية، المغرب"
             val deliveryNotes = doc.getString("deliveryNotes") ?: ""
             val timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
-            val courierName = doc.getString("courierName") ?: "كابتن ألو عزيز"
+            val courierName = doc.getString("courierName") ?: "كابتن ديليفيو"
             val courierPhone = doc.getString("courierPhone") ?: ""
             val courierRating = doc.getDouble("courierRating") ?: 5.0
             val courierVehicle = doc.getString("courierVehicle") ?: "دراجة نارية"

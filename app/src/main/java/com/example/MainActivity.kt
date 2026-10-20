@@ -303,8 +303,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                         onFallback()
                                     }
                                 },
-                                onRegister = { name, email, phone, pass, role, rName, vType, plate ->
-                                    viewModel.registerUser(name, email, phone, pass, role, rName, vType, plate)
+                                onRegister = { name, email, phone, pass, role, rName, vType, plate, mType, ice, bAddr, cin, dLic, rib ->
+                                    viewModel.registerUser(name, email, phone, pass, role, rName, vType, plate, mType, ice, bAddr, cin, dLic, rib)
                                 },
                                 onClearMessages = { viewModel.clearAuthMessages() },
                                 onOpenStaffLogin = { viewModel.navigateTo(AppScreen.STAFF_LOGIN) },

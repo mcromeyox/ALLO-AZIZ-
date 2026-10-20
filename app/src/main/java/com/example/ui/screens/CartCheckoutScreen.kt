@@ -612,7 +612,7 @@ fun CartCheckoutScreen(
 
                     PaymentOptionRow(
                         title = AppStrings.payCash(language),
-                        subtitle = "ادفع نقداً للمندوب عزيز عند استلام طلبك",
+                        subtitle = "ادفع نقداً لمندوب ديليفيو عند استلام طلبك",
                         icon = Icons.Default.Money,
                         isSelected = selectedPaymentMethod == PaymentMethodType.CASH_ON_DELIVERY,
                         onClick = { onSelectPaymentMethod(PaymentMethodType.CASH_ON_DELIVERY) }

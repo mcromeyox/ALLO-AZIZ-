@@ -91,7 +91,7 @@ object ExternalShareHelper {
      */
     fun shareOrderReceipt(context: Context, order: OrderEntity) {
         val receiptText = buildString {
-            appendLine("🧾 *إيصال طلب - ألو عزيز (ALLO AZIZ)*")
+            appendLine("🧾 *إيصال طلب - ديليفيو (DELIVIO)*")
             appendLine("━━━━━━━━━━━━━━━━━━━")
             appendLine("🔢 *رقم الطلب:* #${order.id}")
             appendLine("🏪 *المتجر:* ${order.storeName}")
@@ -109,12 +109,12 @@ object ExternalShareHelper {
             appendLine("🛵 رسوم التوصيل: ${order.deliveryFee} درهم")
             appendLine("💵 *الإجمالي النهائي:* ${order.total} درهم مغربي")
             appendLine("━━━━━━━━━━━━━━━━━━━")
-            appendLine("شكراً لاختياركم ألو عزيز! تتبع فوري وتوصيل سريع في الدار البيضاء والمحمدية.")
+            appendLine("شكراً لاختياركم ديليفيو DELIVIO! تتبع فوري وتوصيل سريع في الدار البيضاء والمحمدية.")
         }
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "إيصال طلبك #${order.id} - ألو عزيز")
+            putExtra(Intent.EXTRA_SUBJECT, "إيصال طلبك #${order.id} - ديليفيو DELIVIO")
             putExtra(Intent.EXTRA_TEXT, receiptText)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
@@ -144,7 +144,7 @@ object ExternalShareHelper {
      */
     fun shareSplitBill(context: Context, total: Double, count: Int, perPerson: Double, summary: String = "") {
         val splitText = buildString {
-            appendLine("🍕 *قسمة فاتورة طلب - ألو عزيز (ALLO AZIZ)*")
+            appendLine("🍕 *قسمة فاتورة طلب - ديليفيو (DELIVIO)*")
             appendLine("━━━━━━━━━━━━━━━━━━━")
             if (summary.isNotBlank()) {
                 appendLine("🛒 *الطلبات:* $summary")
@@ -155,12 +155,12 @@ object ExternalShareHelper {
             appendLine("💵 *نصيب كل شخص:* ${"%.2f".format(perPerson)} درهم مغربي")
             appendLine("━━━━━━━━━━━━━━━━━━━")
             appendLine("يرجى تحويل أو دفع حصتك عبر كاش أو تطبيق البنك.")
-            appendLine("تطبيق ألو عزيز • توصيل فوري وطعام شهي 🚀")
+            appendLine("تطبيق ديليفيو DELIVIO • توصيل فوري وطعام شهي 🚀")
         }
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "قسمة الفاتورة ($count أفراد) - ألو عزيز")
+            putExtra(Intent.EXTRA_SUBJECT, "قسمة الفاتورة ($count أفراد) - ديليفيو DELIVIO")
             putExtra(Intent.EXTRA_TEXT, splitText)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
