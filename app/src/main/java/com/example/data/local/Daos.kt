@@ -30,7 +30,7 @@ interface UserAccountDao {
     @Query("SELECT * FROM users WHERE status = 'PENDING_APPROVAL' ORDER BY createdAt DESC")
     fun getPendingUsers(): Flow<List<UserAccountEntity>>
 
-    @Query("SELECT * FROM users WHERE status = 'PENDING_APPROVAL' AND role IN ('DRIVER', 'RESTAURANT_OWNER') ORDER BY createdAt DESC")
+    @Query("SELECT * FROM users WHERE status = 'PENDING_APPROVAL' AND role IN ('DRIVER', 'RESTAURANT_OWNER', 'SUPPORT_AGENT') ORDER BY createdAt DESC")
     fun getPendingPartnerApplications(): Flow<List<UserAccountEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -38,19 +38,19 @@ object ServiceManager {
     fun isStorageConfigured(): Boolean = false
 
     /**
-     * Development OTP System
-     * Generates a safe, fixed development OTP for testing phone authentication.
+     * OTP Verification Code Generator
+     * Generates a 6-digit verification code for phone or email activation.
      */
-    fun generateDevOtp(phoneNumber: String): String {
-        val devOtp = "1234"
-        Log.i("ALLO_AZIZ_DEV", "[DEVELOPMENT ONLY] OTP generated for $phoneNumber: $devOtp")
-        return devOtp
+    fun generateDevOtp(recipient: String): String {
+        val otp = ((Math.random() * 900000).toInt() + 100000).toString()
+        Log.i("DELIVIO_DEV", "[DELIVIO OTP] Code for $recipient: $otp")
+        return otp
     }
 
     /**
-     * Development Email Logger
+     * Development Email & SMS Logger
      */
     fun recordDevEmail(to: String, subject: String, body: String) {
-        Log.i("ALLO_AZIZ_DEV", "[DEVELOPMENT EMAIL] To: $to | Subject: $subject | Content: $body")
+        Log.i("DELIVIO_DEV", "[DELIVIO EMAIL/SMS] To: $to | Subject: $subject | Content: $body")
     }
 }

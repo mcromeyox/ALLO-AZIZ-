@@ -21,7 +21,12 @@ data class UserAccountEntity(
     val rating: Double = 4.9,
     val avatarEmoji: String = "👤",
     val authProvider: String = "EMAIL", // GOOGLE, PHONE, EMAIL
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val cinNumber: String? = null,
+    val driverLicense: String? = null,
+    val iceNumber: String? = null,
+    val businessAddress: String? = null,
+    val ribNumber: String? = null
 )
 
 @Entity(tableName = "stores")

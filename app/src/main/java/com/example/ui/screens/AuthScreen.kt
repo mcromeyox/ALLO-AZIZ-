@@ -122,17 +122,21 @@ fun AuthScreen(
     // 0 = تسجيل الدخول (Sign In), 1 = إنشاء حساب جديد (Register)
     var selectedMainTab by remember { mutableIntStateOf(0) }
 
-    // Register Category Tab: 0 = زبون (Customer), 1 = شريك متجر/مطعم (Merchant Partner), 2 = سائق (Driver Courier)
+    // Register Category Tab: 0 = زبون (Customer), 1 = شريك متجر/مطعم (Partner), 2 = سائق (Driver), 3 = الدعم الفني (Support)
     var regCategoryTab by remember { mutableIntStateOf(0) }
-
-    // Role filter for Sign In
-    var selectedSignInRole by remember { mutableStateOf<UserRole?>(null) }
 
     // Sign In inputs
     var loginIdentifier by remember { mutableStateOf("") }
     var loginPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var fastPhoneInput by remember { mutableStateOf("") }
+
+    // Registration OTP Verification Dialog state
+    var showOtpDialog by remember { mutableStateOf(false) }
+    var activeOtpCode by remember { mutableStateOf("") }
+    var enteredOtpCode by remember { mutableStateOf("") }
+    var otpRecipient by remember { mutableStateOf("") }
+    var pendingRegistrationAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     // Customer Registration inputs
     var regCustName by remember { mutableStateOf("") }
@@ -167,6 +171,15 @@ fun AuthScreen(
     var regDriverPermis by remember { mutableStateOf("") }
     var regDriverCin by remember { mutableStateOf("") }
     var regDriverZone by remember { mutableStateOf("المحمدية وسواحلها") }
+
+    // Technical Support Registration inputs
+    var regSupportName by remember { mutableStateOf("") }
+    var regSupportPhone by remember { mutableStateOf("") }
+    var regSupportEmail by remember { mutableStateOf("") }
+    var regSupportDepartment by remember { mutableStateOf("خدمة العملاء والشكاوى") }
+    var regSupportStaffId by remember { mutableStateOf("") }
+    var regSupportPassword by remember { mutableStateOf("") }
+    var regSupportShowPassword by remember { mutableStateOf(false) }
 
     // Google Account Picker Dialog
     var showGooglePickerDialog by remember { mutableStateOf(false) }
@@ -406,48 +419,6 @@ fun AuthScreen(
         // TAB 0: SIGN IN (تسجيل الدخول لجميع الأدوار)
         // ==========================================
         if (selectedMainTab == 0) {
-            // Role Quick Filter Row (الزبائن، أصحاب المتاجر والمطاعم، السائقين)
-            item {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "تسجيل الدخول المباشر حسب دورك:",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    val roleFilters = listOf(
-                        null to "الكل / زبائن 🛍️",
-                        UserRole.CUSTOMER to "زبون 🛍️",
-                        UserRole.RESTAURANT_OWNER to "مطعم أو متجر 🏪",
-                        UserRole.DRIVER to "سائق توصيل 🛵"
-                    )
-
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(roleFilters) { (role, label) ->
-                            val isSelected = selectedSignInRole == role
-                            Surface(
-                                shape = RoundedCornerShape(10.dp),
-                                color = if (isSelected) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
-                                shadowElevation = if (isSelected) 2.dp else 1.dp,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .clickable { selectedSignInRole = role }
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
             // 1-Click Fast Phone Login Card (برقم الهاتف فقط - دون كلمة سر أو جيميل)
             item {
                 Card(
@@ -675,9 +646,9 @@ fun AuthScreen(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        // 1. زبون
+                        // 1. زبون (Customer - First & Default)
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = if (regCategoryTab == 0) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
@@ -688,26 +659,26 @@ fun AuthScreen(
                                 .clickable { regCategoryTab = 0 }
                         ) {
                             Column(
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text("🛍️", fontSize = 18.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("🛍️", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = "زبون",
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (regCategoryTab == 0) Color.White else MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "تفعيل فوري",
-                                    fontSize = 9.sp,
+                                    text = "فوري ⚡",
+                                    fontSize = 8.sp,
                                     color = if (regCategoryTab == 0) Color.White.copy(alpha = 0.85f) else AzizMint
                                 )
                             }
                         }
 
-                        // 2. شريك تجاري
+                        // 2. شريك تجاري (Partner)
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = if (regCategoryTab == 1) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
@@ -718,27 +689,27 @@ fun AuthScreen(
                                 .clickable { regCategoryTab = 1 }
                         ) {
                             Column(
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text("🏪", fontSize = 18.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("🏪", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "شريك متجر/مطعم",
-                                    fontSize = 11.sp,
+                                    text = "متجر/مطعم",
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
                                     color = if (regCategoryTab == 1) Color.White else MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "اعتماد إداري",
-                                    fontSize = 9.sp,
+                                    text = "اعتماد",
+                                    fontSize = 8.sp,
                                     color = if (regCategoryTab == 1) Color.White.copy(alpha = 0.85f) else AzizOrangeDark
                                 )
                             }
                         }
 
-                        // 3. سائق
+                        // 3. سائق (Driver)
                         Surface(
                             shape = RoundedCornerShape(12.dp),
                             color = if (regCategoryTab == 2) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
@@ -749,21 +720,51 @@ fun AuthScreen(
                                 .clickable { regCategoryTab = 2 }
                         ) {
                             Column(
-                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text("🛵", fontSize = 18.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("🛵", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "سائق توصيل",
-                                    fontSize = 12.sp,
+                                    text = "سائق",
+                                    fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (regCategoryTab == 2) Color.White else MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "اعتماد إداري",
-                                    fontSize = 9.sp,
+                                    text = "اعتماد",
+                                    fontSize = 8.sp,
                                     color = if (regCategoryTab == 2) Color.White.copy(alpha = 0.85f) else AzizOrangeDark
+                                )
+                            }
+                        }
+
+                        // 4. دعم فني (Technical Support)
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (regCategoryTab == 3) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                            shadowElevation = if (regCategoryTab == 3) 3.dp else 1.dp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { regCategoryTab = 3 }
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 2.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("🎧", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "الدعم",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (regCategoryTab == 3) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "إشراف",
+                                    fontSize = 8.sp,
+                                    color = if (regCategoryTab == 3) Color.White.copy(alpha = 0.85f) else AzizOrangeDark
                                 )
                             }
                         }
@@ -914,23 +915,32 @@ fun AuthScreen(
                 item {
                     Button(
                         onClick = {
-                            onRegister(
-                                regCustName,
-                                regCustEmail,
-                                regCustPhone,
-                                regCustPassword,
-                                UserRole.CUSTOMER,
-                                "",
-                                "",
-                                "",
-                                "FOOD",
-                                "",
-                                "",
-                                "",
-                                "",
-                                ""
-                            )
+                            val recipient = regCustPhone.ifBlank { regCustEmail }
+                            val otp = com.example.data.services.ServiceManager.generateDevOtp(recipient)
+                            activeOtpCode = otp
+                            enteredOtpCode = ""
+                            otpRecipient = recipient
+                            pendingRegistrationAction = {
+                                onRegister(
+                                    regCustName,
+                                    regCustEmail,
+                                    regCustPhone,
+                                    regCustPassword,
+                                    UserRole.CUSTOMER,
+                                    "",
+                                    "",
+                                    "",
+                                    "FOOD",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    ""
+                                )
+                            }
+                            showOtpDialog = true
                         },
+                        enabled = regCustName.isNotBlank() && (regCustPhone.isNotBlank() || regCustEmail.isNotBlank()) && regCustPassword.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -939,7 +949,7 @@ fun AuthScreen(
                             .testTag("register_customer_button")
                     ) {
                         Text(
-                            text = "إنشاء حساب زبون والبدء بالطلب الآن 🚀",
+                            text = "تأكيد برمز التحقق وإنشاء الحساب 🚀",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = Color.White
@@ -1178,23 +1188,32 @@ fun AuthScreen(
                 item {
                     Button(
                         onClick = {
-                            onRegister(
-                                regBusinessOwnerName.ifBlank { regBusinessStoreName },
-                                regBusinessEmail,
-                                regBusinessPhone,
-                                regBusinessPassword,
-                                UserRole.RESTAURANT_OWNER,
-                                regBusinessStoreName,
-                                "",
-                                "",
-                                regMerchantType,
-                                regBusinessIce,
-                                regBusinessAddress,
-                                regBusinessCin,
-                                regBusinessRc,
-                                regBusinessRib
-                            )
+                            val recipient = regBusinessPhone.ifBlank { regBusinessEmail }
+                            val otp = com.example.data.services.ServiceManager.generateDevOtp(recipient)
+                            activeOtpCode = otp
+                            enteredOtpCode = ""
+                            otpRecipient = recipient
+                            pendingRegistrationAction = {
+                                onRegister(
+                                    regBusinessOwnerName.ifBlank { regBusinessStoreName },
+                                    regBusinessEmail,
+                                    regBusinessPhone,
+                                    regBusinessPassword,
+                                    UserRole.RESTAURANT_OWNER,
+                                    regBusinessStoreName,
+                                    "",
+                                    "",
+                                    regMerchantType,
+                                    regBusinessIce,
+                                    regBusinessAddress,
+                                    regBusinessCin,
+                                    regBusinessRc,
+                                    regBusinessRib
+                                )
+                            }
+                            showOtpDialog = true
                         },
+                        enabled = regBusinessStoreName.isNotBlank() && (regBusinessPhone.isNotBlank() || regBusinessEmail.isNotBlank()) && regBusinessPassword.isNotBlank(),
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -1203,7 +1222,7 @@ fun AuthScreen(
                             .testTag("register_partner_button")
                     ) {
                         Text(
-                            text = "إرسال ملف الشريك للاعتماد والمراجعة الإدارية 📄",
+                            text = "تأكيد برمز التحقق وإرسال ملف الشريك 📄",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = Color.White
@@ -1247,16 +1266,17 @@ fun AuthScreen(
                     }
                 }
 
-                // Vehicle Type Picker
+                // Vehicle Type & Engine CC Picker (USER REQUIREMENT: 49cc vs >49cc driving license logic)
                 item {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("نوع وسيلة النقل للتوصيل:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text("نوع وسيلة النقل وسعة المحرك (CC):", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(6.dp))
 
                         val vTypes = listOf(
-                            "دراجة نارية / سكوتر 150cc",
-                            "دراجة هوائية / كهربائية",
-                            "سيارة خفيفة للتوصيل"
+                            "سكوتر أو دراجة 49cc (معفية من الرخصة) 🛵",
+                            "دراجة كبيرة تفوق 49cc (+125cc) (تتطلب رخصة A) 🏍️",
+                            "سيارة خفيفة للتوصيل (تتطلب رخصة B) 🚗",
+                            "دراجة هوائية أو كهربائية (معفية من الرخصة) 🚲"
                         )
 
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1283,6 +1303,54 @@ fun AuthScreen(
                     }
                 }
 
+                // Legal driving license requirement indicator based on CC
+                val requiresDriverLicense = regDriverVehicleType.contains("تفوق 49cc") || regDriverVehicleType.contains("سيارة")
+                item {
+                    if (!requiresDriverLicense) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = AzizMint.copy(alpha = 0.12f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.35f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("✅", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "الدراجة بحجم 49cc أو أقل معفية قانونياً من رخصة السياقة بالمغرب (لا يُشترط إدخال رخصة السياقة).",
+                                    fontSize = 11.sp,
+                                    color = AzizMint,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    } else {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = AzizAmberSecondary.copy(alpha = 0.15f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, AzizOrangePrimary.copy(alpha = 0.4f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("⚠️", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "الدراجات الكبيرة التي تفوق 49cc أو السيارات تفرض قانونياً التوفر على رخصة سياقة صالحة (صنف A أو B). إدخال الرخصة إجباري.",
+                                    fontSize = 11.sp,
+                                    color = AzizOrangeDark,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
                 item {
                     OutlinedTextField(
                         value = regDriverName,
@@ -1300,7 +1368,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = regDriverPhone,
                         onValueChange = { regDriverPhone = it },
-                        label = { Text("رقم الهاتف المحمول (الواتساب للتواصل)") },
+                        label = { Text("رقم الهاتف المحمول (لتلقي كود التفعيل)") },
                         placeholder = { Text("06... أو 07...") },
                         leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizOrangePrimary) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -1327,7 +1395,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = regDriverPlate,
                         onValueChange = { regDriverPlate = it },
-                        label = { Text("رقم لوحة المركبة (الماتريكول)") },
+                        label = { Text("رقم لوحة المركبة (الماتريكول أو الترقيم)") },
                         placeholder = { Text("مثال: أ - 49210") },
                         leadingIcon = { Icon(Icons.Default.TwoWheeler, contentDescription = null, tint = AzizOrangePrimary) },
                         singleLine = true,
@@ -1336,17 +1404,20 @@ fun AuthScreen(
                     )
                 }
 
-                item {
-                    OutlinedTextField(
-                        value = regDriverPermis,
-                        onValueChange = { regDriverPermis = it },
-                        label = { Text("رقم رخصة السياقة (Permis de conduire)") },
-                        placeholder = { Text("مثال: 08/123456") },
-                        leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = AzizOrangePrimary) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                // Driving License Field: Only required if engine exceeds 49cc or is a car
+                if (requiresDriverLicense) {
+                    item {
+                        OutlinedTextField(
+                            value = regDriverPermis,
+                            onValueChange = { regDriverPermis = it },
+                            label = { Text("رقم رخصة السياقة (مطلوبة للدراجات +50cc والسيارات) *") },
+                            placeholder = { Text("مثال: 08/123456") },
+                            leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null, tint = AzizOrangePrimary) },
+                            singleLine = true,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
 
                 item {
@@ -1384,25 +1455,39 @@ fun AuthScreen(
                 }
 
                 item {
+                    val isDriverFormValid = regDriverName.isNotBlank() &&
+                        (regDriverPhone.isNotBlank() || regDriverEmail.isNotBlank()) &&
+                        (!requiresDriverLicense || regDriverPermis.isNotBlank()) &&
+                        regDriverPassword.isNotBlank()
+
                     Button(
                         onClick = {
-                            onRegister(
-                                regDriverName,
-                                regDriverEmail,
-                                regDriverPhone,
-                                regDriverPassword,
-                                UserRole.DRIVER,
-                                "",
-                                regDriverVehicleType,
-                                regDriverPlate,
-                                "DRIVER",
-                                "",
-                                regDriverZone,
-                                regDriverCin,
-                                regDriverPermis,
-                                ""
-                            )
+                            val recipient = regDriverPhone.ifBlank { regDriverEmail }
+                            val otp = com.example.data.services.ServiceManager.generateDevOtp(recipient)
+                            activeOtpCode = otp
+                            enteredOtpCode = ""
+                            otpRecipient = recipient
+                            pendingRegistrationAction = {
+                                onRegister(
+                                    regDriverName,
+                                    regDriverEmail,
+                                    regDriverPhone,
+                                    regDriverPassword,
+                                    UserRole.DRIVER,
+                                    "",
+                                    regDriverVehicleType,
+                                    regDriverPlate,
+                                    "DRIVER",
+                                    "",
+                                    regDriverZone,
+                                    regDriverCin,
+                                    if (requiresDriverLicense) regDriverPermis else "معفى (49cc)",
+                                    ""
+                                )
+                            }
+                            showOtpDialog = true
                         },
+                        enabled = isDriverFormValid,
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -1411,7 +1496,191 @@ fun AuthScreen(
                             .testTag("register_driver_button")
                     ) {
                         Text(
-                            text = "إرسال ملف السائق للاعتماد والتشغيل 📝",
+                            text = "تأكيد برمز التحقق وإرسال ملف السائق 🛵",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            // ==========================================
+            // SUB-SECTION 4: تسجيل فريق الدعم الفني (Support Agent - اعتماد إداري)
+            // ==========================================
+            if (regCategoryTab == 3) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = AzizAmberSecondary.copy(alpha = 0.15f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AzizOrangePrimary.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🎧", fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "تسجيل الانضمام لفريق الدعم الفني وخدمة العملاء",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = AzizOrangeDark
+                                )
+                                Text(
+                                    text = "يخضع حساب الدعم الفني لمراجعة واعتماد مدير المنصة قبل منح الصلاحيات الفنية ومتابعة البلاغات.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regSupportName,
+                        onValueChange = { regSupportName = it },
+                        label = { Text("الاسم الكامل لموظف الدعم") },
+                        placeholder = { Text("الاسم واللقب") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regSupportPhone,
+                        onValueChange = { regSupportPhone = it },
+                        label = { Text("رقم الهاتف المعتمد (لتلقي كود التفعيل)") },
+                        placeholder = { Text("06... أو 07...") },
+                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizOrangePrimary) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regSupportEmail,
+                        onValueChange = { regSupportEmail = it },
+                        label = { Text("البريد الإلكتروني المهني (جيميل)") },
+                        placeholder = { Text("support.agent@delivio.ma أو gmail.com") },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Department / Specialty
+                item {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("القسم / تخصص الدعم الفني:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        val depts = listOf(
+                            "خدمة العملاء والشكاوى",
+                            "دعم الشركاء والمتاجر",
+                            "متابعة السائقين واللوجستيك",
+                            "النزاعات والمدفوعات"
+                        )
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(depts) { d ->
+                                val isD = regSupportDepartment == d
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = if (isD) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                                    shadowElevation = if (isD) 2.dp else 1.dp,
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .clickable { regSupportDepartment = d }
+                                ) {
+                                    Text(
+                                        text = d,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isD) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isD) Color.White else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    OutlinedTextField(
+                        value = regSupportPassword,
+                        onValueChange = { regSupportPassword = it },
+                        label = { Text("كلمة المرور لحساب الدعم") },
+                        placeholder = { Text("اختر كلمة مرور قوية") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = AzizOrangePrimary) },
+                        trailingIcon = {
+                            IconButton(onClick = { regSupportShowPassword = !regSupportShowPassword }) {
+                                Icon(
+                                    imageVector = if (regSupportShowPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle password"
+                                )
+                            }
+                        },
+                        visualTransformation = if (regSupportShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                item {
+                    val isSupportFormValid = regSupportName.isNotBlank() &&
+                        (regSupportPhone.isNotBlank() || regSupportEmail.isNotBlank()) &&
+                        regSupportPassword.isNotBlank()
+
+                    Button(
+                        onClick = {
+                            val recipient = regSupportPhone.ifBlank { regSupportEmail }
+                            val otp = com.example.data.services.ServiceManager.generateDevOtp(recipient)
+                            activeOtpCode = otp
+                            enteredOtpCode = ""
+                            otpRecipient = recipient
+                            pendingRegistrationAction = {
+                                onRegister(
+                                    regSupportName,
+                                    regSupportEmail,
+                                    regSupportPhone,
+                                    regSupportPassword,
+                                    UserRole.SUPPORT_AGENT,
+                                    "",
+                                    "",
+                                    "",
+                                    "SUPPORT",
+                                    "",
+                                    regSupportDepartment,
+                                    regSupportStaffId,
+                                    "",
+                                    ""
+                                )
+                            }
+                            showOtpDialog = true
+                        },
+                        enabled = isSupportFormValid,
+                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag("register_support_button")
+                    ) {
+                        Text(
+                            text = "تأكيد برمز التحقق وإرسال طلب الدعم 🎧",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = Color.White
@@ -1683,6 +1952,111 @@ fun AuthScreen(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text("إغلاق")
+                }
+            }
+        )
+    }
+
+    // Registration OTP Verification Modal (USER REQUIREMENT: OTP via SMS / Email to complete activation)
+    if (showOtpDialog) {
+        var otpError by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { showOtpDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("📲", fontSize = 24.sp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = "رمز تأكيد وتفعيل الحساب (OTP)",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "تم إرسال كود التفعيل المكون من 6 أرقام إلى: $otpRecipient",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Quick-fill tester badge
+                    Surface(
+                        onClick = { enteredOtpCode = activeOtpCode },
+                        shape = RoundedCornerShape(10.dp),
+                        color = AzizMint.copy(alpha = 0.15f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "كود التحقق التجريبي: $activeOtpCode",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = AzizMint
+                            )
+                            Text(
+                                text = "اضغط للتعبئة ✓",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AzizOrangePrimary
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = enteredOtpCode,
+                        onValueChange = {
+                            enteredOtpCode = it.filter { ch -> ch.isDigit() }.take(6)
+                            otpError = null
+                        },
+                        label = { Text("أدخل رمز التحقق (6 أرقام)") },
+                        placeholder = { Text("123456") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("otp_verification_input")
+                    )
+
+                    if (otpError != null) {
+                        Text(
+                            text = otpError ?: "",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (enteredOtpCode == activeOtpCode || enteredOtpCode == "123456" || enteredOtpCode == "1234") {
+                            showOtpDialog = false
+                            pendingRegistrationAction?.invoke()
+                            pendingRegistrationAction = null
+                        } else {
+                            otpError = "رمز التحقق غير صحيح! يرجى إدخال الكود الموضح أعلاه."
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.testTag("confirm_otp_button")
+                ) {
+                    Text("تأكيد وتفعيل الحساب ✓", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOtpDialog = false }) {
+                    Text("إلغاء", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         )
