@@ -123,6 +123,18 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     val selectedLanguage: StateFlow<AppLanguage> = _selectedLanguage.asStateFlow()
 
     // Store & Catalog selection
+    private val _selectedBranch = MutableStateFlow(com.example.data.model.AppBranch.FOOD)
+    val selectedBranch: StateFlow<com.example.data.model.AppBranch> = _selectedBranch.asStateFlow()
+
+    fun selectBranch(branch: com.example.data.model.AppBranch) {
+        _selectedBranch.value = branch
+        if (branch == com.example.data.model.AppBranch.ECOMMERCE) {
+            _selectedCategory.value = StoreCategory.ECOMMERCE
+        } else if (_selectedCategory.value == StoreCategory.ECOMMERCE) {
+            _selectedCategory.value = StoreCategory.ALL
+        }
+    }
+
     private val _selectedCategory = MutableStateFlow(StoreCategory.ALL)
     val selectedCategory: StateFlow<StoreCategory> = _selectedCategory.asStateFlow()
 
@@ -131,6 +143,154 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     private val _selectedStore = MutableStateFlow<Store?>(null)
     val selectedStore: StateFlow<Store?> = _selectedStore.asStateFlow()
+
+    // Merchant KYC & Documents (Glovo & Temu Standard)
+    private val _merchantApplications = MutableStateFlow<List<com.example.data.model.MerchantApplication>>(
+        listOf(
+            com.example.data.model.MerchantApplication(
+                id = "app_init_1",
+                storeName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)",
+                merchantType = "ECOMMERCE",
+                ownerName = "أمين السعدي",
+                iceNumber = "002847193000045",
+                phone = "+212 661-884920",
+                address = "شارع الحسن الثاني، المحمدية",
+                status = "APPROVED",
+                notes = "تم التحقق من السجل التجاري والبطاقة الوطنية (معيار Glovo & Temu)"
+            ),
+            com.example.data.model.MerchantApplication(
+                id = "app_init_2",
+                storeName = "تيك زون إلكترونيات المحمدية (TechZone)",
+                merchantType = "ECOMMERCE",
+                ownerName = "ياسين التازي",
+                iceNumber = "001928475000088",
+                phone = "+212 662-773344",
+                address = "قرب محطة القطار، المحمدية",
+                status = "APPROVED",
+                notes = "وثائق الوكالة والضمان معتمدة ومطابقة للمواصفات"
+            )
+        )
+    )
+    val merchantApplications: StateFlow<List<com.example.data.model.MerchantApplication>> = _merchantApplications.asStateFlow()
+
+    private val _showMerchantRegistration = MutableStateFlow(false)
+    val showMerchantRegistration: StateFlow<Boolean> = _showMerchantRegistration.asStateFlow()
+
+    fun openMerchantRegistration() {
+        _showMerchantRegistration.value = true
+    }
+
+    fun closeMerchantRegistration() {
+        _showMerchantRegistration.value = false
+    }
+
+    fun submitMerchantApplication(
+        storeName: String,
+        merchantType: String,
+        iceNumber: String,
+        phone: String,
+        address: String,
+        cinUri: String?,
+        licenseUri: String?,
+        hygieneUri: String?,
+        ribUri: String?,
+        storefrontUri: String?
+    ) {
+        val newApp = com.example.data.model.MerchantApplication(
+            id = "app_${System.currentTimeMillis()}",
+            storeName = storeName,
+            merchantType = merchantType,
+            ownerName = userProfile.value?.fullName?.ifBlank { "شريك تجاري" } ?: "شريك تجاري",
+            iceNumber = iceNumber,
+            phone = phone,
+            address = address,
+            cinUri = cinUri,
+            licenseUri = licenseUri,
+            hygieneUri = hygieneUri,
+            ribUri = ribUri,
+            storefrontUri = storefrontUri,
+            status = "PENDING_VERIFICATION",
+            notes = "تم إيداع الوثائق الرسمية بنجاح وهي قيد المراجعة الإدارية"
+        )
+        _merchantApplications.value = listOf(newApp) + _merchantApplications.value
+
+        viewModelScope.launch {
+            val isEcom = merchantType.equals("ECOMMERCE", ignoreCase = true)
+            val store = StoreEntity(
+                id = "store_custom_${System.currentTimeMillis()}",
+                name = storeName,
+                nameAr = storeName,
+                nameFr = storeName,
+                category = if (isEcom) StoreCategory.ECOMMERCE.id else StoreCategory.FAST_FOOD.id,
+                rating = 5.0,
+                reviewCount = 0,
+                deliveryTimeMins = if (isEcom) 35 else 25,
+                deliveryFee = if (isEcom) 18.0 else 8.0,
+                minOrder = if (isEcom) 50.0 else 25.0,
+                address = address.ifBlank { "المحمدية" },
+                emoji = if (isEcom) "🛍️" else "🍔",
+                isFeatured = false,
+                badge = "بانتظار مصادقة الوثائق (Glovo & Temu Standard)",
+                isOpen = false,
+                ownerId = _currentUser.value?.id ?: "merchant_user"
+            )
+            repository.insertStore(store)
+            _userAlertMessage.value = "تم إيداع وثائق المتجر بنجاح! سيتم التحقق والمصادقة خلال 24 ساعة 🛡️"
+        }
+    }
+
+    fun approveMerchantApplication(appId: String) {
+        _merchantApplications.value = _merchantApplications.value.map {
+            if (it.id == appId) it.copy(status = "APPROVED", notes = "تمت المصادقة واعتماد المتجر رسمياً ✓")
+            else it
+        }
+        _userAlertMessage.value = "تمت المصادقة على المتجر ومنحه شارة التوثيق الذهبية 🛡️✨"
+    }
+
+    fun rejectMerchantApplication(appId: String, reason: String = "الوثائق غير مكتملة") {
+        _merchantApplications.value = _merchantApplications.value.map {
+            if (it.id == appId) it.copy(status = "REJECTED", notes = "مرفوض: $reason")
+            else it
+        }
+        _userAlertMessage.value = "تم رفض الطلب: $reason"
+    }
+
+    // Pricing & Service Transparency ("كم الخدمة؟")
+    private val _showPricingModal = MutableStateFlow(false)
+    val showPricingModal: StateFlow<Boolean> = _showPricingModal.asStateFlow()
+
+    fun openPricingModal() {
+        _showPricingModal.value = true
+    }
+
+    fun closePricingModal() {
+        _showPricingModal.value = false
+    }
+
+    // High-Tech Modern Delivery: Scheduled Delivery & Driver Tip
+    private val _scheduledDeliveryTime = MutableStateFlow<String?>("الآن (توصيل فوري ⚡)")
+    val scheduledDeliveryTime: StateFlow<String?> = _scheduledDeliveryTime.asStateFlow()
+
+    fun setScheduledDeliveryTime(time: String?) {
+        _scheduledDeliveryTime.value = time
+    }
+
+    private val _courierTip = MutableStateFlow(0.0)
+    val courierTip: StateFlow<Double> = _courierTip.asStateFlow()
+
+    fun setCourierTip(tip: Double) {
+        _courierTip.value = tip
+    }
+
+    private val _groupOrderCode = MutableStateFlow<String?>(null)
+    val groupOrderCode: StateFlow<String?> = _groupOrderCode.asStateFlow()
+
+    fun startGroupOrder(): String {
+        val code = "ALLO-GRP-${Random.nextInt(100, 999)}"
+        _groupOrderCode.value = code
+        _userAlertMessage.value = "تم تفعيل الطلب الجماعي: $code - شارك الرابط مع أصدقائك 👥"
+        return code
+    }
 
     // Cart State
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
@@ -472,16 +632,16 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     private fun initSupportChat() {
         val greeting = when (_selectedLanguage.value) {
-            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء ألو عزيز 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
-            AppLanguage.FRENCH -> "Bienvenue au support ALLO AZIZ 24/7 ! Je suis Sara, comment puis-je vous aider ?"
-            AppLanguage.ENGLISH -> "Welcome to ALLO AZIZ 24/7 Support! I'm Sara, how can I assist you today?"
+            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء ديليفيو DELIVIO 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
+            AppLanguage.FRENCH -> "Bienvenue au support DELIVIO 24/7 ! Je suis Sara, comment puis-je vous aider ?"
+            AppLanguage.ENGLISH -> "Welcome to DELIVIO 24/7 Support! I'm Sara, how can I assist you today?"
         }
         _supportMessages.value = listOf(
             SupportChatMessage(
                 id = "msg_init",
                 text = greeting,
                 isUser = false,
-                agentName = "سارة - دعم ألو عزيز"
+                agentName = "سارة - دعم ديليفيو"
             )
         )
     }
@@ -639,6 +799,61 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /**
+     * Seamless 1-Click Phone Number Login & Registration (No Gmail Required).
+     * If account exists, logs in immediately.
+     * If new customer, creates and activates customer account immediately.
+     */
+    fun loginWithPhoneOnly(phoneNumber: String, customerName: String = "") {
+        viewModelScope.launch {
+            clearAuthMessages()
+            val cleanPhone = phoneNumber.trim()
+            if (cleanPhone.length < 8) {
+                _authError.value = "يرجى إدخال رقم هاتف صحيح مكون من 9 إلى 10 أرقام (مثال: 0612345678)."
+                return@launch
+            }
+
+            val existing = repository.getUserByPhone(cleanPhone)
+                ?: repository.getUserByIdentifier(cleanPhone)
+
+            if (existing != null) {
+                _currentUser.value = existing
+                _currentUserId.value = existing.id
+                val matchedRole = UserRole.values().firstOrNull { it.name == existing.role } ?: UserRole.CUSTOMER
+                _currentRole.value = matchedRole
+                _currentScreen.value = when (matchedRole) {
+                    UserRole.CUSTOMER -> AppScreen.HOME
+                    UserRole.RESTAURANT_OWNER -> AppScreen.RESTAURANT_DASHBOARD
+                    UserRole.DRIVER -> AppScreen.DRIVER_DASHBOARD
+                    UserRole.SUPPORT_AGENT -> AppScreen.SUPPORT_DASHBOARD
+                    UserRole.SUPER_ADMIN -> AppScreen.ADMIN_DASHBOARD
+                }
+                _userAlertMessage.value = "مرحباً بك مجدداً يا ${existing.name}! تم الدخول برقم الهاتف بنجاح 📱"
+            } else {
+                val displayName = customerName.trim().ifBlank { "زبون ديليفيو (${cleanPhone.takeLast(4)})" }
+                val newId = "usr_phone_${System.currentTimeMillis()}"
+                val newAccount = UserAccountEntity(
+                    id = newId,
+                    name = displayName,
+                    email = "$cleanPhone@delivio.ma",
+                    phone = cleanPhone,
+                    password = "phone_verified",
+                    role = UserRole.CUSTOMER.name,
+                    status = "ACTIVE",
+                    balance = 0.0,
+                    avatarEmoji = "📱",
+                    authProvider = "PHONE"
+                )
+                repository.insertUser(newAccount)
+                _currentUser.value = newAccount
+                _currentUserId.value = newAccount.id
+                _currentRole.value = UserRole.CUSTOMER
+                _currentScreen.value = AppScreen.HOME
+                _userAlertMessage.value = "أهلاً بك يا $displayName في ديليفيو! تم تفعيل حسابك برقم الهاتف فورياً 🚀"
+            }
+        }
+    }
+
     fun registerUser(
         name: String,
         email: String,
@@ -692,7 +907,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             val newAccount = UserAccountEntity(
                 id = newId,
                 name = trimmedName,
-                email = trimmedEmail.ifBlank { "$trimmedPhone@alloaziz.ma" },
+                email = trimmedEmail.ifBlank { "$trimmedPhone@delivio.ma" },
                 phone = trimmedPhone.ifBlank { "+212 600-000000" },
                 password = trimmedPass,
                 role = role.name,
@@ -1448,7 +1663,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val hasEcommerce = items.any { it.product.category == StoreCategory.ECOMMERCE }
         val deliveryFee = if (hasEcommerce) 18.0 else 8.0
         val discount = subtotal * _promoDiscountPercent.value
-        val total = (subtotal - discount + deliveryFee).coerceAtLeast(0.0)
+        val tip = _courierTip.value
+        val total = (subtotal - discount + deliveryFee + tip).coerceAtLeast(0.0)
 
         val orderNum = Random.nextInt(1000, 9999)
         val orderId = "AZ-$orderNum"
@@ -1468,6 +1684,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 repository.deductWallet(total)
             }
 
+            val scheduledTimeInfo = _scheduledDeliveryTime.value ?: "توصيل فوري"
+            val combinedNotes = buildString {
+                if (_deliveryNotes.value.isNotBlank()) append(_deliveryNotes.value)
+                append(" • [موعد التسليم: $scheduledTimeInfo]")
+                if (tip > 0) append(" • [إكرامية السائق: $tip د.م]")
+            }
+
             val newOrder = OrderEntity(
                 id = orderId,
                 storeId = storeId,
@@ -1483,7 +1706,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 driverId = null,
                 paymentMethod = paymentMethodStr,
                 deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
-                deliveryNotes = _deliveryNotes.value,
+                deliveryNotes = combinedNotes,
                 timestamp = System.currentTimeMillis(),
                 courierName = "الكابتن عزيز برادة 🛵",
                 courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },

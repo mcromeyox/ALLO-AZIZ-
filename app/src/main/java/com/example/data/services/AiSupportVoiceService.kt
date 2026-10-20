@@ -63,7 +63,7 @@ object AiSupportVoiceService {
         apiKey: String,
         activeOrderSummary: String?
     ): String? {
-        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=$apiKey"
+        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
 
         val langDirective = when (language) {
             AppLanguage.FRENCH -> "Répondez impérativement en Français chaleureux, professionnel et concis (1 à 2 phrases max, adapté à la lecture vocale orale)."

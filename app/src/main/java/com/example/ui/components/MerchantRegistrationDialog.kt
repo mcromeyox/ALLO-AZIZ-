@@ -180,9 +180,9 @@ fun MerchantRegistrationDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = if (language == AppLanguage.ARABIC) {
-                            "شكراً لانضمامك إلى شبكة ألو عزيز! تم استلام وثائق متجرك (البطاقة الوطنية، السجل التجاري، ورخصة النشاط). سيقوم فريق التحقق والمصادقة بالرد وتفعيل المتجر خلال 24 ساعة لضمان الجودة والأمان لكافة الزبائن."
+                            "شكراً لانضمامك إلى شبكة ديليفيو DELIVIO! تم استلام وثائق متجرك (البطاقة الوطنية، السجل التجاري، ورخصة النشاط). سيقوم فريق التحقق والمصادقة بالرد وتفعيل المتجر خلال 24 ساعة لضمان الجودة والأمان لكافة الزبائن."
                         } else {
-                            "Merci d'avoir rejoint ALLO AZIZ ! Vos documents (CIN, RC, Licence, RIB) sont en cours de validation par notre équipe d'audit (délai : 24h). Vous recevrez une notification d'activation officielle."
+                            "Merci d'avoir rejoint DELIVIO ! Vos documents (CIN, RC, Licence, RIB) sont en cours de validation par notre équipe d'audit (délai : 24h). Vous recevrez une notification d'activation officielle."
                         },
                         fontSize = 12.sp,
                         lineHeight = 18.sp,
@@ -235,7 +235,7 @@ fun MerchantRegistrationDialog(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = if (language == AppLanguage.ARABIC) "انضم كتاجر معتمد في ألو عزيز 🛡️" else "Devenir Marchand Certifié ALLO AZIZ",
+                                        text = if (language == AppLanguage.ARABIC) "انضم كتاجر معتمد في ديليفيو 🛡️" else "Devenir Marchand Certifié DELIVIO",
                                         fontWeight = FontWeight.Black,
                                         fontSize = 15.sp,
                                         color = MaterialTheme.colorScheme.onSurface

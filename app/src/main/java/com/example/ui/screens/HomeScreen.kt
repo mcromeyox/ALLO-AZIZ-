@@ -53,6 +53,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -129,27 +130,51 @@ fun HomeScreen(
     onOpenCart: () -> Unit = {},
     onOpenLocationPicker: (() -> Unit)? = null,
     onOpenAiAssistant: (() -> Unit)? = null,
-    onOpenSupportVoiceCall: (() -> Unit)? = null
+    onOpenSupportVoiceCall: (() -> Unit)? = null,
+    selectedBranch: com.example.data.model.AppBranch = com.example.data.model.AppBranch.FOOD,
+    onSelectBranch: (com.example.data.model.AppBranch) -> Unit = {},
+    onOpenMerchantRegistration: (() -> Unit)? = null,
+    onOpenPricingModal: (() -> Unit)? = null
 ) {
     var customizingProduct by remember { mutableStateOf<Product?>(null) }
     var showAddressDialog by remember { mutableStateOf(false) }
 
+    val isEcommerceBranch = selectedBranch == com.example.data.model.AppBranch.ECOMMERCE
+
     val filteredStores = CatalogData.stores.filter { store ->
-        val matchesCategory = selectedCategory == StoreCategory.ALL || store.category == selectedCategory
+        val matchesBranch = if (isEcommerceBranch) {
+            store.category == StoreCategory.ECOMMERCE
+        } else {
+            store.category != StoreCategory.ECOMMERCE
+        }
+        val matchesCategory = if (isEcommerceBranch) {
+            true
+        } else {
+            selectedCategory == StoreCategory.ALL || store.category == selectedCategory
+        }
         val matchesQuery = searchQuery.isBlank() ||
                 store.name.contains(searchQuery, ignoreCase = true) ||
                 store.nameAr.contains(searchQuery, ignoreCase = true) ||
                 store.nameFr.contains(searchQuery, ignoreCase = true)
-        matchesCategory && matchesQuery
+        matchesBranch && matchesCategory && matchesQuery
     }
 
     val popularProducts = CatalogData.products.filter { product ->
-        val matchesCategory = selectedCategory == StoreCategory.ALL || product.category == selectedCategory
+        val matchesBranch = if (isEcommerceBranch) {
+            product.category == StoreCategory.ECOMMERCE
+        } else {
+            product.category != StoreCategory.ECOMMERCE
+        }
+        val matchesCategory = if (isEcommerceBranch) {
+            true
+        } else {
+            selectedCategory == StoreCategory.ALL || product.category == selectedCategory
+        }
         val matchesQuery = searchQuery.isBlank() ||
                 product.nameAr.contains(searchQuery, ignoreCase = true) ||
                 product.nameEn.contains(searchQuery, ignoreCase = true) ||
                 product.nameFr.contains(searchQuery, ignoreCase = true)
-        matchesCategory && matchesQuery
+        matchesBranch && matchesCategory && matchesQuery
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -248,12 +273,127 @@ fun HomeScreen(
             }
         }
 
+        // Department / Branch Switcher (Food & Dining vs E-Commerce & Retail Marketplace)
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .testTag("home_branch_switcher"),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(6.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // Branch 1: Food
+                        val isFood = selectedBranch == com.example.data.model.AppBranch.FOOD
+                        Surface(
+                            onClick = { onSelectBranch(com.example.data.model.AppBranch.FOOD) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isFood) AzizOrangePrimary else Color.Transparent,
+                            shadowElevation = if (isFood) 3.dp else 0.dp,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text("🍔", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "المطاعم والمأكولات" else if (language == AppLanguage.FRENCH) "Restaurants & Plats" else "Food & Dining",
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isFood) FontWeight.Black else FontWeight.Bold,
+                                    color = if (isFood) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        // Branch 2: E-Commerce
+                        val isEcom = selectedBranch == com.example.data.model.AppBranch.ECOMMERCE
+                        Surface(
+                            onClick = { onSelectBranch(com.example.data.model.AppBranch.ECOMMERCE) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isEcom) Color(0xFF6366F1) else Color.Transparent,
+                            shadowElevation = if (isEcom) 3.dp else 0.dp,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text("🛍️", fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "سوق التجارة الإلكترونية" else if (language == AppLanguage.FRENCH) "E-Commerce & High-Tech" else "E-Commerce Retail",
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isEcom) FontWeight.Black else FontWeight.Bold,
+                                    color = if (isEcom) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+
+                    // Transparent Service Fee Strip ("كم الخدمة؟")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (selectedBranch == com.example.data.model.AppBranch.FOOD) {
+                                    if (language == AppLanguage.ARABIC) "⚡ توصيل ساخن 20-30 دقيقة • رسوم التوصيل: 8 د.م فقط"
+                                    else "⚡ Livraison rapide 20-30 min • Frais : 8 DH"
+                                } else {
+                                    if (language == AppLanguage.ARABIC) "📦 شحن وتأمين الطرود • رسوم الشحن: 18 د.م (ضمان واسترجاع)"
+                                    else "📦 Expédition colis sécurisée • Frais : 18 DH"
+                                },
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Surface(
+                            onClick = { onOpenPricingModal?.invoke() },
+                            shape = RoundedCornerShape(8.dp),
+                            color = AzizMint.copy(alpha = 0.15f),
+                            modifier = Modifier.padding(start = 4.dp)
+                        ) {
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "كم الخدمة؟ 💡" else "Tarifs 💡",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AzizMint,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         // Search Bar
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
                 OutlinedTextField(
                     value = searchQuery,
@@ -299,314 +439,503 @@ fun HomeScreen(
             }
         }
 
-        // AI Voice Shopping Hero Banner
+        // ==========================================
+        // UNIVERSAL AI VOICE & TEXT SHOPPING HERO BANNER (Food + Global Concierge)
+        // ==========================================
         item {
             Surface(
                 onClick = { onOpenAiAssistant?.invoke() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .testTag("home_ai_voice_hero_banner"),
-                shape = RoundedCornerShape(22.dp),
-                border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF818CF8).copy(alpha = 0.45f)),
-                shadowElevation = 5.dp
-            ) {
-                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFF0F172A),
-                                    Color(0xFF1E1B4B),
-                                    Color(0xFF2C1654)
+                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .testTag("home_ai_voice_hero_banner"),
+                    shape = RoundedCornerShape(22.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF818CF8).copy(alpha = 0.45f)),
+                    shadowElevation = 5.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF0F172A),
+                                        Color(0xFF1E1B4B),
+                                        Color(0xFF2C1654)
+                                    )
                                 )
                             )
-                        )
-                        .padding(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(14.dp)
                     ) {
                         Row(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.linearGradient(
-                                            colors = listOf(AzizOrangePrimary, AzizAmberSecondary)
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Mic,
-                                    contentDescription = "Voice Shopping",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = when (language) {
-                                            AppLanguage.FRENCH -> "Assistant Vocal ALLO AZIZ AI"
-                                            AppLanguage.ENGLISH -> "ALLO AZIZ AI Voice Assistant"
-                                            AppLanguage.ARABIC -> "مساعد ألو عزيز الصوتي AI"
-                                        },
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = AzizMint.copy(alpha = 0.25f)
-                                    ) {
-                                        Text(
-                                            text = when (language) {
-                                                AppLanguage.FRENCH -> "NOUVEAU ⚡"
-                                                AppLanguage.ENGLISH -> "NEW ⚡"
-                                                AppLanguage.ARABIC -> "جديد ⚡"
-                                            },
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = AzizMint
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Commandez à la voix, l'IA prépare votre panier !"
-                                        AppLanguage.ENGLISH -> "Order with your voice, AI builds your cart!"
-                                        AppLanguage.ARABIC -> "تكلم واطلب مشترياتك بالصوت وسنجهز سلتك فوراً!"
-                                    },
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = AzizOrangePrimary,
-                            modifier = Modifier.padding(start = 8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Parler 🎙️"
-                                        AppLanguage.ENGLISH -> "Speak 🎙️"
-                                        AppLanguage.ARABIC -> "تكلم الآن 🎙️"
-                                    },
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // AI Voice Customer Support Hero Card (Sara IA)
-        item {
-            Surface(
-                onClick = { onOpenSupportVoiceCall?.invoke() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 5.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .testTag("home_ai_voice_support_hero_banner"),
-                shape = RoundedCornerShape(20.dp),
-                shadowElevation = 3.dp
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Color(0xFF0F172A),
-                                    Color(0xFF1E1B4B),
-                                    Color(0xFF31104B)
-                                )
-                            )
-                        )
-                        .padding(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        Brush.linearGradient(
-                                            colors = listOf(AzizMint, Color(0xFF059669))
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.RecordVoiceOver,
-                                    contentDescription = "Support Vocal IA",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = when (language) {
-                                            AppLanguage.FRENCH -> "Sara IA • Support Vocal 24/7"
-                                            AppLanguage.ENGLISH -> "Sara AI • 24/7 Voice Support"
-                                            AppLanguage.ARABIC -> "سارة AI • الدعم الصوتي الفوري"
-                                        },
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.White
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = AzizMint.copy(alpha = 0.25f)
-                                    ) {
-                                        Text(
-                                            text = when (language) {
-                                                AppLanguage.FRENCH -> "EN DIRECT 🔴"
-                                                AppLanguage.ENGLISH -> "LIVE 🔴"
-                                                AppLanguage.ARABIC -> "مباشر 🔴"
-                                            },
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = AzizMint
-                                        )
-                                    }
-                                }
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Parlez en direct avec l'IA, elle vous répond à voix haute !"
-                                        AppLanguage.ENGLISH -> "Speak live with AI, it answers you out loud!"
-                                        AppLanguage.ARABIC -> "تحدث مع الدعم الفني بالصوت وتجيبك سارة فورياً!"
-                                    },
-                                    fontSize = 11.sp,
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = AzizMint,
-                            modifier = Modifier.padding(start = 8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = when (language) {
-                                        AppLanguage.FRENCH -> "Appeler 📞"
-                                        AppLanguage.ENGLISH -> "Call 📞"
-                                        AppLanguage.ARABIC -> "اتصال 📞"
-                                    },
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Hero Express Banner
-        item {
-            HeroDeliveryBanner(
-                language = language,
-                onApplyCode = onApplyPromo
-            )
-        }
-
-        // Categories Horizontal Selector
-        item {
-            Column(modifier = Modifier.padding(top = 12.dp)) {
-                Text(
-                    text = AppStrings.categories(language),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(StoreCategory.values()) { category ->
-                        val isSelected = selectedCategory == category
-                        val title = when (language) {
-                            AppLanguage.ARABIC -> category.titleAr
-                            AppLanguage.FRENCH -> category.titleFr
-                            AppLanguage.ENGLISH -> category.titleEn
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(14.dp),
-                            color = if (isSelected) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
-                            tonalElevation = if (isSelected) 4.dp else 1.dp,
-                            shadowElevation = if (isSelected) 3.dp else 0.dp,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .clickable { onSelectCategory(category) }
-                                .testTag("category_chip_${category.id}")
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(46.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(AzizOrangePrimary, AzizAmberSecondary)
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Mic,
+                                        contentDescription = "Voice Shopping",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = when (language) {
+                                                AppLanguage.FRENCH -> "Assistant Vocal DELIVIO AI"
+                                                AppLanguage.ENGLISH -> "DELIVIO AI Voice Assistant"
+                                                AppLanguage.ARABIC -> "مساعد ديليفيو الصوتي AI"
+                                            },
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = AzizMint.copy(alpha = 0.25f)
+                                        ) {
+                                            Text(
+                                                text = when (language) {
+                                                    AppLanguage.FRENCH -> "NOUVEAU ⚡"
+                                                    AppLanguage.ENGLISH -> "NEW ⚡"
+                                                    AppLanguage.ARABIC -> "جديد ⚡"
+                                                },
+                                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = AzizMint
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = if (isEcommerceBranch) {
+                                            when (language) {
+                                                AppLanguage.FRENCH -> "Commandez tout article de toute plateforme (Zara, Shein, Amazon...) à la voix !"
+                                                AppLanguage.ENGLISH -> "Find any item from any platform (Zara, Shein, Amazon...) by voice!"
+                                                AppLanguage.ARABIC -> "اطلب أي منتج من أي منصة (زارا، شين، أمازون...) بالصوت أو الكتابة!"
+                                            }
+                                        } else {
+                                            when (language) {
+                                                AppLanguage.FRENCH -> "Commandez à la voix, l'IA prépare votre panier !"
+                                                AppLanguage.ENGLISH -> "Order with your voice, AI builds your cart!"
+                                                AppLanguage.ARABIC -> "تكلم واطلب مشترياتك بالصوت وسنجهز سلتك فوراً!"
+                                            }
+                                        },
+                                        fontSize = 11.sp,
+                                        color = Color.White.copy(alpha = 0.85f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = AzizOrangePrimary,
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = when (language) {
+                                            AppLanguage.FRENCH -> "Parler 🎙️"
+                                            AppLanguage.ENGLISH -> "Speak 🎙️"
+                                            AppLanguage.ARABIC -> "تكلم الآن 🎙️"
+                                        },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        if (!isEcommerceBranch) {
+            // AI Voice Customer Support Hero Card (Sara IA)
+            item {
+                Surface(
+                    onClick = { onOpenSupportVoiceCall?.invoke() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .testTag("home_ai_voice_support_hero_banner"),
+                    shape = RoundedCornerShape(20.dp),
+                    shadowElevation = 3.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF0F172A),
+                                        Color(0xFF1E1B4B),
+                                        Color(0xFF31104B)
+                                    )
+                                )
+                            )
+                            .padding(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(46.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            Brush.linearGradient(
+                                                colors = listOf(AzizMint, Color(0xFF059669))
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.RecordVoiceOver,
+                                        contentDescription = "Support Vocal IA",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = when (language) {
+                                                AppLanguage.FRENCH -> "Sara IA • Support Vocal 24/7"
+                                                AppLanguage.ENGLISH -> "Sara AI • 24/7 Voice Support"
+                                                AppLanguage.ARABIC -> "سارة AI • الدعم الصوتي الفوري"
+                                            },
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color.White
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Surface(
+                                            shape = RoundedCornerShape(6.dp),
+                                            color = AzizMint.copy(alpha = 0.25f)
+                                        ) {
+                                            Text(
+                                                text = when (language) {
+                                                    AppLanguage.FRENCH -> "EN DIRECT 🔴"
+                                                    AppLanguage.ENGLISH -> "LIVE 🔴"
+                                                    AppLanguage.ARABIC -> "مباشر 🔴"
+                                                },
+                                                modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = AzizMint
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = when (language) {
+                                            AppLanguage.FRENCH -> "Parlez en direct avec l'IA, elle vous répond à voix haute !"
+                                            AppLanguage.ENGLISH -> "Speak live with AI, it answers you out loud!"
+                                            AppLanguage.ARABIC -> "تحدث مع الدعم الفني بالصوت وتجيبك سارة فورياً!"
+                                        },
+                                        fontSize = 11.sp,
+                                        color = Color.White.copy(alpha = 0.85f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = AzizMint,
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = when (language) {
+                                            AppLanguage.FRENCH -> "Appeler 📞"
+                                            AppLanguage.ENGLISH -> "Call 📞"
+                                            AppLanguage.ARABIC -> "اتصال 📞"
+                                        },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Hero Express Banner
+            item {
+                HeroDeliveryBanner(
+                    language = language,
+                    onApplyCode = onApplyPromo
+                )
+            }
+
+            // Food Categories Horizontal Selector
+            item {
+                Column(modifier = Modifier.padding(top = 10.dp)) {
+                    Text(
+                        text = AppStrings.categories(language),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+
+                    val foodCategories = StoreCategory.values().filter { it != StoreCategory.ECOMMERCE }
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(foodCategories) { category ->
+                            val isSelected = selectedCategory == category
+                            val title = when (language) {
+                                AppLanguage.ARABIC -> category.titleAr
+                                AppLanguage.FRENCH -> category.titleFr
+                                AppLanguage.ENGLISH -> category.titleEn
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSelected) AzizOrangePrimary else MaterialTheme.colorScheme.surface,
+                                tonalElevation = if (isSelected) 4.dp else 1.dp,
+                                shadowElevation = if (isSelected) 3.dp else 0.dp,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable { onSelectCategory(category) }
+                                    .testTag("category_chip_${category.id}")
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Text(text = category.iconName, fontSize = 16.sp)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = title,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // ==========================================
+            // E-COMMERCE & RETAIL MARKETPLACE BRANCH
+            // ==========================================
+            item {
+                Surface(
+                    onClick = { onOpenMerchantRegistration?.invoke() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .testTag("home_ecommerce_hero_banner"),
+                    shape = RoundedCornerShape(22.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.2.dp, Color(0xFF6366F1).copy(alpha = 0.5f)),
+                    shadowElevation = 5.dp
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFF1E1B4B),
+                                        Color(0xFF312E81),
+                                        Color(0xFF4338CA)
+                                    )
+                                )
+                            )
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(46.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("🛍️", fontSize = 24.sp)
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = if (language == AppLanguage.ARABIC) "سوق التجارة الإلكترونية المعتمد 🛡️" else "Marketplace E-Commerce Certifié",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Black,
+                                                color = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = AzizMint
+                                            ) {
+                                                Text(
+                                                    text = "KYC ✓",
+                                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            text = if (language == AppLanguage.ARABIC) "متاجر موثوقة ومصادق عليها بالـ CIN والسجل التجاري (Glovo & Temu)" else "Vendeurs certifiés avec licence et RC",
+                                            fontSize = 10.sp,
+                                            color = Color.White.copy(alpha = 0.85f)
+                                        )
+                                    }
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = AzizMint
+                                ) {
+                                    Text(
+                                        text = if (language == AppLanguage.ARABIC) "ضمان 7 أيام ✓" else "Garantie 7j",
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (language == AppLanguage.ARABIC) "📦 شحن الطرود: 18 د.م (مؤمن ومغلف)" else "📦 Expédition colis sécurisée : 18 DH",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = if (language == AppLanguage.ARABIC) "شحن خاص للطرود مع تتبع المسار وضمان فحص السلعة عند الاستلام" else "Suivi direct et inspection avant paiement",
+                                        fontSize = 10.sp,
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                }
+
+                                Button(
+                                    onClick = { onOpenMerchantRegistration?.invoke() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = if (language == AppLanguage.ARABIC) "انضم كبائع 💼" else "Devenir Vendeur",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF312E81)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // E-Commerce Categories
+            item {
+                Column(modifier = Modifier.padding(top = 10.dp)) {
+                    Text(
+                        text = if (language == AppLanguage.ARABIC) "أقسام سوق التجارة الإلكترونية 🛍️" else "Catégories E-Commerce",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+
+                    val ecomTags = listOf(
+                        "الكل في المتجر 🛍️",
+                        "هواتف وإلكترونيات 📱",
+                        "جيمنج وكمبيوتر 🎮",
+                        "أزياء وموضة 👗",
+                        "عطور فاخرة 🧴",
+                        "جلد طبيعي وأصالة 🎒",
+                        "شواحن وإكسسوارات 🔌"
+                    )
+
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(ecomTags) { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                tonalElevation = 2.dp,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .clickable { onSearchChange(tag.substringBefore(" ").takeIf { it != "الكل" } ?: "") }
                             ) {
                                 Text(
-                                    text = category.iconName,
-                                    fontSize = 16.sp
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = title,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                    text = tag,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -626,7 +955,13 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = AppStrings.featuredStores(language),
+                        text = if (isEcommerceBranch) {
+                            if (language == AppLanguage.ARABIC) "متاجر وبوتيكات إلكترونية معتمدة 🏬"
+                            else if (language == AppLanguage.FRENCH) "Boutiques E-Commerce Vérifiées 🏬"
+                            else "Verified E-Commerce Boutiques 🏬"
+                        } else {
+                            AppStrings.featuredStores(language)
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 17.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -656,7 +991,7 @@ fun HomeScreen(
             }
         }
 
-        // Most Popular Dishes section
+        // Most Popular Dishes / Products section
         item {
             Column(modifier = Modifier.padding(top = 22.dp, start = 16.dp, end = 16.dp)) {
                 Row(
@@ -665,16 +1000,22 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = AppStrings.popularMeals(language),
+                        text = if (isEcommerceBranch) {
+                            if (language == AppLanguage.ARABIC) "أحدث المنتجات والإلكترونيات الفاخرة 🛍️"
+                            else if (language == AppLanguage.FRENCH) "Produits & Gadgets Tendances 🛍️"
+                            else "Trending Products & Tech 🛍️"
+                        } else {
+                            AppStrings.popularMeals(language)
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 17.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "⭐ ALLO AZIZ",
+                        text = if (isEcommerceBranch) "📦 شحن 18 د.م" else "⭐ DELIVIO GOURMET",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = AzizAmberSecondary
+                        color = if (isEcommerceBranch) Color(0xFF6366F1) else AzizAmberSecondary
                     )
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -694,6 +1035,73 @@ fun HomeScreen(
                         }
                     }
                 )
+            }
+        }
+
+        // Partner Onboarding & KYC Banner (Glovo & Temu Standard)
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                    .clickable { onOpenMerchantRegistration?.invoke() }
+                    .testTag("merchant_onboarding_cta_banner"),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(AzizOrangePrimary.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(if (isEcommerceBranch) "🛍️" else "👨‍🍳", fontSize = 22.sp)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = if (isEcommerceBranch) {
+                                    if (language == AppLanguage.ARABIC) "انضم كتاجر إلكتروني معتمد 💼" else "Devenir Vendeur E-Commerce"
+                                } else {
+                                    if (language == AppLanguage.ARABIC) "انضم كشريك مطعم معتمد 👨‍🍳" else "Devenir Restaurant Partenaire"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (language == AppLanguage.ARABIC)
+                                    "إيداع الوثائق الرسمية (CIN، السجل التجاري، التراخيص) - معايير Glovo & Temu"
+                                else "Validation KYC & Documents officiels (CIN, RC, Licence)",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = AzizOrangePrimary
+                    ) {
+                        Text(
+                            text = if (language == AppLanguage.ARABIC) "تقديم الوثائق 📑" else "Postuler",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
 
@@ -786,9 +1194,9 @@ fun HomeScreen(
                             )
                             Text(
                                 text = when (language) {
-                                    AppLanguage.FRENCH -> "ALLO AZIZ Express • Mohammedia"
-                                    AppLanguage.ENGLISH -> "ALLO AZIZ Express • Mohammedia"
-                                    AppLanguage.ARABIC -> "ألو عزيز إكسبريس • المحمدية"
+                                    AppLanguage.FRENCH -> "DELIVIO Express • Mohammedia"
+                                    AppLanguage.ENGLISH -> "DELIVIO Express • Mohammedia"
+                                    AppLanguage.ARABIC -> "ديليفيو إكسبريس • المحمدية"
                                 },
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 11.sp
@@ -878,9 +1286,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = when (language) {
-                            AppLanguage.FRENCH -> "ALLO AZIZ AI 🎙️"
-                            AppLanguage.ENGLISH -> "ALLO AZIZ AI 🎙️"
-                            AppLanguage.ARABIC -> "ألو عزيز AI 🎙️"
+                            AppLanguage.FRENCH -> "DELIVIO AI 🎙️"
+                            AppLanguage.ENGLISH -> "DELIVIO AI 🎙️"
+                            AppLanguage.ARABIC -> "ديليفيو AI 🎙️"
                         },
                         fontWeight = FontWeight.Black,
                         fontSize = 13.sp,
@@ -1104,7 +1512,7 @@ fun HeroDeliveryBanner(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "⚡ ALLO AZIZ EXPRESS",
+                            text = "⚡ DELIVIO EXPRESS",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,

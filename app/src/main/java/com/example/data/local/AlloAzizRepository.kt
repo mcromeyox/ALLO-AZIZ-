@@ -200,6 +200,11 @@ class AlloAzizRepository(private val database: AppDatabase) {
     }
 
     suspend fun initializeDefaultDataIfEmpty() {
+        if (database.storeDao().getStoreCount() > 0) {
+            // High-Speed Launch: Database is already primed, skip heavy seeding for ultra-fast startup!
+            return
+        }
+
         // 1. Seed Multi-role accounts with SHA-256 hashed passwords
         val defaultHashedPassword = PasswordHasher.hashPassword("abdomery")
 
@@ -305,73 +310,51 @@ class AlloAzizRepository(private val database: AppDatabase) {
             )
         )
 
-        for (u in defaultUsers) {
-            database.userDao().insertUser(u)
-        }
+        database.userDao().insertUsers(defaultUsers)
 
-        // Always guarantee super admin with requested credentials is active and hashed
-        database.userDao().insertUser(
-            UserAccountEntity(
-                id = "usr_super_admin",
-                name = "المدير العام (Super Admin)",
-                email = "mcromeyox@gmail.com",
-                phone = "+212 600-000001",
-                password = defaultHashedPassword,
-                role = "SUPER_ADMIN",
-                status = "ACTIVE",
-                balance = 150000.0,
-                avatarEmoji = "👑",
-                authProvider = "EMAIL"
+        // 2. Batch seed Stores into Room database
+        database.storeDao().insertStores(CatalogData.stores.map { st ->
+            StoreEntity(
+                id = st.id,
+                name = st.name,
+                nameAr = st.nameAr,
+                nameFr = st.nameFr,
+                category = st.category.id,
+                rating = st.rating,
+                reviewCount = st.reviewCount,
+                deliveryTimeMins = st.deliveryTimeMins,
+                deliveryFee = st.deliveryFee,
+                minOrder = st.minOrder,
+                address = st.address,
+                emoji = st.emoji,
+                isFeatured = st.isFeatured,
+                badge = st.badge,
+                isOpen = st.isOpen,
+                ownerId = st.ownerId
             )
-        )
+        })
 
-        // 2. Seed Stores into Room database
-        for (st in CatalogData.stores) {
-            database.storeDao().insertStore(
-                StoreEntity(
-                    id = st.id,
-                    name = st.name,
-                    nameAr = st.nameAr,
-                    nameFr = st.nameFr,
-                    category = st.category.id,
-                    rating = st.rating,
-                    reviewCount = st.reviewCount,
-                    deliveryTimeMins = st.deliveryTimeMins,
-                    deliveryFee = st.deliveryFee,
-                    minOrder = st.minOrder,
-                    address = st.address,
-                    emoji = st.emoji,
-                    isFeatured = st.isFeatured,
-                    badge = st.badge,
-                    isOpen = st.isOpen,
-                    ownerId = st.ownerId
-                )
+        // 3. Batch seed Products into Room database
+        database.productDao().insertProducts(CatalogData.products.map { p ->
+            ProductEntity(
+                id = p.id,
+                storeId = p.storeId,
+                storeName = p.storeName,
+                nameEn = p.nameEn,
+                nameAr = p.nameAr,
+                nameFr = p.nameFr,
+                descriptionEn = p.descriptionEn,
+                descriptionAr = p.descriptionAr,
+                descriptionFr = p.descriptionFr,
+                price = p.price,
+                category = p.category.id,
+                emoji = p.emoji,
+                rating = p.rating,
+                isPopular = p.isPopular,
+                calories = p.calories,
+                isAvailable = p.isAvailable
             )
-        }
-
-        // 3. Seed Products into Room database
-        for (p in CatalogData.products) {
-            database.productDao().insertProduct(
-                ProductEntity(
-                    id = p.id,
-                    storeId = p.storeId,
-                    storeName = p.storeName,
-                    nameEn = p.nameEn,
-                    nameAr = p.nameAr,
-                    nameFr = p.nameFr,
-                    descriptionEn = p.descriptionEn,
-                    descriptionAr = p.descriptionAr,
-                    descriptionFr = p.descriptionFr,
-                    price = p.price,
-                    category = p.category.id,
-                    emoji = p.emoji,
-                    rating = p.rating,
-                    isPopular = p.isPopular,
-                    calories = p.calories,
-                    isAvailable = p.isAvailable
-                )
-            )
-        }
+        })
 
         // 4. Seed Support Tickets
         val sampleTickets = listOf(

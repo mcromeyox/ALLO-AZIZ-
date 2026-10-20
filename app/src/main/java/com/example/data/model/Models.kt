@@ -194,3 +194,35 @@ data class SupportTicket(
     val lastMessage: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )
+
+enum class AppBranch(
+    val id: String,
+    val titleAr: String,
+    val titleFr: String,
+    val titleEn: String,
+    val emoji: String,
+    val badgeAr: String,
+    val standardDeliveryFee: Double
+) {
+    FOOD("food", "المطاعم والمأكولات", "Restaurants & Food", "Food & Restaurants", "🍔", "توصيل ساخن وسريع", 8.0),
+    ECOMMERCE("ecommerce", "سوق المنتجات والتجارة الإلكترونية", "Boutique & E-Commerce", "E-Commerce & Retail", "🛍️", "شحن طرود مؤمن", 18.0)
+}
+
+data class MerchantApplication(
+    val id: String,
+    val storeName: String,
+    val merchantType: String, // "FOOD" or "ECOMMERCE"
+    val ownerName: String = "",
+    val iceNumber: String = "",
+    val phone: String = "",
+    val address: String = "",
+    val cinUri: String? = null,
+    val licenseUri: String? = null,
+    val hygieneUri: String? = null,
+    val ribUri: String? = null,
+    val storefrontUri: String? = null,
+    val submissionTime: Long = System.currentTimeMillis(),
+    val status: String = "PENDING_VERIFICATION", // "PENDING_VERIFICATION", "APPROVED", "REJECTED"
+    val notes: String = ""
+)
+

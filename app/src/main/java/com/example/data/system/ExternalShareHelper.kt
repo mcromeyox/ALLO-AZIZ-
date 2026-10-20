@@ -138,4 +138,35 @@ object ExternalShareHelper {
         } catch (_: Exception) {
         }
     }
+
+    /**
+     * Shares split bill calculation with friends via WhatsApp / Telegram / SMS.
+     */
+    fun shareSplitBill(context: Context, total: Double, count: Int, perPerson: Double, summary: String = "") {
+        val splitText = buildString {
+            appendLine("🍕 *قسمة فاتورة طلب - ألو عزيز (ALLO AZIZ)*")
+            appendLine("━━━━━━━━━━━━━━━━━━━")
+            if (summary.isNotBlank()) {
+                appendLine("🛒 *الطلبات:* $summary")
+                appendLine("━━━━━━━━━━━━━━━━━━━")
+            }
+            appendLine("💰 *إجمالي الفاتورة شامل التوصيل:* ${"%.2f".format(total)} درهم")
+            appendLine("👥 *عدد الأفراد:* $count أشخاص")
+            appendLine("💵 *نصيب كل شخص:* ${"%.2f".format(perPerson)} درهم مغربي")
+            appendLine("━━━━━━━━━━━━━━━━━━━")
+            appendLine("يرجى تحويل أو دفع حصتك عبر كاش أو تطبيق البنك.")
+            appendLine("تطبيق ألو عزيز • توصيل فوري وطعام شهي 🚀")
+        }
+
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "قسمة الفاتورة ($count أفراد) - ألو عزيز")
+            putExtra(Intent.EXTRA_TEXT, splitText)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        val chooser = Intent.createChooser(shareIntent, "مشاركة قسمة الفاتورة عبر...").apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(chooser)
+    }
 }

@@ -129,11 +129,6 @@ object ExternalAiVoiceService {
         persona: VoicePersona
     ): AudioSynthesizedResult? {
         val voiceName = if (persona == VoicePersona.SARA) "Aoede" else "Puck"
-        // 1. Try gemini-3.8-flash-tts (Generates native studio audio/wav)
-        val res38 = tryModelTts("gemini-3.8-flash-tts", text, apiKey, voiceName)
-        if (res38 != null) return res38
-
-        // 2. Fallback to gemini-2.5-flash-preview-tts (Generates audio/pcm)
         return tryModelTts("gemini-2.5-flash-preview-tts", text, apiKey, voiceName)
     }
 

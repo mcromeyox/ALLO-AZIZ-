@@ -1541,7 +1541,7 @@ fun LiveTrackingMapCanvas(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "ALLO AZIZ",
+                        text = "DELIVIO",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
                         color = AzizOrangePrimary

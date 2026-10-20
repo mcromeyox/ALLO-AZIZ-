@@ -154,7 +154,7 @@ fun StaffLoginScreen(
                 )
 
                 Text(
-                    text = "ALLO AZIZ • Staff & Partner Portal 🇲🇦",
+                    text = "DELIVIO • Staff & Partner Portal 🇲🇦",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

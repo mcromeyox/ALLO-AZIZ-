@@ -121,6 +121,11 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val customerLng by viewModel.customerLng.collectAsState()
     val showLocationPickerModal by viewModel.showLocationPickerModal.collectAsState()
 
+    val selectedBranch by viewModel.selectedBranch.collectAsState()
+    val showMerchantRegistration by viewModel.showMerchantRegistration.collectAsState()
+    val showPricingModal by viewModel.showPricingModal.collectAsState()
+    val merchantApplications by viewModel.merchantApplications.collectAsState()
+
     val showAiAssistant by viewModel.showAiAssistant.collectAsState()
     val showAiVoiceSupportDialog by viewModel.showAiVoiceSupportDialog.collectAsState()
     val aiRecommendation by viewModel.aiRecommendation.collectAsState()
@@ -267,6 +272,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 authSuccessMsg = authSuccess,
                                 onLoginCredentials = { id, pass -> viewModel.loginWithCredentials(id, pass) },
                                 onLoginGoogle = { email, name -> viewModel.loginWithGoogle(email, name) },
+                                onLoginWithPhone = { phone, name -> viewModel.loginWithPhoneOnly(phone, name) },
                                 onTriggerGoogleSignIn = { onFallback ->
                                     try {
                                         val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -349,7 +355,11 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onOpenCart = { viewModel.navigateTo(AppScreen.CART_CHECKOUT) },
                                 onOpenLocationPicker = { viewModel.openLocationPicker() },
                                 onOpenAiAssistant = { viewModel.openAiAssistant() },
-                                onOpenSupportVoiceCall = { viewModel.openAiVoiceSupportDialog() }
+                                onOpenSupportVoiceCall = { viewModel.openAiVoiceSupportDialog() },
+                                selectedBranch = selectedBranch,
+                                onSelectBranch = { viewModel.selectBranch(it) },
+                                onOpenMerchantRegistration = { viewModel.openMerchantRegistration() },
+                                onOpenPricingModal = { viewModel.openPricingModal() }
                             )
                         }
 
@@ -416,7 +426,8 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                         viewModel.fetchCurrentGpsLocation(context, updateDeliveryAddress = true)
                                     }
                                 },
-                                onOpenLocationPicker = { viewModel.openLocationPicker() }
+                                onOpenLocationPicker = { viewModel.openLocationPicker() },
+                                onOpenPricingModal = { viewModel.openPricingModal() }
                             )
                         }
 
@@ -537,7 +548,9 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onLanguageChange = { viewModel.setLanguage(it) },
                                 onTopUpWallet = { viewModel.topUpWallet(it) },
                                 onNavigateToSupport = { viewModel.navigateTo(AppScreen.LIVE_SUPPORT) },
-                                onLogout = { viewModel.logout() }
+                                onLogout = { viewModel.logout() },
+                                onOpenMerchantRegistration = { viewModel.openMerchantRegistration() },
+                                onOpenPricingModal = { viewModel.openPricingModal() }
                             )
                         }
 
@@ -598,7 +611,10 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onAddNewStore = { name, nameAr, cat, addr, fee, emoji ->
                                     viewModel.addNewStore(name, nameAr, cat, addr, fee, emoji)
                                 },
-                                onBroadcastAnnouncement = { title, body -> viewModel.broadcastSystemAnnouncement(title, body) }
+                                onBroadcastAnnouncement = { title, body -> viewModel.broadcastSystemAnnouncement(title, body) },
+                                merchantApplications = merchantApplications,
+                                onApproveMerchant = { viewModel.approveMerchantApplication(it) },
+                                onRejectMerchant = { appId, reason -> viewModel.rejectMerchantApplication(appId, reason) }
                             )
                         }
                     }
@@ -652,6 +668,23 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                             onSupportMessageLogged = { userQ, aiR ->
                                 viewModel.sendSupportMessage(userQ)
                             }
+                        )
+                    }
+
+                    if (showMerchantRegistration) {
+                        com.example.ui.components.MerchantRegistrationDialog(
+                            language = language,
+                            onDismissRequest = { viewModel.closeMerchantRegistration() },
+                            onMerchantSubmitted = { sName, mType, ice, phone, addr, cin, lic, hyg, rib, sf ->
+                                viewModel.submitMerchantApplication(sName, mType, ice, phone, addr, cin, lic, hyg, rib, sf)
+                            }
+                        )
+                    }
+
+                    if (showPricingModal) {
+                        com.example.ui.components.PricingTransparencyDialog(
+                            language = language,
+                            onDismissRequest = { viewModel.closePricingModal() }
                         )
                     }
                 }

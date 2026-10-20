@@ -85,7 +85,9 @@ fun ProfileSettingsScreen(
     onLanguageChange: (AppLanguage) -> Unit,
     onTopUpWallet: (Double) -> Unit,
     onNavigateToSupport: () -> Unit,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onOpenMerchantRegistration: (() -> Unit)? = null,
+    onOpenPricingModal: (() -> Unit)? = null
 ) {
     val balance = wallet?.balance ?: 0.0
     val points = wallet?.points ?: 0
@@ -268,6 +270,80 @@ fun ProfileSettingsScreen(
                                     )
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Merchant & Store Partner Onboarding (Glovo & Temu Standard)
+        item {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(AzizOrangePrimary.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("🏪", fontSize = 22.sp)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "انضم كشريك تجاري أو مطعم (Glovo & Temu) 🤝" else "Devenir Partenaire Marchand / Restaurant",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "أضف متجرك، ارفع الوثائق الرسمية (CIN, RC, نظافة)، وابدأ البيع فوراً" else "Inscrivez votre commerce, soumettez vos documents et vendez",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onOpenMerchantRegistration?.invoke() },
+                            colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1.3f)
+                        ) {
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "تسجيل متجر وإيداع الوثائق 📄" else "Inscrire mon commerce 📄",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = { onOpenPricingModal?.invoke() },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "كم الخدمة؟ ℹ️" else "Frais & Tarifs ℹ️",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                color = AzizOrangePrimary
+                            )
                         }
                     }
                 }
@@ -805,7 +881,7 @@ fun ProfileSettingsScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "ALLO AZIZ - ألو عزيز للخدمات اللوجستية",
+                                text = "DELIVIO Technologies - ديليفيو للخدمات اللوجستية والتجارة",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ALLO AZIZ"
+rootProject.name = "DELIVIO"
 
 include(":app")

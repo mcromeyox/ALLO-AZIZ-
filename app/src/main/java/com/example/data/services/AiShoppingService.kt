@@ -85,7 +85,7 @@ object AiShoppingService {
         apiKey: String,
         products: List<Product>
     ): AiShoppingRecommendation? {
-        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=$apiKey"
+        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
 
         val catalogSummary = products.map { p ->
             JSONObject().apply {
@@ -99,26 +99,26 @@ object AiShoppingService {
         }
 
         val systemPrompt = """
-            You are 'Sara' or 'Karim', the ultra-realistic voice shopping assistant for ALLO AZIZ in Mohammedia, Morocco.
-            The user spoke naturally in Moroccan Darija, French, or English: "$userVoiceText".
+            You are 'Sara' or 'Karim', the ultra-realistic voice shopping AI concierge for DELIVIO Super-App in Mohammedia, Morocco.
+            The user spoke or typed naturally in Moroccan Darija, French, Arabic, or English: "$userVoiceText".
             
             Catalog available:
             $catalogSummary
             
             Analyze the user's intent with 100% precision:
-            - Accurately match all requested products.
+            - If the user asks for a product from the catalog, match it accurately.
+            - If the user asks for products from ANY global or local platform (e.g. Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple, Jumia), DELIVIO Concierge fulfills it seamlessly! Assign storeName to "DELIVIO Concierge Global Marketplace (Zara, Shein, Amazon & Partenaires)", set a realistic price in Moroccan Dirhams (DH), and provide an item object.
             - Extract quantities (e.g., 2, 3, joj, tleta).
-            - Extract culinary preferences (e.g., sans oignon, sauce piquante, bien cuit, fromage fondu).
-            - Create warm, natural, human-like voice sentences in French and Arabic (speechAudioFr and speechAudioAr).
-            - The voice sentence MUST sound like a polite Moroccan human concierge talking on the phone, welcoming the customer and stating the order warmly, without robotic words like "items" or "table".
+            - Extract culinary or product preferences (size, color, sauce, warranty).
+            - Create warm, natural, human-like voice sentences in French and Arabic (speechAudioFr and speechAudioAr) welcoming the user with Moroccan hospitality.
             
             Return ONLY raw valid JSON:
             {
                "confidence": 99,
                "explanationFr": "French summary of what was chosen",
                "explanationAr": "Arabic summary of what was chosen",
-               "speechAudioFr": "Parfait ! J'ai bien préparé votre commande chez [Store] avec [Items]. Le total est de [Price] dirhams avec la livraison. Vous pouvez confirmer en un clic !",
-               "speechAudioAr": "ممتاز! جهزت لك طلبك بكل سرور من [Store]، بمجموع [Price] درهم مع التوصيل السريع. يمكنك التأكيد الآن!",
+               "speechAudioFr": "Parfait ! J'ai bien préparé votre commande chez [Store] avec [Items]. Le total est de [Price] dirhams avec la livraison express. Vous pouvez confirmer en un clic !",
+               "speechAudioAr": "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من [Store]، بمجموع [Price] درهم مع التوصيل السريع. يمكنك التأكيد الآن!",
                "storeName": "Store name",
                "notes": ["Sauce piquante", "Sans oignon"],
                "items": [
@@ -275,7 +275,9 @@ object AiShoppingService {
         if (q.contains("curry") || q.contains("كاري")) {
             detectedNotes.add("Sauce Curry Doux")
         }
-        if (q.contains("harissa") || q.contains("هريسة") || q.contains("حار") || q.contains("piquant") || q.contains("har") || q.contains("7ar")) {
+        if (q.contains("sauce piquante") || q.contains("sauce piquant") || q.contains("صوص حار") || q.contains("صلصة حارة")) {
+            detectedNotes.add("Sauce piquante 🔥")
+        } else if (q.contains("harissa") || q.contains("هريسة") || q.contains("حار") || q.contains("piquant") || q.contains("har") || q.contains("7ar")) {
             detectedNotes.add("Harissa Beldia Piquante 🇲🇦")
         }
         if (q.contains("sweet chili") || q.contains("سويت تشيلي")) {
@@ -315,7 +317,18 @@ object AiShoppingService {
         val hasGaming = q.contains("casque gamer") || q.contains("gaming") || q.contains("جيمنج") || q.contains("العاب") || q.contains("ألعاب") || q.contains("headset")
         val hasLeather = q.contains("sac") || q.contains("حقيبة") || q.contains("جلد") || q.contains("cuir") || q.contains("محفظة")
 
-        // 2. Food & Restaurant items
+        // 2. External Global Platforms (Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple, etc.)
+        val isZara = q.contains("zara") || q.contains("زارا")
+        val isShein = q.contains("shein") || q.contains("شين") || q.contains("شي ان") || q.contains("شي إن")
+        val isAmazon = q.contains("amazon") || q.contains("أمازون") || q.contains("امازون")
+        val isTemu = q.contains("temu") || q.contains("تيمو")
+        val isAliExpress = q.contains("aliexpress") || q.contains("علي اكسبريس") || q.contains("على اكسبريس")
+        val isDecathlon = q.contains("decathlon") || q.contains("ديكاتلون") || q.contains("ديكاتلو")
+        val isNikeAdidas = q.contains("nike") || q.contains("adidas") || q.contains("نايكي") || q.contains("نايك") || q.contains("اديداس") || q.contains("أديداس") || q.contains("حذاء") || q.contains("chaussure") || q.contains("sneakers") || q.contains("بسكليت")
+        val isAppleSamsung = q.contains("apple") || q.contains("iphone") || q.contains("ايفون") || q.contains("آيفون") || q.contains("samsung") || q.contains("سامسونج")
+        val isGlobalMarketplace = isZara || isShein || isAmazon || isTemu || isAliExpress || isDecathlon || isNikeAdidas || isAppleSamsung
+
+        // 3. Food & Restaurant items
         val hasTacos = q.contains("tacos") || q.contains("طاكوس") || q.contains("تاكوس") || q.contains("otacos") || q.contains("o'tacos")
         val hasShawarma = q.contains("shawarma") || q.contains("chawarma") || q.contains("شاورما") || q.contains("ساندويتش") || q.contains("americain") || q.contains("أمريكان")
         val hasBurgerKing = q.contains("whopper") || q.contains("ووبر") || q.contains("burger king") || q.contains("برجر كينج") || q.contains("smash") || q.contains("سماش")
@@ -383,7 +396,76 @@ object AiShoppingService {
             explanationFr = "Articles de mode et parfumerie de luxe authentifiés avec emballage soigné !"
             explanationAr = "منتجات أزياء وعطور أصلية فاخرة مصادق عليها مع تغليف بريميوم أنيق!"
         }
-        // B. TACOS & SHAWARMA MATCH
+        // B. GLOBAL & EXTERNAL MARKETPLACE CONCIERGE (Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple)
+        else if (isGlobalMarketplace) {
+            isEcommerceOrder = true
+            val platformLabel = when {
+                isZara -> "زارا (Zara Fashion)"
+                isShein -> "شين (Shein Marketplace)"
+                isAmazon -> "أمازون (Amazon Global)"
+                isTemu -> "تيمو (Temu Express)"
+                isAliExpress -> "علي إكسبريس (AliExpress)"
+                isDecathlon -> "ديكاتلون (Decathlon Sports)"
+                isNikeAdidas -> "نايكي وأديداس (Nike & Adidas Store)"
+                isAppleSamsung -> "آبل وسامسونغ (Apple & Samsung Center)"
+                else -> "كونسيرج المنصات العالمية (Global Marketplace Concierge)"
+            }
+            mainStoreName = "DELIVIO Concierge • $platformLabel"
+            storeEmoji = when {
+                isZara || isShein -> "👗"
+                isNikeAdidas || isDecathlon -> "👟"
+                isAppleSamsung -> "📱"
+                else -> "📦"
+            }
+            val itemNameAr = when {
+                isZara -> "قطعة أزياء زارا العصرية المختارة"
+                isShein -> "فستان ولباس شين العصري الأنيق"
+                isAmazon -> "منتج أصلي مستورد عبر أمازون جلوبال"
+                isTemu -> "منتج كونسيرج تيمو إكسبريس بجودة ممتازة"
+                isDecathlon -> "حذاء ومعدات رياضية أصلية من ديكاتلون"
+                isNikeAdidas -> "حذاء سنيكرز نايكي / أديداس أصلي مريح"
+                isAppleSamsung -> "إكسسوار وجهاز أصلي معتمد مع الضمان"
+                else -> "طلبك الخاص من $platformLabel"
+            }
+            val itemNameFr = when {
+                isZara -> "Article de mode tendance sélectionné chez Zara"
+                isShein -> "Tenue et accessoires élégants Shein"
+                isAmazon -> "Produit authentique importé Amazon Global"
+                isTemu -> "Article express vérifié qualité Temu"
+                isDecathlon -> "Équipement sportif certifié Decathlon"
+                isNikeAdidas -> "Baskets sneakers originales Nike / Adidas"
+                isAppleSamsung -> "Accessoire officiel certifié avec garantie"
+                else -> "Commande concierge depuis $platformLabel"
+            }
+            val dynamicPrice = when {
+                isAppleSamsung -> 380.0
+                isNikeAdidas -> 350.0
+                isZara -> 290.0
+                isDecathlon -> 220.0
+                isShein || isTemu -> 149.0
+                else -> 199.0
+            }
+            val dynamicProduct = Product(
+                id = "p_concierge_${System.currentTimeMillis()}",
+                storeId = "store_concierge_global",
+                storeName = mainStoreName,
+                nameEn = itemNameFr,
+                nameAr = itemNameAr,
+                nameFr = itemNameFr,
+                descriptionEn = "Concierge item sourced with quality assurance",
+                descriptionAr = "طلب خاص تم توفيره فورياً عبر خدمة ديليفيو كونسيرج الذكية للمنصات العالمية مع الضمان والتوصيل المؤمن",
+                descriptionFr = "Service Concierge DELIVIO multi-plateformes avec emballage sécurisé et garantie",
+                price = dynamicPrice,
+                category = StoreCategory.ECOMMERCE,
+                emoji = storeEmoji,
+                rating = 4.95,
+                imageUrl = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600"
+            )
+            matchedItems.add(AiRecommendedItem(dynamicProduct, defaultQty, "تغليف مؤمن وشحن سريع ومطابقة الجودة 100%", dynamicPrice * defaultQty))
+            explanationFr = "Excellent choix ! Votre article chez $platformLabel a été identifié et préparé par le Concierge DELIVIO avec garantie et expédition express."
+            explanationAr = "اختيار رائع! تم إيجاد طلبك وتحديده من $platformLabel وتجهيزه عبر كونسيرج ديليفيو الذكي مع ضمان الجودة والشحن المؤمن."
+        }
+        // C. TACOS & SHAWARMA MATCH
         else if (hasTacos) {
             mainStoreName = "أو تاكوس (O'Tacos)"
             storeEmoji = "🌮"
@@ -501,17 +583,42 @@ object AiShoppingService {
             explanationFr = "Produits de pharmacie et soins d'urgence prêts pour livraison rapide."
             explanationAr = "مستلزمات صيدلية المركز الطارئة مع توصيل فوري!"
         }
-        // L. DEFAULT
+        // L. DEFAULT & UNIVERSAL CONCIERGE (Finds any product from any platform)
         else {
-            mainStoreName = "أو تاكوس (O'Tacos)"
-            storeEmoji = "🌮"
-            products.find { it.id == "p_otacos_l" }?.let {
-                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-            } ?: products.find { it.id == "p_mcdo_bigmac" }?.let {
-                matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+            if (q.length > 2 && !q.contains("tacos") && !q.contains("burger")) {
+                isEcommerceOrder = true
+                mainStoreName = "DELIVIO Concierge • خدمة الطلب المباشر من أي مكان"
+                storeEmoji = "🛍️"
+                val dynamicProduct = Product(
+                    id = "p_concierge_${System.currentTimeMillis()}",
+                    storeId = "store_concierge_global",
+                    storeName = mainStoreName,
+                    nameEn = "Special Order: \"${query.take(45)}\"",
+                    nameAr = "طلبك الخاص: \"${query.take(45)}\"",
+                    nameFr = "Commande spéciale : \"${query.take(45)}\"",
+                    descriptionEn = "Universal concierge order sourced from trusted merchants",
+                    descriptionAr = "تم التعرف على طلبك وتوفيره لك فوراً من أي متجر أو منصة عبر خدمة ديليفيو كونسيرج الذكية مع فحص الجودة",
+                    descriptionFr = "Produit identifié et commandé via le service Concierge DELIVIO multi-plateformes",
+                    price = 120.0,
+                    category = StoreCategory.ECOMMERCE,
+                    emoji = "✨",
+                    rating = 4.9,
+                    imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
+                )
+                matchedItems.add(AiRecommendedItem(dynamicProduct, defaultQty, "طلب خاص موثق ومعتمد", dynamicProduct.price * defaultQty))
+                explanationFr = "J'ai identifié votre demande (\"$query\") et préparé votre commande personnalisée via le Concierge DELIVIO !"
+                explanationAr = "تم التعرف على طلبك بالكامل (\"$query\") وتجهيزه لك فوراً عبر كونسيرج ديليفيو الذكي من أي منصة!"
+            } else {
+                mainStoreName = "أو تاكوس (O'Tacos)"
+                storeEmoji = "🌮"
+                products.find { it.id == "p_otacos_l" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+                } ?: products.find { it.id == "p_mcdo_bigmac" }?.let {
+                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+                }
+                explanationFr = "Sélection gourmande préparée avec soin avec vos sauces favorites !"
+                explanationAr = "تم تجهيز طلبك الشهي مع الصلصات اللذيذة والبطاطس المقرمشة!"
             }
-            explanationFr = "Sélection gourmande préparée avec soin avec vos sauces favorites !"
-            explanationAr = "تم تجهيز طلبك الشهي مع الصلصات اللذيذة والبطاطس المقرمشة!"
         }
 
         val total = matchedItems.sumOf { it.subtotal }

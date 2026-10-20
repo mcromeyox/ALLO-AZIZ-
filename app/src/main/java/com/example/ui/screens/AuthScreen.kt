@@ -96,6 +96,7 @@ fun AuthScreen(
     onOpenStaffLogin: () -> Unit = {},
     onRequestPasswordReset: ((identifier: String, onOtp: (String) -> Unit) -> Unit)? = null,
     onConfirmPasswordReset: ((identifier: String, newPass: String) -> Unit)? = null,
+    onLoginWithPhone: ((phoneNumber: String, customerName: String) -> Unit)? = null,
     onSkipAsGuest: (() -> Unit)? = null
 ) {
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Sign In, 1 = Register
@@ -104,6 +105,8 @@ fun AuthScreen(
     var loginIdentifier by remember { mutableStateOf("") }
     var loginPassword by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+    var fastPhoneInput by remember { mutableStateOf("") }
+    var fastCustomerName by remember { mutableStateOf("") }
 
     // Register inputs
     var regName by remember { mutableStateOf("") }
@@ -161,15 +164,15 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "ALLO AZIZ",
+                    text = "DELIVIO",
                     fontWeight = FontWeight.Black,
-                    fontSize = 28.sp,
+                    fontSize = 30.sp,
                     color = AzizOrangePrimary,
-                    letterSpacing = 1.sp
+                    letterSpacing = 1.5.sp
                 )
 
                 Text(
-                    text = "ألو عزيز • سرعة، أمان، وأشهى المأكولات 🇲🇦",
+                    text = "ديليفيو • سرعة، فخامة، وسوق تجارة إلكترونية متكامل 🇲🇦",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -341,6 +344,92 @@ fun AuthScreen(
 
         // TAB 0: SIGN IN (Customer Login Only)
         if (selectedTab == 0) {
+            // 1-Click Fast Phone Login Card (Phone Only - No Gmail required)
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = AzizMint.copy(alpha = 0.08f)),
+                    border = CardDefaults.outlinedCardBorder().copy(brush = Brush.horizontalGradient(listOf(AzizMint, AzizOrangePrimary))),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("📱", fontSize = 20.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "دخول فوري برقم الهاتف فقط (دون جيميل أو كلمة سر)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = AzizOrangeDark
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "أدخل رقم هاتفك فقط، وسيتعرف عليك التطبيق فوراً أو ينشئ حسابك تلقائياً كزبون بدون أي تعقيد.",
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedTextField(
+                            value = fastPhoneInput,
+                            onValueChange = { fastPhoneInput = it },
+                            label = { Text("رقم الهاتف المحمول (مثال: 0612345678)") },
+                            placeholder = { Text("06... أو 07...") },
+                            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = AzizMint) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("fast_phone_login_input")
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                if (onLoginWithPhone != null) {
+                                    onLoginWithPhone(fastPhoneInput, fastCustomerName)
+                                } else {
+                                    onLoginCredentials(fastPhoneInput, "phone_verified")
+                                }
+                            },
+                            enabled = fastPhoneInput.trim().length >= 8,
+                            colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .testTag("fast_phone_login_btn")
+                        ) {
+                            Text(
+                                text = "دخول فوري برقم الهاتف فقط 🚀",
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "أو عبر خيارات الدخول الأخرى",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 10.dp)
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                }
+            }
+
             // Google Sign-In Button
             item {
                 OutlinedButton(
@@ -583,13 +672,13 @@ fun AuthScreen(
                 )
             }
 
-            // Email (Gmail)
+            // Email (Gmail - Optional if phone provided)
             item {
                 OutlinedTextField(
                     value = regEmail,
                     onValueChange = { regEmail = it },
-                    label = { Text("البريد الإلكتروني (جيميل / Gmail)") },
-                    placeholder = { Text("yourname@gmail.com") },
+                    label = { Text("البريد الإلكتروني (اختياري إذا أدخلت رقم الهاتف)") },
+                    placeholder = { Text("اختياري: yourname@gmail.com") },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
@@ -734,7 +823,7 @@ fun AuthScreen(
         item {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "ALLO AZIZ v2.0 • Mohammedia, Morocco 🇲🇦",
+                text = "DELIVIO Super-App v3.0 • Premium Delivery & Marketplace 🇲🇦",
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),

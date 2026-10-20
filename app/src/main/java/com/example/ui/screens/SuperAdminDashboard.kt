@@ -77,7 +77,10 @@ fun SuperAdminDashboard(
     driverPayoutPercent: Double = 80.0,
     platformServiceFee: Double = 2.5,
     onUpdateCommissionRates: (Double, Double, Double) -> Unit = { _, _, _ -> },
-    onToggleDeliveryZone: (String) -> Unit = {}
+    onToggleDeliveryZone: (String) -> Unit = {},
+    merchantApplications: List<com.example.data.model.MerchantApplication> = emptyList(),
+    onApproveMerchant: (String) -> Unit = {},
+    onRejectMerchant: (String, String) -> Unit = { _, _ -> }
 ) {
     var selectedRoleFilter by remember { mutableIntStateOf(0) } // 0 = All, 1 = Drivers, 2 = Restaurant, 3 = Customers
     var showAddStoreModal by remember { mutableStateOf(false) }
@@ -313,6 +316,144 @@ fun SuperAdminDashboard(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("ترقية الدور 🔄", fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section: Merchant KYC & Store Document Approvals (Glovo & Temu Standard)
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🛡️", fontSize = 20.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "طلبات مصادقة المتاجر وإيداع الوثائق (${merchantApplications.size})",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 14.sp
+                            )
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = AzizOrangePrimary.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "معايير Glovo & Temu",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AzizOrangePrimary,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "تدقيق البطاقة الوطنية (CIN)، السجل التجاري (RC)، رخصة السلامة/الجودة، وصور المحل",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        items(merchantApplications) { app ->
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(if (app.merchantType == "ECOMMERCE") "🛍️" else "🍔", fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(text = app.storeName, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(
+                                    text = "${if (app.merchantType == "ECOMMERCE") "تجارة إلكترونية" else "مطعم أكلات"} • ${app.ownerName} • ${app.phone}",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = when (app.status) {
+                                "APPROVED" -> AzizMint.copy(alpha = 0.15f)
+                                "PENDING_VERIFICATION" -> AzizAmberSecondary.copy(alpha = 0.15f)
+                                else -> Color.Red.copy(alpha = 0.15f)
+                            }
+                        ) {
+                            Text(
+                                text = when (app.status) {
+                                    "APPROVED" -> "معتمد وموثق ✓"
+                                    "PENDING_VERIFICATION" -> "قيد التدقيق ⏳"
+                                    else -> "مرفوض ✕"
+                                },
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = when (app.status) {
+                                    "APPROVED" -> AzizMint
+                                    "PENDING_VERIFICATION" -> AzizAmberSecondary
+                                    else -> Color.Red
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "• العنوان: ${app.address} | رقم ICE/RC: ${app.iceNumber}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "• الوثائق المودعة: 🪪 CIN للوجهين | 📑 السجل التجاري | 🛡️ رخصة النشاط | 💳 شهادة RIB | 🏬 صورة المحل",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = AzizMint
+                    )
+
+                    if (app.status == "PENDING_VERIFICATION") {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { onApproveMerchant(app.id) },
+                                colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("مصادقة واعتماد المتجر ✓", fontSize = 11.sp, color = Color.White)
+                            }
+
+                            OutlinedButton(
+                                onClick = { onRejectMerchant(app.id, "الوثائق تحتاج إلى إعادة تصوير") },
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("رفض / طلب تعديل ✕", fontSize = 11.sp, color = Color.Red)
+                            }
                         }
                     }
                 }

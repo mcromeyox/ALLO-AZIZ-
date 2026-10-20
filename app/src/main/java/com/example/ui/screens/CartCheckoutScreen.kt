@@ -34,6 +34,9 @@ import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.ShoppingBag
@@ -56,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -65,6 +69,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -98,20 +103,27 @@ fun CartCheckoutScreen(
     onPlaceOrder: () -> Unit,
     onNavigateToHome: () -> Unit,
     onUseCurrentGpsLocation: (() -> Unit)? = null,
-    onOpenLocationPicker: (() -> Unit)? = null
+    onOpenLocationPicker: (() -> Unit)? = null,
+    onOpenPricingModal: (() -> Unit)? = null
 ) {
     BackHandler { onBack() }
+    val context = LocalContext.current
 
     var promoInput by remember { mutableStateOf("") }
     var cardNumber by remember { mutableStateOf("") }
     var cardExpiry by remember { mutableStateOf("") }
     var cardCvv by remember { mutableStateOf("") }
 
+    var selectedDeliveryTiming by remember { mutableStateOf("NOW") }
+    var selectedTipAmount by remember { mutableStateOf(0.0) }
+    var splitPeopleCount by remember { mutableIntStateOf(2) }
+    var showSplitBill by remember { mutableStateOf(false) }
+
     val hasEcommerceItems = cartItems.any { it.product.category == com.example.data.model.StoreCategory.ECOMMERCE }
     val subtotal = cartItems.sumOf { (it.product.price + it.extraOptionsPrice) * it.quantity }
     val deliveryFee = if (cartItems.isEmpty()) 0.0 else if (hasEcommerceItems) 18.0 else 8.0
     val discount = subtotal * discountPercent
-    val total = (subtotal - discount + deliveryFee).coerceAtLeast(0.0)
+    val total = (subtotal - discount + deliveryFee + selectedTipAmount).coerceAtLeast(0.0)
 
     if (cartItems.isEmpty()) {
         Box(
@@ -324,6 +336,130 @@ fun CartCheckoutScreen(
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
                     )
+                }
+            }
+        }
+
+        // Modern Delivery Scheduling Card (Uber Eats & Glovo Style)
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = if (language == AppLanguage.ARABIC) "توقيت استلام الطلب ⏱️" else "Créneau de livraison ⏱️",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            onClick = { selectedDeliveryTiming = "NOW" },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selectedDeliveryTiming == "NOW") AzizOrangePrimary else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "⚡ الآن (فوري)" else "⚡ Immédiat",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedDeliveryTiming == "NOW") Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+
+                        Surface(
+                            onClick = { selectedDeliveryTiming = "SCHEDULED" },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (selectedDeliveryTiming == "SCHEDULED") AzizOrangePrimary else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "⏰ جدولة وقت لاحق" else "⏰ Programmer",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedDeliveryTiming == "SCHEDULED") Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Driver Courier Tip Card (Glovo & Temu Style)
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (language == AppLanguage.ARABIC) "إكرامية كابتن التوصيل 🛵" else "Pourboire du livreur 🛵",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (selectedTipAmount > 0) {
+                            Text(
+                                text = "+$selectedTipAmount د.م",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = AzizMint
+                            )
+                        }
+                    }
+                    Text(
+                        text = if (language == AppLanguage.ARABIC) "100% من الإكرامية تذهب مباشرة إلى كابتن التوصيل" else "100% du pourboire revient au livreur",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(0.0 to "0 د.م", 3.0 to "+3 د.م", 5.0 to "+5 د.م", 10.0 to "+10 د.م").forEach { (amount, label) ->
+                            val isSelected = selectedTipAmount == amount
+                            Surface(
+                                onClick = { selectedTipAmount = amount },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (isSelected) AzizMint else MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = label,
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -578,6 +714,26 @@ fun CartCheckoutScreen(
                         }
                     }
 
+                    if (selectedTipAmount > 0) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "إكرامية كابتن التوصيل 🛵" else "Pourboire livreur",
+                                fontSize = 12.sp,
+                                color = AzizMint
+                            )
+                            Text(
+                                text = "+$selectedTipAmount ${AppStrings.currency(language)}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AzizMint
+                            )
+                        }
+                    }
+
                     HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
 
                     Row(
@@ -596,6 +752,186 @@ fun CartCheckoutScreen(
                             fontSize = 18.sp,
                             color = AzizOrangePrimary
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        onClick = { onOpenPricingModal?.invoke() },
+                        shape = RoundedCornerShape(10.dp),
+                        color = AzizOrangePrimary.copy(alpha = 0.08f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Info, contentDescription = null, tint = AzizOrangePrimary, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "كم الخدمة؟ دليل التسعير والشفافية التامة 🔍" else "Tarifs & Transparence des frais 🔍",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AzizOrangePrimary
+                                )
+                            }
+                            Text(
+                                text = if (language == AppLanguage.ARABIC) "عرض التفاصيل ←" else "Détails →",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Split Bill with Friends (High-Tech Feature)
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showSplitBill = !showSplitBill },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(AzizMint.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Group,
+                                    contentDescription = null,
+                                    tint = AzizMint,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "قسمة الفاتورة مع الأصدقاء (Split Bill) 👥" else "Partager l'addition (Split Bill) 👥",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "احسب نصيب كل شخص وشاركه عبر واتساب" else "Calculez la part de chacun et partagez sur WhatsApp",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Text(
+                            text = if (showSplitBill) "إخفاء ▲" else "احسب الآن ▼",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AzizMint
+                        )
+                    }
+
+                    AnimatedVisibility(visible = showSplitBill) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                        ) {
+                            HorizontalDivider(modifier = Modifier.padding(bottom = 10.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (language == AppLanguage.ARABIC) "عدد الأشخاص المشاركين:" else "Nombre de personnes :",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = { if (splitPeopleCount > 2) splitPeopleCount-- },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text("－", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    Text(
+                                        text = "$splitPeopleCount",
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 16.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                    IconButton(
+                                        onClick = { if (splitPeopleCount < 12) splitPeopleCount++ },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Text("＋", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val perPerson = total / splitPeopleCount
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = AzizMint.copy(alpha = 0.12f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = if (language == AppLanguage.ARABIC) "نصيب كل فرد:" else "Part par personne :",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "${"%.2f".format(perPerson)} ${AppStrings.currency(language)}",
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 18.sp,
+                                            color = AzizMint
+                                        )
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            val itemsSummary = cartItems.joinToString(", ") { "${it.quantity}x ${it.product.nameAr}" }
+                                            com.example.data.system.ExternalShareHelper.shareSplitBill(
+                                                context = context,
+                                                total = total,
+                                                count = splitPeopleCount,
+                                                perPerson = perPerson,
+                                                summary = itemsSummary
+                                            )
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (language == AppLanguage.ARABIC) "مشاركة الحسبة 📲" else "Partager 📲",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

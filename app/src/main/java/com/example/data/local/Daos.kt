@@ -36,6 +36,9 @@ interface UserAccountDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserAccountEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUsers(users: List<UserAccountEntity>)
+
     @Query("UPDATE users SET status = :status WHERE id = :userId")
     suspend fun updateUserStatus(userId: String, status: String)
 
@@ -48,6 +51,9 @@ interface UserAccountDao {
 
 @Dao
 interface StoreDao {
+    @Query("SELECT COUNT(*) FROM stores")
+    suspend fun getStoreCount(): Int
+
     @Query("SELECT * FROM stores ORDER BY isFeatured DESC, rating DESC")
     fun getAllStores(): Flow<List<StoreEntity>>
 
@@ -59,6 +65,9 @@ interface StoreDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStore(store: StoreEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStores(stores: List<StoreEntity>)
 
     @Update
     suspend fun updateStore(store: StoreEntity)
@@ -83,6 +92,9 @@ interface ProductDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProduct(product: ProductEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertProducts(products: List<ProductEntity>)
 
     @Update
     suspend fun updateProduct(product: ProductEntity)

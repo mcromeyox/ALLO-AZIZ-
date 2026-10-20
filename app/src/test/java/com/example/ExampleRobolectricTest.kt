@@ -42,9 +42,9 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun readStringFromContext_matchesAlloAziz() {
+    fun readStringFromContext_matchesAppName() {
         val appName = context.getString(R.string.app_name)
-        assertEquals("ALLO AZIZ", appName)
+        assertEquals("DELIVIO", appName)
     }
 
     @Test

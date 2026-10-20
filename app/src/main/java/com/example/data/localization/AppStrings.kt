@@ -4,12 +4,12 @@ import com.example.data.model.AppLanguage
 
 object AppStrings {
 
-    fun appName(lang: AppLanguage): String = "ALLO AZIZ"
+    fun appName(lang: AppLanguage): String = "DELIVIO"
 
     fun slogan(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "أسرع توصيل في مدينتك.. طلبك واصل مع عزيز!"
-        AppLanguage.FRENCH -> "La livraison la plus rapide de votre ville avec Aziz!"
-        AppLanguage.ENGLISH -> "The fastest delivery in your city with Aziz!"
+        AppLanguage.ARABIC -> "ديليفيو • سرعة فائقة، مطاعم فاخرة وسوق تجارة إلكترونية ذكي!"
+        AppLanguage.FRENCH -> "DELIVIO • Super-App de livraison express & marketplace moderne !"
+        AppLanguage.ENGLISH -> "DELIVIO • Premium express delivery & smart marketplace super-app!"
     }
 
     // Tabs
@@ -93,9 +93,9 @@ object AppStrings {
     }
 
     fun expressBannerTitle(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "خدمة ألو عزيز إكسبريس ⚡"
-        AppLanguage.FRENCH -> "Service ALLO AZIZ Express ⚡"
-        AppLanguage.ENGLISH -> "ALLO AZIZ Express ⚡"
+        AppLanguage.ARABIC -> "خدمة ديليفيو إكسبريس ⚡"
+        AppLanguage.FRENCH -> "Service DELIVIO Express ⚡"
+        AppLanguage.ENGLISH -> "DELIVIO Express ⚡"
     }
 
     fun expressBannerDesc(lang: AppLanguage): String = when (lang) {
@@ -467,9 +467,9 @@ object AppStrings {
     }
 
     fun aboutApp(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "حول تطبيق ألو عزيز"
-        AppLanguage.FRENCH -> "À propos de ALLO AZIZ"
-        AppLanguage.ENGLISH -> "About ALLO AZIZ"
+        AppLanguage.ARABIC -> "حول تطبيق ديليفيو DELIVIO"
+        AppLanguage.FRENCH -> "À propos de DELIVIO"
+        AppLanguage.ENGLISH -> "About DELIVIO"
     }
 
     fun appVersion(lang: AppLanguage): String = when (lang) {
