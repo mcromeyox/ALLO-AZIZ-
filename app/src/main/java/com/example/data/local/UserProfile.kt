@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.Flow
  */
 @Entity(tableName = "user_profiles")
 data class UserProfile(
-    @PrimaryKey val userId: String = "default_user",
+    @PrimaryKey val userId: String = "",
     val fullName: String = "",
     val email: String = "",
     val phoneNumber: String = "",
