@@ -228,6 +228,6 @@ interface AddressDao {
     @Query("UPDATE addresses SET isDefault = 1 WHERE id = :addressId AND userId = :userId")
     suspend fun setDefaultAddress(userId: String, addressId: String)
 
-    @Query("DELETE FROM addresses WHERE id = :addressId")
-    suspend fun deleteAddress(addressId: String)
+    @Query("DELETE FROM addresses WHERE id = :addressId AND userId = :userId")
+    suspend fun deleteAddress(addressId: String, userId: String)
 }
