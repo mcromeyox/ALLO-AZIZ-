@@ -174,55 +174,55 @@ fun LiveSupportScreen(
         AppLanguage.FRENCH -> listOf(
             Pair(
                 "Combien de temps prend la livraison avec DELIVIO ?",
-                "La livraison prend entre 15 et 25 minutes grâce à notre réseau de coursiers déployés partout à Mohammedia et ses environs."
+                "Le délai dépend de la disponibilité des commerces et des coursiers. Vérifiez l'estimation affichée avant de confirmer la commande."
             ),
             Pair(
                 "Le paiement via l'application est-il sécurisé ?",
-                "Oui, tous les paiements par carte bancaire sont 100% sécurisés (cryptage bancaire 256-bit SSL). Nous proposons aussi le paiement en espèces à la livraison et le portefeuille DELIVIO Pay."
+                "Les moyens de paiement disponibles sont ceux affichés à l'écran de paiement. N'envoyez jamais les données de votre carte dans le chat."
             ),
             Pair(
                 "Comment contacter le coursier directement ?",
-                "Dès l'acceptation de la commande, le numéro de téléphone et les boutons d'appel et chat directs avec le coursier DELIVIO apparaissent dans l'écran de suivi en direct."
+                "Les options de contact, si elles sont disponibles pour votre commande, apparaissent dans son écran de suivi."
             ),
             Pair(
                 "Que faire si un article manque à ma commande ?",
-                "L'équipe support 24/7 vous indemnise immédiatement : soit par réexpédition gratuite et immédiate, soit par recrédit direct sur votre portefeuille DELIVIO Pay en 1 minute."
+                "Veuillez contacter le support pour faire vérifier la commande. Aucun remboursement ou remplacement n'est confirmé avant examen."
             )
         )
         AppLanguage.ENGLISH -> listOf(
             Pair(
                 "How long does delivery usually take?",
-                "Delivery takes between 15 and 25 minutes thanks to our dedicated courier fleet across Mohammedia."
+                "Delivery estimates depend on store and courier availability. Check the estimate shown before confirming your order."
             ),
             Pair(
                 "Is payment through the app secure?",
-                "Yes, 100% encrypted with 256-bit SSL banking security. We also accept Cash on Delivery and DELIVIO Pay wallet."
+                "Available payment methods are the ones shown at checkout. Never send card details in chat."
             ),
             Pair(
                 "How can I contact the courier directly?",
-                "As soon as an order is accepted, you can call or message the DELIVIO courier directly from the live tracking screen."
+                "Contact options, if available for your order, will appear on the order tracking screen."
             ),
             Pair(
                 "What if an item is missing from my order?",
-                "Our 24/7 team covers you: we immediately re-dispatch the missing item for free, or refund your wallet in 1 minute."
+                "Please contact support so the order can be reviewed. A refund or replacement cannot be confirmed before review."
             )
         )
         AppLanguage.ARABIC -> listOf(
             Pair(
                 "كم يستغرق التوصيل مع ديليفيو DELIVIO عادةً؟",
-                "يستغرق التوصيل ما بين 15 إلى 25 دقيقة كحد أقصى بفضل شبكة مناديبنا المتواجدين في كافة أرجاء المدينة."
+                "تختلف مدة التوصيل حسب توفر المتجر والمندوب. تحقق من المدة المعروضة قبل تأكيد الطلب."
             ),
             Pair(
                 "هل الدفع عبر التطبيق آمن ومضمون؟",
-                "نعم، جميع المعاملات مشفرة بأعلى بروتوكول بنكي ومعتمدة رسمياً، كما نوفر الدفع نقداً ومحفظة DELIVIO Pay."
+                "وسائل الدفع المتاحة هي التي تظهر لك عند إتمام الطلب. لا ترسل بيانات بطاقتك البنكية داخل المحادثة."
             ),
             Pair(
                 "كيف أتواصل مع المندوب مباشرة؟",
-                "فور قبول الطلب، يظهر رقم هاتف المندوب وزر الاتصال والمحادثة المباشرة داخل شاشة التتبع الفوري."
+                "ستظهر خيارات التواصل، إن كانت متاحة، داخل شاشة تتبع الطلب."
             ),
             Pair(
                 "ماذا أفعل إذا وصل الطلب غير مكتمل؟",
-                "فريق الدعم 24/7 يعوضك فوراً إما بإرسال المندوب مجاناً أو بإرجاع المبلغ لمحفظتك خلال دقيقة."
+                "تواصل مع الدعم لمراجعة الطلب. لا يمكن تأكيد التعويض أو الاسترجاع قبل التحقق من الحالة."
             )
         )
     }
@@ -232,7 +232,7 @@ fun LiveSupportScreen(
             .fillMaxSize()
             .testTag("live_support_screen")
     ) {
-        // Support Header with 24/7 Status
+        // Support Header
         Card(
             shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -316,13 +316,10 @@ fun LiveSupportScreen(
                             Text("💬", fontSize = 16.sp)
                         }
 
-                        // Direct call button
+                        // Do not dial a fabricated support number.
                         IconButton(
                             onClick = {
-                                val intent = Intent(Intent.ACTION_DIAL).apply {
-                                    data = Uri.parse("tel:0800255629")
-                                }
-                                context.startActivity(intent)
+                                Toast.makeText(context, "بيانات الاتصال بالدعم غير مهيأة بعد", Toast.LENGTH_LONG).show()
                             },
                             modifier = Modifier
                                 .clip(CircleShape)
@@ -354,9 +351,9 @@ fun LiveSupportScreen(
                     ) {
                         Text(
                             text = when (language) {
-                                AppLanguage.FRENCH -> "Hotline Gratuite : 0800-DELIVIO (24h/24)"
-                                AppLanguage.ENGLISH -> "Toll-Free Hotline: 0800-DELIVIO (24/7)"
-                                AppLanguage.ARABIC -> "خط المساعدة المجاني: 0800-DELIVIO (24h/24)"
+                                AppLanguage.FRENCH -> "Contact support : coordonnées à configurer"
+                                AppLanguage.ENGLISH -> "Support contact: not configured yet"
+                                AppLanguage.ARABIC -> "بيانات الاتصال بالدعم غير مهيأة بعد"
                             },
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -862,7 +859,7 @@ fun ChatBubble(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "• IA 24/7",
+                        text = "• IA" ,
                         fontSize = 9.sp,
                         color = AzizMint,
                         fontWeight = FontWeight.Bold
