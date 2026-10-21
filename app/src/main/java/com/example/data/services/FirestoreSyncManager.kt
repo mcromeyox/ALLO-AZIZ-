@@ -40,6 +40,7 @@ object FirestoreSyncManager {
         return try {
             val orderMap = hashMapOf(
                 "id" to order.id,
+                "customerId" to order.customerId,
                 "storeId" to order.storeId,
                 "storeName" to order.storeName,
                 "itemsSummary" to order.itemsSummary,
