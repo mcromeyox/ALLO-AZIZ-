@@ -108,7 +108,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     val currentUserId: StateFlow<String> = _currentUserId.asStateFlow()
 
     // Driver Status
-    private val _driverIsOnline = MutableStateFlow(true)
+    private val _driverIsOnline = MutableStateFlow(false)
     val driverIsOnline: StateFlow<Boolean> = _driverIsOnline.asStateFlow()
 
     // Language (Default: French 🇫🇷 as primary language, customer can switch to English or Arabic)
@@ -147,33 +147,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     val selectedStore: StateFlow<Store?> = _selectedStore.asStateFlow()
 
     // Merchant KYC & Documents (Glovo & Temu Standard)
-    private val _merchantApplications = MutableStateFlow<List<com.example.data.model.MerchantApplication>>(
-        listOf(
-            com.example.data.model.MerchantApplication(
-                id = "app_init_1",
-                storeName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)",
-                merchantType = "ECOMMERCE",
-                ownerName = "أمين السعدي",
-                iceNumber = "002847193000045",
-                phone = "+212 661-884920",
-                address = "شارع الحسن الثاني، المحمدية",
-                status = "APPROVED",
-                notes = "تم التحقق من السجل التجاري والبطاقة الوطنية (معيار Glovo & Temu)"
-            ),
-            com.example.data.model.MerchantApplication(
-                id = "app_init_2",
-                storeName = "تيك زون إلكترونيات المحمدية (TechZone)",
-                merchantType = "ECOMMERCE",
-                ownerName = "ياسين التازي",
-                iceNumber = "001928475000088",
-                phone = "+212 662-773344",
-                address = "قرب محطة القطار، المحمدية",
-                status = "APPROVED",
-                notes = "وثائق الوكالة والضمان معتمدة ومطابقة للمواصفات"
-            )
-        )
-    )
-    val merchantApplications: StateFlow<List<com.example.data.model.MerchantApplication>> = _merchantApplications.asStateFlow()
+    private val _merchantApplications = MutableStateFlow<List<com.example.data.model.MerchantApplication>>(emptyList())
 
     private val _showMerchantRegistration = MutableStateFlow(false)
     val showMerchantRegistration: StateFlow<Boolean> = _showMerchantRegistration.asStateFlow()
@@ -645,9 +619,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     private fun initSupportChat() {
         val greeting = when (_selectedLanguage.value) {
-            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء ديليفيو DELIVIO 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
-            AppLanguage.FRENCH -> "Bienvenue au support DELIVIO 24/7 ! Je suis Sara, comment puis-je vous aider ?"
-            AppLanguage.ENGLISH -> "Welcome to DELIVIO 24/7 Support! I'm Sara, how can I assist you today?"
+            AppLanguage.ARABIC -> "أهلاً بك في مساعد ديليفيو DELIVIO. كيف يمكنني مساعدتك اليوم؟"
+            AppLanguage.FRENCH -> "Bienvenue dans l’assistance DELIVIO. Je suis Sara, comment puis-je vous aider ?"
+            AppLanguage.ENGLISH -> "Welcome to DELIVIO assistance. I'm Sara, how can I help you today?"
         }
         _supportMessages.value = listOf(
             SupportChatMessage(
@@ -1885,8 +1859,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 text = responseText,
                 isUser = false,
                 agentName = when (lang) {
-                    AppLanguage.FRENCH -> "Sara (IA Support DELIVIO 24/7)"
-                    AppLanguage.ENGLISH -> "Sara (DELIVIO 24/7 AI Support)"
+                    AppLanguage.FRENCH -> "Sara (IA Support DELIVIO)"
+                    AppLanguage.ENGLISH -> "Sara (DELIVIO AI Support)"
                     AppLanguage.ARABIC -> "سارة - دعم ديليفيو DELIVIO"
                 }
             )
