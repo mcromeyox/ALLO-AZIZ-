@@ -1028,9 +1028,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun addNewAddress(title: String, type: String, city: String, neighborhood: String, street: String, notes: String) {
         viewModelScope.launch {
+            val userId = _currentUserId.value
+            if (userId.isBlank()) {
+                _userAlertMessage.value = "يرجى تسجيل الدخول قبل حفظ عنوان التوصيل."
+                return@launch
+            }
             val newAddr = AddressEntity(
                 id = "addr_${System.currentTimeMillis()}",
-                userId = _currentUserId.value,
+                userId = userId,
                 title = title,
                 type = type,
                 city = city,
@@ -1047,7 +1052,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun deleteAddress(addressId: String) {
         viewModelScope.launch {
-            repository.deleteAddress(addressId)
+            val userId = _currentUserId.value
+            if (userId.isBlank()) {
+                _userAlertMessage.value = "يرجى تسجيل الدخول قبل حذف عنوان التوصيل."
+                return@launch
+            }
+            repository.deleteAddress(addressId, userId)
             _userAlertMessage.value = "تم حذف العنوان"
         }
     }
