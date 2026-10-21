@@ -106,8 +106,10 @@ object AiShoppingService {
             $catalogSummary
             
             Analyze the user's intent with 100% precision:
-            - If the user asks for a product from the catalog, match it accurately.
-            - If the user asks for products from ANY global or local platform (e.g. Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple, Jumia), DELIVIO Concierge fulfills it seamlessly! Assign storeName to "DELIVIO Concierge Global Marketplace (Zara, Shein, Amazon & Partenaires)", set a realistic price in Moroccan Dirhams (DH), and provide an item object.
+            - Only recommend products whose exact IDs exist in the provided catalog.
+            - Never invent products, stores, availability, stock, delivery promises, or prices.
+            - If the requested product is not present in the catalog, return an empty "items" array and explain that it is currently unavailable; do not create a substitute unless it is an explicitly matched catalog product.
+            - The app will calculate prices from the catalog; treat any model-generated price as untrusted.
             - Extract quantities (e.g., 2, 3, joj, tleta).
             - Extract culinary or product preferences (size, color, sauce, warranty).
             - Create warm, natural, human-like voice sentences in French and Arabic (speechAudioFr and speechAudioAr) welcoming the user with Moroccan hospitality.
@@ -187,11 +189,8 @@ object AiShoppingService {
                     val qty = itemObj.optInt("quantity", 1).coerceAtLeast(1)
                     val note = itemObj.optString("note", "")
 
-                    // Flexible product lookup (ID, name, or sub-token match)
+                    // Trust only exact catalog IDs. Names and partial-token matches can select the wrong product.
                     val product = products.find { it.id == pid }
-                        ?: products.find { it.nameFr.contains(pName, ignoreCase = true) || it.nameAr.contains(pName, ignoreCase = true) }
-                        ?: products.find { it.nameFr.contains(pid, ignoreCase = true) || it.nameAr.contains(pid, ignoreCase = true) }
-                        ?: products.find { it.id.contains(pid, ignoreCase = true) || pid.contains(it.id, ignoreCase = true) }
 
                     if (product != null) {
                         recommendedItems.add(
@@ -583,47 +582,21 @@ object AiShoppingService {
             explanationFr = "Produits de pharmacie et soins d'urgence prêts pour livraison rapide."
             explanationAr = "مستلزمات صيدلية المركز الطارئة مع توصيل فوري!"
         }
-        // L. DEFAULT & UNIVERSAL CONCIERGE (Finds any product from any platform)
+        // L. Unknown or unavailable request: never fabricate a purchasable product.
         else {
-            if (q.length > 2 && !q.contains("tacos") && !q.contains("burger")) {
-                isEcommerceOrder = true
-                mainStoreName = "DELIVIO Concierge • خدمة الطلب المباشر من أي مكان"
-                storeEmoji = "🛍️"
-                val dynamicProduct = Product(
-                    id = "p_concierge_${System.currentTimeMillis()}",
-                    storeId = "store_concierge_global",
-                    storeName = mainStoreName,
-                    nameEn = "Special Order: \"${query.take(45)}\"",
-                    nameAr = "طلبك الخاص: \"${query.take(45)}\"",
-                    nameFr = "Commande spéciale : \"${query.take(45)}\"",
-                    descriptionEn = "Universal concierge order sourced from trusted merchants",
-                    descriptionAr = "تم التعرف على طلبك وتوفيره لك فوراً من أي متجر أو منصة عبر خدمة ديليفيو كونسيرج الذكية مع فحص الجودة",
-                    descriptionFr = "Produit identifié et commandé via le service Concierge DELIVIO multi-plateformes",
-                    price = 120.0,
-                    category = StoreCategory.ECOMMERCE,
-                    emoji = "✨",
-                    rating = 4.9,
-                    imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
-                )
-                matchedItems.add(AiRecommendedItem(dynamicProduct, defaultQty, "طلب خاص موثق ومعتمد", dynamicProduct.price * defaultQty))
-                explanationFr = "J'ai identifié votre demande (\"$query\") et préparé votre commande personnalisée via le Concierge DELIVIO !"
-                explanationAr = "تم التعرف على طلبك بالكامل (\"$query\") وتجهيزه لك فوراً عبر كونسيرج ديليفيو الذكي من أي منصة!"
-            } else {
-                mainStoreName = "أو تاكوس (O'Tacos)"
-                storeEmoji = "🌮"
-                products.find { it.id == "p_otacos_l" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-                } ?: products.find { it.id == "p_mcdo_bigmac" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-                }
-                explanationFr = "Sélection gourmande préparée avec soin avec vos sauces favorites !"
-                explanationAr = "تم تجهيز طلبك الشهي مع الصلصات اللذيذة والبطاطس المقرمشة!"
-            }
+            mainStoreName = "DELIVIO"
+            storeEmoji = "🛍️"
+            explanationFr = "Je n'ai pas trouvé ce produit dans le catalogue disponible. Aucun article n'a été ajouté."
+            explanationAr = "لم أجد هذا المنتج في الكتالوج المتاح. لم تتم إضافة أي منتج إلى السلة."
         }
 
         val total = matchedItems.sumOf { it.subtotal }
         // E-Commerce parcel delivery fee is 18.0 DH (insured parcel), while food is 8.0 DH
-        val deliveryFee = if (isEcommerceOrder) 18.0 else 8.0
+        val deliveryFee = when {
+            matchedItems.isEmpty() -> 0.0
+            isEcommerceOrder -> 18.0
+            else -> 8.0
+        }
         val grandTotal = total + deliveryFee
 
         val itemsDescriptionFr = matchedItems.joinToString(" et ") { "${it.quantity} ${it.product.nameFr}" }
