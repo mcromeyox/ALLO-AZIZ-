@@ -1,7 +1,6 @@
 package com.example.data.services
 
 import android.content.Context
-import android.util.Log
 import com.example.BuildConfig
 import com.google.firebase.FirebaseApp
 
@@ -17,7 +16,8 @@ object ServiceManager {
 
     fun isFirebaseConfigured(context: Context): Boolean {
         return try {
-            FirebaseApp.getApps(context).isNotEmpty() && BuildConfig.FIREBASE_PROJECT_ID.isNotBlank()
+            val app = FirebaseApp.getApps(context).firstOrNull() ?: return false
+            !app.options.projectId.isNullOrBlank() && !app.options.applicationId.isNullOrBlank()
         } catch (e: Exception) {
             false
         }
@@ -28,10 +28,8 @@ object ServiceManager {
         return key.isNotBlank() && !key.contains("YourReal") && !key.contains("PLACEHOLDER")
     }
 
-    fun isPaymentGatewayConfigured(): Boolean {
-        val key = try { BuildConfig.PAYMENT_PROVIDER_KEY } catch (e: Exception) { "" }
-        return key.isNotBlank() && !key.contains("merchant_key")
-    }
+    // A client-side API key is not proof of a secure payment integration.
+    fun isPaymentGatewayConfigured(): Boolean = false
 
     fun isSmsProviderConfigured(): Boolean = false
     fun isEmailProviderConfigured(): Boolean = false
@@ -41,16 +39,12 @@ object ServiceManager {
      * OTP Verification Code Generator
      * Generates a 6-digit verification code for phone or email activation.
      */
-    fun generateDevOtp(recipient: String): String {
-        val otp = ((Math.random() * 900000).toInt() + 100000).toString()
-        Log.i("DELIVIO_DEV", "[DELIVIO OTP] Code for $recipient: $otp")
-        return otp
-    }
+    @Deprecated("Use a trusted server-issued OTP; development OTPs are disabled.")
+    fun generateDevOtp(recipient: String): String = ""
 
     /**
      * Development Email & SMS Logger
      */
-    fun recordDevEmail(to: String, subject: String, body: String) {
-        Log.i("DELIVIO_DEV", "[DELIVIO EMAIL/SMS] To: $to | Subject: $subject | Content: $body")
-    }
+    @Deprecated("Use a trusted email/SMS provider; development logging is disabled.")
+    fun recordDevEmail(to: String, subject: String, body: String) = Unit
 }
