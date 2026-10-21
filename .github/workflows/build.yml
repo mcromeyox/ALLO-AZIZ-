@@ -76,7 +76,7 @@ jobs:
 
       - name: Check for embedded provider keys and development auth bypasses
         run: |
-          if grep -R -nE 'BuildConfig\\.(GEMINI_API_KEY|ELEVENLABS_API_KEY|PAYMENT_PROVIDER_KEY|FIREBASE_PROJECT_ID)|generativelanguage\\.googleapis\\.com' app/src/main; then
+          if grep -R -nE 'BuildConfig\.(GEMINI_API_KEY|ELEVENLABS_API_KEY|PAYMENT_PROVIDER_KEY|FIREBASE_PROJECT_ID)|generativelanguage\.googleapis\.com' app/src/main; then
             echo "Client-side provider credentials or direct Gemini endpoints must not be shipped."
             exit 1
           fi
