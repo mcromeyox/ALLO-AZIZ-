@@ -174,47 +174,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         ribUri: String?,
         storefrontUri: String?
     ) {
-        val newApp = com.example.data.model.MerchantApplication(
-            id = "app_${System.currentTimeMillis()}",
-            storeName = storeName,
-            merchantType = merchantType,
-            ownerName = userProfile.value?.fullName?.ifBlank { "شريك تجاري" } ?: "شريك تجاري",
-            iceNumber = iceNumber,
-            phone = phone,
-            address = address,
-            cinUri = cinUri,
-            licenseUri = licenseUri,
-            hygieneUri = hygieneUri,
-            ribUri = ribUri,
-            storefrontUri = storefrontUri,
-            status = "PENDING_VERIFICATION",
-            notes = "تم إيداع الوثائق الرسمية بنجاح وهي قيد المراجعة الإدارية"
-        )
-        _merchantApplications.value = listOf(newApp) + _merchantApplications.value
-
-        viewModelScope.launch {
-            val isEcom = merchantType.equals("ECOMMERCE", ignoreCase = true)
-            val store = StoreEntity(
-                id = "store_custom_${System.currentTimeMillis()}",
-                name = storeName,
-                nameAr = storeName,
-                nameFr = storeName,
-                category = if (isEcom) StoreCategory.ECOMMERCE.id else StoreCategory.FAST_FOOD.id,
-                rating = 5.0,
-                reviewCount = 0,
-                deliveryTimeMins = if (isEcom) 35 else 25,
-                deliveryFee = if (isEcom) 18.0 else 8.0,
-                minOrder = if (isEcom) 50.0 else 25.0,
-                address = address.ifBlank { "المحمدية" },
-                emoji = if (isEcom) "🛍️" else "🍔",
-                isFeatured = false,
-                badge = "بانتظار مصادقة الوثائق (Glovo & Temu Standard)",
-                isOpen = false,
-                ownerId = _currentUser.value?.id ?: "merchant_user"
-            )
-            repository.insertStore(store)
-            _userAlertMessage.value = "تم إيداع وثائق المتجر بنجاح! سيتم التحقق والمصادقة خلال 24 ساعة 🛡️"
-        }
+        // KYC files and business documents must not be stored or approved only in local UI state.
+        _userAlertMessage.value = "تسجيل المتاجر متوقف مؤقتاً حتى ربط خادم آمن لحفظ الوثائق والتحقق منها. لم يتم إرسال أي طلب."
     }
 
     fun approveMerchantApplication(appId: String) {
@@ -774,6 +735,11 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
+            if (role != UserRole.CUSTOMER) {
+                _authError.value = "تسجيل الشركاء والسائقين متوقف حتى تجهيز خادم آمن لحفظ الوثائق ومراجعة الطلبات."
+                return@launch
+            }
+
             if (trimmedName.isBlank() || (trimmedEmail.isBlank() && trimmedPhone.isBlank())) {
                 _authError.value = "يرجى ملء الاسم ورقم الهاتف أو البريد الإلكتروني."
                 return@launch
@@ -919,6 +885,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun approvePartnerApplication(userId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             repository.updateUserStatus(userId, "ACTIVE")
             repository.addNotification(
                 NotificationEntity(
@@ -939,6 +906,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun rejectPartnerApplication(userId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             repository.updateUserStatus(userId, "REJECTED")
             repository.addNotification(
                 NotificationEntity(
