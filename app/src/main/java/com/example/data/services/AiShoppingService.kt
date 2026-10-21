@@ -410,11 +410,17 @@ object AiShoppingService {
             explanationFr = "Les articles sélectionnés proviennent de plusieurs commerces. Aucun article n'a été ajouté."
             explanationAr = "المنتجات المطلوبة من متاجر مختلفة. لم تتم إضافة أي منتجات إلى السلة."
         }
-        val selectedProduct = matchedItems.firstOrNull()?.product
-        val selectedStore = selectedProduct?.let { product ->
+        var selectedProduct = matchedItems.firstOrNull()?.product
+        var selectedStore = selectedProduct?.let { product ->
             CatalogData.stores.firstOrNull { it.id == product.storeId }
         }
-        if (selectedProduct != null) mainStoreName = selectedProduct.storeName
+        if (selectedProduct != null && selectedStore == null) {
+            matchedItems.clear()
+            selectedProduct = null
+            explanationFr = "Les informations de livraison de ce commerce ne sont pas configurées. Aucun article n'a été ajouté."
+            explanationAr = "بيانات توصيل هذا المتجر غير مهيأة. لم تتم إضافة أي منتج."
+        }
+        if (selectedProduct != null) mainStoreName = selectedProduct.storeName else mainStoreName = "DELIVIO"
         val total = matchedItems.sumOf { it.product.price * it.quantity }
         val deliveryFee = if (matchedItems.isEmpty()) 0.0 else selectedStore?.deliveryFee ?: 0.0
         val grandTotal = total + deliveryFee
