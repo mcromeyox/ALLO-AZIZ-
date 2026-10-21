@@ -133,7 +133,8 @@ data class NotificationEntity(
     val timestamp: Long,
     val isRead: Boolean = false,
     val type: String = "ORDER",
-    val orderId: String? = null
+    val orderId: String? = null,
+    @ColumnInfo(defaultValue = "''") val userId: String = ""
 )
 
 @Entity(tableName = "wallet_profile")
