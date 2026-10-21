@@ -341,7 +341,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val currentRec = _aiRecommendation.value ?: return
         val updatedItems = currentRec.items.mapNotNull { item ->
             if (item.product.id == productId) {
-                val newQty = item.quantity + delta
+                val newQty = (item.quantity + delta).coerceIn(0, item.product.stockCount)
                 if (newQty <= 0) null else item.copy(quantity = newQty, subtotal = item.product.price * newQty)
             } else {
                 item
