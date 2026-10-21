@@ -622,11 +622,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-        userProfile = repository.userProfile.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            null
-        )
+        userProfile = _currentUserId
+            .flatMapLatest { userId ->
+                if (userId.isBlank()) kotlinx.coroutines.flow.flowOf(null)
+                else repository.getUserProfile(userId)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
         // Seed initial room data asynchronously off main thread for zero-lag launch
         viewModelScope.launch(Dispatchers.IO) {
@@ -2026,8 +2027,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     // Local UserProfile & Preferences Management
     fun saveUserProfile(profile: UserProfile) {
         viewModelScope.launch {
-            repository.saveUserProfile(profile)
-            _userAlertMessage.value = "تم حفظ الملف الشخصي وتفضيلات التوصيل محلياً بنجاح! 💾"
+            val userId = _currentUserId.value
+            if (userId.isBlank()) {
+                _userAlertMessage.value = "يرجى تسجيل الدخول قبل حفظ الملف الشخصي."
+                return@launch
+            }
+            repository.saveUserProfile(profile.copy(userId = userId))
+            _userAlertMessage.value = "تم حفظ الملف الشخصي على هذا الجهاز."
         }
     }
 
@@ -2042,8 +2048,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         paymentMethod: String = "CASH_ON_DELIVERY"
     ) {
         viewModelScope.launch {
-            val current = userProfile.value ?: UserProfile()
-            val updated = current.copy(
+            val userId = _currentUserId.value
+            if (userId.isBlank()) {
+                _userAlertMessage.value = "يرجى تسجيل الدخول قبل حفظ تفضيلات التوصيل."
+                return@launch
+            }
+            val current = userProfile.value ?: UserProfile(userId = userId)
+            val updated = current.copy(userId = userId,
                 streetAddress = deliveryAddress,
                 city = city,
                 neighborhood = neighborhood,
