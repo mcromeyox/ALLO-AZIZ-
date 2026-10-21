@@ -13,7 +13,6 @@ class AlloAzizRepository(private val database: AppDatabase) {
     val allStores: Flow<List<StoreEntity>> = database.storeDao().getAllStores()
     val allProducts: Flow<List<ProductEntity>> = database.productDao().getAllProducts()
     val allOrders: Flow<List<OrderEntity>> = database.orderDao().getAllOrders()
-    val activeOrder: Flow<OrderEntity?> = database.orderDao().getActiveOrder()
     val allNotifications: Flow<List<NotificationEntity>> = database.notificationDao().getAllNotifications()
     val unreadCount: Flow<Int> = database.notificationDao().getUnreadCount()
     val allReviews: Flow<List<ReviewEntity>> = database.reviewDao().getAllReviews()
