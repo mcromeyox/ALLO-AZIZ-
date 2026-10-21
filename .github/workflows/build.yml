@@ -74,6 +74,17 @@ jobs:
             yes | "$SDK_MGR" --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
           fi
 
+      - name: Check for embedded provider keys and development auth bypasses
+        run: |
+          if grep -R -nE 'BuildConfig\\.(GEMINI_API_KEY|ELEVENLABS_API_KEY|PAYMENT_PROVIDER_KEY|FIREBASE_PROJECT_ID)|generativelanguage\\.googleapis\\.com' app/src/main; then
+            echo "Client-side provider credentials or direct Gemini endpoints must not be shipped."
+            exit 1
+          fi
+          if grep -R -nE 'enteredOtpCode == "(123456|1234)"|phone_verified|admin1234|abdomery' app/src/main; then
+            echo "Development authentication bypass detected."
+            exit 1
+          fi
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
