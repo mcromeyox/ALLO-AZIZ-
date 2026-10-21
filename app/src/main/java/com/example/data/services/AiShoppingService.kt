@@ -1,20 +1,11 @@
 package com.example.data.services
 
-import android.util.Log
-import com.example.BuildConfig
 import com.example.data.model.CatalogData
 import com.example.data.model.Product
 import com.example.data.model.StoreCategory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONArray
-import org.json.JSONObject
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 data class AiShoppingRecommendation(
     val userPrompt: String,
@@ -48,194 +39,16 @@ data class AiRecommendedItem(
  */
 object AiShoppingService {
 
-    private const val TAG = "AiShoppingService"
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(18, TimeUnit.SECONDS)
-        .build()
-
     suspend fun analyzeShoppingIntent(
         query: String,
         availableProducts: List<Product> = CatalogData.products
-    ): AiShoppingRecommendation = withContext(Dispatchers.IO) {
+    ): AiShoppingRecommendation = withContext(Dispatchers.Default) {
         val cleanQuery = query.trim()
-        if (cleanQuery.isBlank()) {
-            return@withContext matchLocalCatalogWithNlp("Menu Big Mac", availableProducts)
-        }
-
-        // 1. Try Gemini API if key is present
-        val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (_: Throwable) { "" }
-        if (apiKey.isNotBlank() && !apiKey.contains("PLACEHOLDER") && !apiKey.contains("YourKey") && !apiKey.contains("DEFAULT_GEMINI")) {
-            try {
-                val geminiResult = callGeminiApi(cleanQuery, apiKey, availableProducts)
-                if (geminiResult != null && geminiResult.items.isNotEmpty()) {
-                    return@withContext geminiResult
-                }
-            } catch (t: Throwable) {
-                Log.w(TAG, "Gemini API failed, falling back to local NLP engine: ${t.message}")
-            }
-        }
-
-        // 2. High-precision offline Moroccan & French NLP parsing engine
-        return@withContext matchLocalCatalogWithNlp(cleanQuery, availableProducts)
+        // Keep product matching local until a trusted backend proxy is configured.
+        // Never embed a Gemini API key in the APK or send it in a URL query string.
+        matchLocalCatalogWithNlp(cleanQuery, availableProducts)
     }
 
-    private fun callGeminiApi(
-        userVoiceText: String,
-        apiKey: String,
-        products: List<Product>
-    ): AiShoppingRecommendation? {
-        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
-
-        val catalogSummary = products.map { p ->
-            JSONObject().apply {
-                put("id", p.id)
-                put("store", p.storeName)
-                put("nameFr", p.nameFr)
-                put("nameAr", p.nameAr)
-                put("price", p.price)
-                put("category", p.category.name)
-            }
-        }
-
-        val systemPrompt = """
-            You are 'Sara' or 'Karim', the ultra-realistic voice shopping AI concierge for DELIVIO Super-App in Mohammedia, Morocco.
-            The user spoke or typed naturally in Moroccan Darija, French, Arabic, or English: "$userVoiceText".
-            
-            Catalog available:
-            $catalogSummary
-            
-            Analyze the user's intent with 100% precision:
-            - Only recommend products whose exact IDs exist in the provided catalog.
-            - Never invent products, stores, availability, stock, delivery promises, or prices.
-            - If the requested product is not present in the catalog, return an empty "items" array and explain that it is currently unavailable; do not create a substitute unless it is an explicitly matched catalog product.
-            - The app will calculate prices from the catalog; treat any model-generated price as untrusted.
-            - Extract quantities (e.g., 2, 3, joj, tleta).
-            - Extract culinary or product preferences (size, color, sauce, warranty).
-            - Create warm, natural, human-like voice sentences in French and Arabic (speechAudioFr and speechAudioAr) welcoming the user with Moroccan hospitality.
-            
-            Return ONLY raw valid JSON:
-            {
-               "confidence": 99,
-               "explanationFr": "French summary of what was chosen",
-               "explanationAr": "Arabic summary of what was chosen",
-               "speechAudioFr": "Parfait ! J'ai bien préparé votre commande chez [Store] avec [Items]. Le total est de [Price] dirhams avec la livraison express. Vous pouvez confirmer en un clic !",
-               "speechAudioAr": "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من [Store]، بمجموع [Price] درهم مع التوصيل السريع. يمكنك التأكيد الآن!",
-               "storeName": "Store name",
-               "notes": ["Sauce piquante", "Sans oignon"],
-               "items": [
-                  {"productId": "p_mcdo_bigmac", "quantity": 1, "note": "Sauce spéciale"}
-               ]
-            }
-        """.trimIndent()
-
-        val jsonBody = JSONObject().apply {
-            put("contents", JSONArray().apply {
-                put(JSONObject().apply {
-                    put("role", "user")
-                    put("parts", JSONArray().apply {
-                        put(JSONObject().put("text", systemPrompt))
-                    })
-                })
-            })
-            put("generationConfig", JSONObject().apply {
-                put("temperature", 0.1)
-                put("responseMimeType", "application/json")
-                put("maxOutputTokens", 2048)
-            })
-        }
-
-        try {
-            val request = Request.Builder()
-                .url(endpoint)
-                .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                .build()
-
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return null
-                val responseString = response.body?.string() ?: return null
-                val rootJson = JSONObject(responseString)
-                val candidates = rootJson.optJSONArray("candidates") ?: return null
-                if (candidates.length() == 0) return null
-                val rawText = candidates.getJSONObject(0)
-                    .optJSONObject("content")
-                    ?.optJSONArray("parts")
-                    ?.getJSONObject(0)
-                    ?.optString("text", "") ?: return null
-                if (rawText.isBlank()) return null
-
-                val parsedJson = JSONObject(rawText)
-                val explFr = parsedJson.optString("explanationFr", "Articles sélectionnés selon votre demande vocale.")
-                val explAr = parsedJson.optString("explanationAr", "تم اختيار المنتجات المطابقة لطلبك الصوتي بدقة.")
-                val speechFr = parsedJson.optString("speechAudioFr", explFr)
-                val speechAr = parsedJson.optString("speechAudioAr", explAr)
-                val targetStore = parsedJson.optString("storeName", "DELIVIO Express")
-                val confidence = parsedJson.optInt("confidence", 99)
-
-                val notesArray = parsedJson.optJSONArray("notes")
-                val detectedNotes = mutableListOf<String>()
-                if (notesArray != null) {
-                    for (i in 0 until notesArray.length()) {
-                        detectedNotes.add(notesArray.optString(i))
-                    }
-                }
-
-                val itemsArray = parsedJson.optJSONArray("items") ?: JSONArray()
-                val recommendedItems = mutableListOf<AiRecommendedItem>()
-                for (i in 0 until itemsArray.length()) {
-                    val itemObj = itemsArray.getJSONObject(i)
-                    val pid = itemObj.optString("productId")
-                    val pName = itemObj.optString("name", pid)
-                    val qty = itemObj.optInt("quantity", 1).coerceAtLeast(1)
-                    val note = itemObj.optString("note", "")
-
-                    // Trust only exact catalog IDs. Names and partial-token matches can select the wrong product.
-                    val product = products.find { it.id == pid }
-
-                    if (product != null) {
-                        recommendedItems.add(
-                            AiRecommendedItem(
-                                product = product,
-                                quantity = qty,
-                                customNote = note,
-                                subtotal = product.price * qty
-                            )
-                        )
-                    }
-                }
-
-                if (recommendedItems.isEmpty()) return null
-
-            val subtotal = recommendedItems.sumOf { it.subtotal }
-            val deliveryFee = 7.0
-            return AiShoppingRecommendation(
-                userPrompt = userVoiceText,
-                aiExplanationAr = explAr,
-                aiExplanationFr = explFr,
-                items = recommendedItems,
-                estimatedTotal = subtotal,
-                deliveryFee = deliveryFee,
-                grandTotal = subtotal + deliveryFee,
-                targetStoreName = targetStore,
-                estimatedTimeMins = 18,
-                confidenceScore = confidence,
-                speechAudioTextFr = speechFr,
-                speechAudioTextAr = speechAr,
-                detectedNotes = detectedNotes,
-                storeBadgeEmoji = "🏪"
-            )
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "callGeminiApi error: ${e.message}")
-        return null
-    }
-    return null
-}
-
-    /**
-     * High-Precision Moroccan Darija, French & English Offline NLP Shopping Matcher.
-     * Accurately parses multi-item food, grocery, seafood, and pharmacy orders.
-     */
     fun matchLocalCatalogWithNlp(
         query: String,
         products: List<Product>
