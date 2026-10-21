@@ -742,8 +742,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
-            if (trimmedName.isBlank() || (trimmedEmail.isBlank() && trimmedPhone.isBlank())) {
-                _authError.value = "يرجى ملء الاسم ورقم الهاتف أو البريد الإلكتروني."
+            if (trimmedName.isBlank() || trimmedEmail.isBlank()) {
+                _authError.value = "يرجى إدخال الاسم والبريد الإلكتروني. التسجيل برقم الهاتف يحتاج تحقق SMS غير مفعّل حالياً."
                 return@launch
             }
 
@@ -798,7 +798,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 _currentUserId.value = newAccount.id
                 _currentRole.value = UserRole.CUSTOMER
                 _currentScreen.value = AppScreen.HOME
-                _userAlertMessage.value = "مرحباً بك يا $trimmedName في ديليفيو! تم تفعيل حسابك بنجاح وبإمكانك الطلب الآن 🛍️"
+                _userAlertMessage.value = "مرحباً بك يا $trimmedName في ديليفيو! تم إنشاء حساب محلي على هذا الجهاز. تأكيد الطلبات غير متاح حتى ربط الخادم."
 
                 repository.addNotification(
                     NotificationEntity(
@@ -807,7 +807,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         titleAr = "مرحباً بك في DELIVIO! 🇲🇦",
                         titleFr = "Bienvenue sur DELIVIO !",
                         titleEn = "Welcome to DELIVIO!",
-                        bodyAr = "تم تفعيل حسابك بنجاح. استمتع بأشهى المأكولات والتسوق السريع.",
+                        bodyAr = "تم إنشاء حساب محلي على هذا الجهاز. تأكيد الطلبات يحتاج ربط الخادم.",
                         bodyFr = "Votre compte a été activé avec succès.",
                         bodyEn = "Your account is now active.",
                         timestamp = System.currentTimeMillis(),
