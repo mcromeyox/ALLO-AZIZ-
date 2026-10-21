@@ -164,22 +164,22 @@ object AiShoppingService {
             mainStoreName = "تيك زون إلكترونيات المحمدية (TechZone)"
             storeEmoji = "📱"
             if (hasAirpods || (!hasSmartwatch && !hasCharger && !hasGaming)) {
-                products.find { it.id == "p_airpods_pro" }?.let {
+                products.find { it.id == "p_airpods_pro" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, defaultQty, "ضمان 12 شهراً • تغليف طرد آمن", it.price * defaultQty))
                 }
             }
             if (hasSmartwatch) {
-                products.find { it.id == "p_smartwatch_ultra" }?.let {
+                products.find { it.id == "p_smartwatch_ultra" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, 1, "ضمان رسمي • شاحن مغناطيسي أصلي", it.price))
                 }
             }
             if (hasCharger) {
-                products.find { it.id == "p_fast_charger_65w" }?.let {
+                products.find { it.id == "p_fast_charger_65w" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, 1, "شاحن سريع GaN ثلاثي المنافذ", it.price))
                 }
             }
             if (hasGaming) {
-                products.find { it.id == "p_gaming_headset_71" }?.let {
+                products.find { it.id == "p_gaming_headset_71" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, 1, "سماعة محيطية 7.1 RGB احترافية", it.price))
                 }
             }
@@ -191,17 +191,17 @@ object AiShoppingService {
             mainStoreName = "بوتيك كازابلانكا للأزياء والعطور (Élégance)"
             storeEmoji = "🛍️"
             if (hasHoodie) {
-                products.find { it.id == "p_hoodie_oversize" }?.let {
+                products.find { it.id == "p_hoodie_oversize" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, defaultQty, "قطن ثقيل 450g • إرجاع مجاني للمقاس", it.price * defaultQty))
                 }
             }
             if (hasParfum) {
-                products.find { it.id == "p_parfum_oud_royal" }?.let {
+                products.find { it.id == "p_parfum_oud_royal" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, 1, "عطر أصلي مختوم ثبات 24 ساعة", it.price))
                 }
             }
             if (hasLeather || matchedItems.isEmpty()) {
-                products.find { it.id == "p_leather_bag_artisan" }?.let {
+                products.find { it.id == "p_leather_bag_artisan" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, 1, "جلد طبيعي مغربي أصيل 100%", it.price))
                 }
             }
@@ -281,7 +281,7 @@ object AiShoppingService {
         else if (hasTacos) {
             mainStoreName = "أو تاكوس (O'Tacos)"
             storeEmoji = "🌮"
-            products.find { it.id == "p_otacos_l" }?.let {
+            products.find { it.id == "p_otacos_l" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             explanationFr = "J'ai préparé votre délicieux Tacos Français avec vos sauces favorites et frites dorées !"
@@ -290,7 +290,7 @@ object AiShoppingService {
         else if (hasShawarma) {
             mainStoreName = "شاورما الشام الملكية"
             storeEmoji = "🥙"
-            products.find { it.id == "p_shawarma_arabi" }?.let {
+            products.find { it.id == "p_shawarma_arabi" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             explanationFr = "Menu Chawarma Arabe sur pain saj avec crème d'ail toum authentique et frites !"
@@ -300,7 +300,7 @@ object AiShoppingService {
         else if (hasBurgerKing) {
             mainStoreName = "برجر كينج (Burger King)"
             storeEmoji = "👑"
-            products.find { it.id == "p_bk_whopper" }?.let {
+            products.find { it.id == "p_bk_whopper" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             explanationFr = "Menu Double Whopper bœuf 100% grillé à la flamme avec frites et boisson !"
@@ -310,11 +310,11 @@ object AiShoppingService {
         else if (hasBigMac || hasNuggets) {
             mainStoreName = "ماكدونالدز (McDonald's)"
             storeEmoji = "🍔"
-            products.find { it.id == "p_mcdo_bigmac" }?.let {
+            products.find { it.id == "p_mcdo_bigmac" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             if (hasNuggets) {
-                products.find { it.id == "p_mcdo_nuggets" }?.let {
+                products.find { it.id == "p_mcdo_nuggets" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                     matchedItems.add(AiRecommendedItem(it, 1, "Sauce Barbecue & Curry", it.price))
                 }
             }
@@ -325,9 +325,9 @@ object AiShoppingService {
         else if (hasKfc) {
             mainStoreName = "كنتاكي (KFC)"
             storeEmoji = "🍗"
-            products.find { it.id == "p_kfc_tenders" }?.let {
+            products.find { it.id == "p_kfc_tenders" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-            } ?: products.find { it.id == "p_kfc_bucket" }?.let {
+            } ?: products.find { it.id == "p_kfc_bucket" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             explanationFr = "Sélection de poulet pané croustillant KFC avec sauces savoureuses !"
@@ -337,9 +337,9 @@ object AiShoppingService {
         else if (hasPizza) {
             mainStoreName = "بيتزا هت (Pizza Hut)"
             storeEmoji = "🍕"
-            products.find { it.id == "p_pizza_4fromages" }?.let {
+            products.find { it.id == "p_pizza_4fromages" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-            } ?: products.find { it.id == "p_ph_supreme" }?.let {
+            } ?: products.find { it.id == "p_ph_supreme" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
             }
             explanationFr = "Pizza italienne dorée au four garnie de fromages fondants et sauce tomate !"
@@ -349,7 +349,7 @@ object AiShoppingService {
         else if (hasSushi) {
             mainStoreName = "طوكيو سوشي بار (Tokyo Sushi)"
             storeEmoji = "🍣"
-            products.find { it.id == "p_sushi_platter" }?.let {
+            products.find { it.id == "p_sushi_platter" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, "Wasabi, gingembre et sauce soja", it.price * defaultQty))
             }
             explanationFr = "Plateau de sushis et makis frais avec sauce soja et wasabi !"
@@ -359,7 +359,7 @@ object AiShoppingService {
         else if (hasTajine) {
             mainStoreName = "طاجين البركة - القصبة"
             storeEmoji = "🍲"
-            products.find { it.id == "p_tajine_meat" }?.let {
+            products.find { it.id == "p_tajine_meat" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, "لحم ضأن بالبرقوق واللوز مع خبز ساخن", it.price * defaultQty))
             }
             explanationFr = "Authentique tajine marocain mijoté avec pain chaud du jour !"
@@ -369,7 +369,7 @@ object AiShoppingService {
         else if (hasFish) {
             mainStoreName = "شواية الميناء للأسماك الطازجة"
             storeEmoji = "🦐"
-            products.find { it.id == "p_fish_plate" }?.let {
+            products.find { it.id == "p_fish_plate" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, "فواكه بحر طازجة وشرمولة وتارتار", it.price * defaultQty))
             }
             explanationFr = "Plateau de poissons et fruits de mer frais grillés au port de Mohammedia !"
@@ -379,7 +379,7 @@ object AiShoppingService {
         else if (hasGrocery) {
             mainStoreName = "مرجان ماركت المحمدية"
             storeEmoji = "🧺"
-            products.find { it.id == "p_marjane_pack" }?.let {
+            products.find { it.id == "p_marjane_pack" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, "حليب، بيض بلدي، زيت زيتون", it.price * defaultQty))
             }
             explanationFr = "Panier de courses essentielles préparé chez Marjane !"
@@ -389,7 +389,7 @@ object AiShoppingService {
         else if (hasPharma) {
             mainStoreName = "صيدلية الشفاء إكسبريس"
             storeEmoji = "💊"
-            products.find { it.id == "p_pharma_care" }?.let {
+            products.find { it.id == "p_pharma_care" && it.isAvailable && it.isApproved && it.price.isFinite() && it.price > 0.0 && it.stockCount > 0 }?.let {
                 matchedItems.add(AiRecommendedItem(it, defaultQty, "أدوية ومستلزمات صحية فورية", it.price * defaultQty))
             }
             explanationFr = "Produits de pharmacie et soins d'urgence prêts pour livraison rapide."
