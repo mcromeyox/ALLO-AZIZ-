@@ -35,6 +35,7 @@ import com.example.data.model.UserRole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -103,7 +104,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     private val _currentRole = MutableStateFlow(UserRole.CUSTOMER)
     val currentRole: StateFlow<UserRole> = _currentRole.asStateFlow()
 
-    private val _currentUserId = MutableStateFlow("usr_customer_1")
+    private val _currentUserId = MutableStateFlow("")
     val currentUserId: StateFlow<String> = _currentUserId.asStateFlow()
 
     // Driver Status
@@ -612,11 +613,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             emptyList()
         )
 
-        allAddresses = repository.allAddresses.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            emptyList()
-        )
+        allAddresses = _currentUserId
+            .flatMapLatest { userId ->
+                if (userId.isBlank()) kotlinx.coroutines.flow.flowOf(emptyList())
+                else repository.addressesForUser(userId)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
         userProfile = repository.userProfile.stateIn(
             viewModelScope,
@@ -904,7 +906,11 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             val trimmedName = name.trim()
             val trimmedEmail = email.trim()
             val trimmedPhone = phone.trim()
-            val trimmedPass = pass.trim().ifBlank { "abdomery" }
+            val trimmedPass = pass.trim()
+            if (trimmedPass.length < 8) {
+                _authError.value = "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل."
+                return@launch
+            }
 
             // Security: Only Super Admin accounts cannot be created via public registration
             if (role == UserRole.SUPER_ADMIN) {
@@ -943,16 +949,16 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 id = newId,
                 name = trimmedName,
                 email = trimmedEmail.ifBlank { "$trimmedPhone@delivio.ma" },
-                phone = trimmedPhone.ifBlank { "+212 600-000000" },
+                phone = trimmedPhone,
                 password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass),
                 role = role.name,
                 status = initialStatus,
                 restaurantName = if (role == UserRole.RESTAURANT_OWNER) restaurantName.ifBlank { "متجر $trimmedName" } else null,
-                vehicleType = if (role == UserRole.DRIVER) vehicleType.ifBlank { "دراجة نارية / سكوتر" } else null,
-                plateNumber = if (role == UserRole.DRIVER) plateNumber.ifBlank { "أ - 12345" } else null,
+                vehicleType = if (role == UserRole.DRIVER) vehicleType.ifBlank { null } else null,
+                plateNumber = if (role == UserRole.DRIVER) plateNumber.ifBlank { null } else null,
                 balance = 0.0,
                 avatarEmoji = role.emoji,
-                authProvider = if (trimmedEmail.endsWith("@gmail.com")) "GOOGLE" else "PHONE",
+                authProvider = if (trimmedEmail.isNotBlank()) "EMAIL" else "PHONE",
                 cinNumber = cinNumber.ifBlank { null },
                 driverLicense = driverLicense.ifBlank { null },
                 iceNumber = iceNumber.ifBlank { null },
@@ -1189,33 +1195,18 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     // Role Switching
     fun switchRole(newRole: UserRole) {
+        val user = _currentUser.value
+        if (user == null || user.role != newRole.name) {
+            _userAlertMessage.value = "يرجى تسجيل الدخول بالحساب والصلاحية الصحيحة للوصول إلى هذه الواجهة."
+            return
+        }
         _currentRole.value = newRole
         when (newRole) {
-            UserRole.CUSTOMER -> {
-                _currentUserId.value = "usr_customer_1"
-                navigateTo(AppScreen.HOME)
-                _userAlertMessage.value = "تم التبديل إلى: حساب الزبون 🛍️"
-            }
-            UserRole.RESTAURANT_OWNER -> {
-                _currentUserId.value = "owner_mcdo"
-                navigateTo(AppScreen.RESTAURANT_DASHBOARD)
-                _userAlertMessage.value = "تم التبديل إلى: بوابة صاحب المطعم (ماكدونالدز) 👨‍🍳"
-            }
-            UserRole.DRIVER -> {
-                _currentUserId.value = "drv_aziz"
-                navigateTo(AppScreen.DRIVER_DASHBOARD)
-                _userAlertMessage.value = "تم التبديل إلى: بوابة السائق (الكابتن عزيز) 🛵"
-            }
-            UserRole.SUPPORT_AGENT -> {
-                _currentUserId.value = "usr_support_1"
-                navigateTo(AppScreen.SUPPORT_DASHBOARD)
-                _userAlertMessage.value = "تم التبديل إلى: لوحة الدعم الفني وتفعيل السائقين 🎧"
-            }
-            UserRole.SUPER_ADMIN -> {
-                _currentUserId.value = "usr_admin_1"
-                navigateTo(AppScreen.ADMIN_DASHBOARD)
-                _userAlertMessage.value = "تم التبديل إلى: لوحة الإدارة العامة والتحكم الشامل 👑"
-            }
+            UserRole.CUSTOMER -> navigateTo(AppScreen.HOME)
+            UserRole.RESTAURANT_OWNER -> navigateTo(AppScreen.RESTAURANT_DASHBOARD)
+            UserRole.DRIVER -> navigateTo(AppScreen.DRIVER_DASHBOARD)
+            UserRole.SUPPORT_AGENT -> navigateTo(AppScreen.SUPPORT_DASHBOARD)
+            UserRole.SUPER_ADMIN -> navigateTo(AppScreen.ADMIN_DASHBOARD)
         }
     }
 
@@ -1305,22 +1296,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun grantCustomerCompensation(amount: Double) {
-        viewModelScope.launch {
-            repository.topUpWallet(amount)
-            repository.addNotification(
-                NotificationEntity(
-                    id = "notif_comp_${System.currentTimeMillis()}",
-                    titleAr = "تعويض فوري من خدمة العملاء 🎁",
-                    titleFr = "Dédommagement client 🎁",
-                    titleEn = "Customer Compensation 🎁",
-                    bodyAr = "تمت إضافة $amount د.م إلى محفظتك اعتذاراً عن أي إزعاج.",
-                    bodyFr = "$amount DH ont été crédités sur votre compte.",
-                    bodyEn = "$amount MAD credited to your wallet.",
-                    timestamp = System.currentTimeMillis()
-                )
-            )
-            _userAlertMessage.value = "تم إرسال تعويض مالي فوري قدره $amount د.م إلى محفظة العميل!"
-        }
+        _userAlertMessage.value = "لا يمكن إصدار تعويض مالي محلياً. يلزم تنفيذ معتمد على الخادم مع سجل تدقيق."
     }
 
     // Restaurant Owner functions
@@ -1666,33 +1642,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun applyPromoCode(code: String): Boolean {
-        val cleanCode = code.trim().uppercase()
-        if (cleanCode == "DELIVIO20" || cleanCode == "AZIZ20") {
-            _appliedPromoCode.value = "DELIVIO20"
-            _promoDiscountPercent.value = 0.20 // 20%
-            _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود DELIVIO20 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code DELIVIO20 appliqué ! -20% sur la commande 🎉"
-                AppLanguage.ENGLISH -> "Code DELIVIO20 applied! 20% off your order 🎉"
-            }
-            return true
-        } else if (cleanCode == "DELIVIO10" || cleanCode == "ALLO10") {
-            _appliedPromoCode.value = "DELIVIO10"
-            _promoDiscountPercent.value = 0.10 // 10%
-            _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود DELIVIO10 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code DELIVIO10 appliqué ! -10% 🎉"
-                AppLanguage.ENGLISH -> "Code DELIVIO10 applied! 10% off 🎉"
-            }
-            return true
-        } else {
-            _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب DELIVIO20"
-                AppLanguage.FRENCH -> "Code promo invalide. Essayez DELIVIO20"
-                AppLanguage.ENGLISH -> "Invalid promo code. Try DELIVIO20"
-            }
-            return false
+        _promoDiscountPercent.value = 0.0
+        _appliedPromoCode.value = ""
+        _userAlertMessage.value = when (_selectedLanguage.value) {
+            AppLanguage.ARABIC -> "العروض غير مفعّلة حالياً. لن يتم احتساب خصم قبل التحقق منه."
+            AppLanguage.FRENCH -> "Les promotions ne sont pas configurées. Aucun rabais n'a été appliqué."
+            AppLanguage.ENGLISH -> "Promotions are not configured yet. No discount has been applied."
         }
+        return false
     }
 
     fun setDeliveryAddress(address: String) {
@@ -2116,26 +2073,10 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun topUpWallet(amount: Double) {
-        viewModelScope.launch {
-            repository.topUpWallet(amount)
-            repository.addNotification(
-                NotificationEntity(
-                    id = "notif_topup_${System.currentTimeMillis()}",
-                    titleAr = "شحن المحفظة بنجاح 💳",
-                    titleFr = "Portefeuille rechargé 💳",
-                    titleEn = "Wallet Topped Up 💳",
-                    bodyAr = "تمت إضافة $amount د.م إلى محفظة DELIVIO Pay بنجاح.",
-                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille DELIVIO Pay.",
-                    bodyEn = "$amount MAD successfully added to your DELIVIO Pay balance.",
-                    timestamp = System.currentTimeMillis(),
-                    type = "WALLET"
-                )
-            )
-            _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم شحن المحفظة بمبلغ $amount د.م بنجاح! 💳"
-                AppLanguage.FRENCH -> "Recharge de $amount DH réussie ! 💳"
-                AppLanguage.ENGLISH -> "Successfully recharged $amount MAD! 💳"
-            }
+        _userAlertMessage.value = when (_selectedLanguage.value) {
+            AppLanguage.ARABIC -> "شحن المحفظة غير متاح حتى ربط مزود دفع حقيقي والتحقق من العملية."
+            AppLanguage.FRENCH -> "Le rechargement est indisponible tant qu'un prestataire de paiement sécurisé n'est pas connecté."
+            AppLanguage.ENGLISH -> "Wallet top-ups are unavailable until a real payment provider and server verification are configured."
         }
     }
 
