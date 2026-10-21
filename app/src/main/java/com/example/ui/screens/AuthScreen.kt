@@ -1880,7 +1880,7 @@ fun AuthScreen(
                                     color = AzizMint
                                 )
                                 Text(
-                                    text = "رمز التأكيد التجريبي للاختبار السريع: $forgotDevOtpCode",
+                                    text = "التحقق غير متاح حتى ربط خدمة SMS أو البريد الآمنة.",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = AzizOrangeDark
@@ -1984,7 +1984,7 @@ fun AuthScreen(
                             otpError = null
                         },
                         label = { Text("أدخل رمز التحقق (6 أرقام)") },
-                        placeholder = { Text("123456") },
+                        placeholder = { Text("رمز التحقق من 6 أرقام") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         shape = RoundedCornerShape(12.dp),
