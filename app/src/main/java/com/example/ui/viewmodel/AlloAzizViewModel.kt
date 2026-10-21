@@ -1577,18 +1577,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         locationTrackingJob = viewModelScope.launch {
             LocationServiceManager.getLocationUpdates(context, intervalMillis = 3000L).collect { loc ->
                 _deviceLocation.value = loc
-                val active = activeOrder.value
-                // If current user is a driver on an active order, update live courier location
-                if (active != null && _currentRole.value == UserRole.DRIVER && active.status == "ON_THE_WAY") {
-                    val distKm = LocationServiceManager.calculateDistanceKm(
-                        loc.latitude, loc.longitude,
-                        active.customerLat, active.customerLng
-                    )
-                    val minsLeft = LocationServiceManager.estimateMinutesLeft(distKm)
-                    val progress = ((1.0 - (distKm / 3.0)).toFloat()).coerceIn(0.1f, 0.98f)
-                    repository.updateCourierGps(active.id, loc.latitude, loc.longitude, progress, minsLeft)
-                    FirestoreSyncManager.updateCourierGpsCloud(active.id, loc.latitude, loc.longitude, progress, minsLeft)
-                }
+                // Device location remains local until authenticated backend tracking is configured.
             }
         }
     }
@@ -1626,13 +1615,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun reorder(order: OrderEntity) {
-        val storeProducts = CatalogData.products.filter { it.storeId == order.storeId }
-        val targetProduct = storeProducts.firstOrNull() ?: CatalogData.products.first()
-        addToCart(targetProduct, 1, "إعادة طلب سابق #${order.id}")
-        navigateTo(AppScreen.CART_CHECKOUT)
+        _userAlertMessage.value = "إعادة الطلب غير متاحة حتى حفظ تفاصيل المنتجات الفعلية والتحقق من الطلب السابق عبر الخادم."
     }
 
-    // 24/7 Support Chat
     fun sendSupportMessage(userText: String) {
         if (userText.isBlank()) return
 
@@ -1694,7 +1679,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val targetPhone = when {
             !customPhone.isNullOrBlank() && !ExternalShareHelper.isPlaceholderOrInvalid(customPhone) -> customPhone
             !order.courierPhone.isBlank() && !ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone) -> order.courierPhone
-            else -> ExternalShareHelper.getSavedWhatsAppNumber(context)
+            else -> ""
         }
         if (ExternalShareHelper.isPlaceholderOrInvalid(targetPhone)) {
             return false
@@ -1722,16 +1707,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun updateCourierPhone(orderId: String, phone: String) {
-        viewModelScope.launch {
-            if (orderId.isNotBlank()) {
-                repository.updateCourierPhone(orderId, phone)
-            }
-            ExternalShareHelper.saveWhatsAppNumber(getApplication(), phone)
-            _userAlertMessage.value = "تم حفظ وتحديث رقم هاتف الكابتن للتواصل بنجاح: $phone"
-        }
+        _userAlertMessage.value = "لا يمكن تعديل رقم مندوب في طلب محلي. يجب أن تأتي بيانات التواصل من الطلب المؤكد على الخادم."
     }
 
-    // Local UserProfile & Preferences Management
     fun saveUserProfile(profile: UserProfile) {
         viewModelScope.launch {
             val userId = _currentUserId.value
