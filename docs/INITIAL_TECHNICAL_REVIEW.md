@@ -1,78 +1,63 @@
-# Initial Technical Review — ALLO-AZIZ
+# DELIVIO — Technical Hardening Report
 
 Date: 2026-10-21
-Base branch reviewed: `main`
+Base branch: `main`
 Working branch: `security-fixes/initial-audit`
 
-This review is based on source inspection. A successful build, device run, Firebase rules review, payment-provider verification, and production deployment have not yet been confirmed.
+This is a source-level hardening pass. The latest CI run must pass before merging. A CI build is not proof that Firebase rules, real payments, live GPS, production data, or legal/privacy operations work in the real world.
 
-## Findings
+## Changes made on the working branch
 
-### Critical — Authentication and authorization
-- Removed the hard-coded administrator email/password bypass from `AlloAzizViewModel.loginStaff` in this patch; staff must pass normal password verification.
-- `AlloAzizRepository` seeds a privileged SUPER_ADMIN account and other staff accounts using a known default password hashed with a fixed salt.
-- Replaced new local password hashes with PBKDF2-HMAC-SHA256 and random per-password salts; legacy salted SHA-256 hashes can be verified and upgraded after successful login. This remains a local helper, not a substitute for server-managed production authentication.
-- Role switching and local UI state are not a security boundary. Sensitive admin, support, merchant approval, driver activation, and order actions require server-side authorization.
-- Disabled the fixed OTP (`842910`) reset flow and direct password change until a trusted backend can issue and verify expiring, single-use reset tokens. Password reset is temporarily unavailable.
-- Some management actions modify local state without proving authorization at a trusted backend.
+### Authentication and authorization
+- Removed the hard-coded administrator login bypass and automatic administrator provisioning from the login flow.
+- New local password hashes use PBKDF2-HMAC-SHA256 with a random salt per password; legacy salted SHA-256 hashes can be verified and upgraded. Plaintext passwords are rejected.
+- Removed the default plaintext password from the user entity and removed locally seeded customer/staff accounts. Seeded demo accounts from existing version-8 databases are removed by a targeted migration.
+- Disabled the predictable client-side OTP reset and direct password changes until a trusted reset-token service exists.
+- Disabled Google and phone-number login paths that previously trusted a supplied email/name or phone number without verified Firebase identity/SMS OTP.
+- Added role checks to sensitive local management actions and prevented role switching into another account's dashboard.
+- These checks are defence-in-depth only; a mobile app is not a trusted authorization boundary. Production permissions must be enforced by a server/Firebase Security Rules.
 
-**Status:** Improved but not production-secure. The repository still seeds demo accounts with a known shared default password, and all roles/data remain locally controlled without a trusted server authorization boundary. Do not use the current build with real customer or staff accounts.
+### Catalog and AI shopping
+- AI instructions no longer tell the model to invent marketplace items or realistic prices.
+- Product selection accepts exact catalog IDs rather than partial IDs/name matches.
+- Unknown requests no longer produce a fabricated purchasable item.
+- Final price, stock, availability, seller identity, delivery fee and order totals still need trusted server validation.
 
-### Critical — AI product integrity
-- The Gemini prompt instructed the model to invent a concierge product and a realistic price for requests from external marketplaces.
-- The response parser previously matched products by partial names and partial IDs, which could select the wrong item.
-- The offline fallback previously created a dynamic purchasable item at a fixed price for unrecognized requests.
+### Orders and customer data
+- Order queries are scoped by customer, driver or store owner where applicable; customer order history and active-order views no longer query every order indiscriminately.
+- Added a customer ownership field to order records with a Room migration.
+- Address deletion is scoped to the owning user, and address/profile state follows the authenticated local user rather than a fixed demo account.
+- Removed fabricated local tickets, reviews, addresses, demo profiles and promotional notifications.
+- Checkout is deliberately disabled until a trusted backend can verify identity, prices, stock, payment and fulfillment. The app must not call a local-only order "confirmed".
 
-**Initial patch:** prompt now forbids invented products/prices, model results are accepted only for exact catalog IDs, and unknown local requests no longer create a fabricated product. Server-side validation of current price, availability, stock, and final order total remains required.
+### Support and operational claims
+- Removed the invented support hotline action/number and unverified claims about 24/7 staffing, 15–25 minute delivery, guaranteed immediate refunds/reshipments, card security, and active courier locations.
+- The support assistant no longer sends a Gemini key directly from the app or presents invented operational facts. AI-backed support should be proxied through a trusted backend using verified order data.
+- Wallet top-ups and local compensation are disabled because no verified payment/refund backend is configured.
+- Promotions are disabled until validated promotion rules are provided by a trusted source.
 
-### High — Maps configuration
-- AndroidManifest contained a hard-coded dummy Google Maps key.
-- Initial patch changes the manifest to read a build-time `GOOGLE_MAPS_API_KEY` environment variable. Builds without that variable will not have a functioning Google Maps key; configure a real, restricted key in GitHub Actions secrets or the build environment.
-
-### High — Database migration
-- Room uses `fallbackToDestructiveMigration()`, which can delete local data on an unsupported schema upgrade.
-- Replace this with explicit migrations and test upgrade paths before production.
-
-### High — Firebase/cloud synchronization
-- A Firestore synchronization manager exists, but repository source alone does not prove that Firebase project configuration, authentication, security rules, and cross-device synchronization work correctly.
-- Review and test Firestore rules with least-privilege access for customers, drivers, restaurants, support, and administrators.
-
-### High — Payments and order integrity
-- A payment-provider key is empty by default; the presence of a payment-method field does not prove payment processing works.
-- Payment confirmation, order totals, discounts, refunds, and wallet balances must be verified on a trusted backend. Do not trust totals or role values sent by a mobile client.
-
-### High — Tracking
-- Location update code exists, but live GPS updates between separate customer and driver devices have not been tested here.
-- Test permission denial, background restrictions, connectivity loss, stale coordinates, and distinguish simulated positions from real GPS.
-
-### High — Privacy and backup
-- User, address, identity/document, and delivery-location data are represented in local models.
-- Backup is enabled and the backup-rule files are largely templates. Review what sensitive data can be backed up or transferred, obtain location consent, define retention/deletion, and publish an appropriate privacy notice.
-
-### Medium — CI and release
-- Workflow previously built a debug APK without running unit tests.
-- Initial patch adds `testDebugUnitTest` before assembling the debug APK.
-- CI result is still pending; this patch has not yet been built or tested by GitHub Actions.
-- Release signing and release-mode verification remain separate work.
-
-### Medium — Branding and demo data
-- Repository naming and README use ALLO AZIZ while the Android app resource/build code uses DELIVIO.
-- Seeded stores, sample reviews, promotions, driver profiles, service promises, and support answers may look real. Mark demo data clearly or replace it with verified operational data before launch.
-
-## Changed in this initial patch
-- Harden AI shopping against invented products and partial-ID matching.
-- Remove fabricated local concierge products for unmatched requests.
-- Replace the dummy Maps key with build-time configuration.
-- Change the admin password test to use a hash and add unit tests to CI.
-- Remove the hard-coded staff administrator login bypass, use PBKDF2 hashes with per-password salts for new local hashes, upgrade verified legacy hashes, and disable the predictable client-side password reset.
+### Storage, privacy and build configuration
+- Removed Room's destructive migration fallback. Added targeted migrations from version 8 to 10; unsupported older versions now fail rather than silently wiping the database. If versions below 8 were ever distributed, their upgrade path must be explicitly implemented before rollout.
+- Disabled Android backup/data transfer for local app data containing personal information.
+- Replaced the dummy Maps key with a build-time `GOOGLE_MAPS_API_KEY` value. A valid, Android-restricted key is still required for maps to work.
+- CI now runs `testDebugUnitTest` before `assembleDebug`.
+- Added password-hashing tests. CI results for the latest commit must be checked; earlier successful runs do not certify later changes.
 
 ## Remaining release blockers
-1. Replace local/hard-coded staff authentication and default privileged accounts with secure account provisioning and server-side authorization.
-2. Replace fixed OTP password reset with a secure verified flow.
-3. Replace destructive Room migration with explicit migrations.
-4. Validate Firebase rules, payment processing, and GPS tracking end-to-end.
-5. Add tests for authorization, unknown product requests, invalid model output, prices/stock, and order state transitions.
-6. Configure a restricted Maps key and secure release signing in GitHub Actions.
-7. Review privacy and production data, and verify the app's legal/operational claims.
 
-No production-readiness claim should be made until these blockers are resolved and verified.
+1. **Trusted backend and identity:** configure the real Firebase project, Firebase Authentication, account provisioning, and server-side role enforcement. Google and SMS login remain disabled until verified.
+2. **Orders:** implement a trusted order-creation endpoint/Cloud Function that validates catalog IDs, price, availability, fees, promo eligibility, user ownership, payment status and order-state transitions.
+3. **Payments and wallet:** connect an actual payment provider, server-side webhooks/verification, refunds and ledger-backed balances. Never accept a client-side balance/paid flag as proof.
+4. **Firestore rules:** inspect and deploy least-privilege rules for every collection; test cross-user read/write attempts. A source-level manager is not proof of safe cloud sync.
+5. **GPS:** test real driver-device location, background permissions, stale/offline behavior and customer-device updates. Do not simulate a courier as a real person.
+6. **Maps:** configure a valid restricted key through GitHub Actions secrets/build environment.
+7. **Database:** implement migrations for any actually distributed schema versions below 8 before rollout.
+8. **Production data:** replace or clearly label sample catalog records and verify merchant consent, pricing, stock, hours and delivery zones.
+9. **Privacy/compliance:** complete a privacy notice, consent, data retention/deletion, document access controls, and Moroccan data-protection review.
+10. **Release:** configure protected release signing with secrets, test a release build on physical devices, and verify app-store/privacy declarations.
+
+## Important operational consequence
+
+This hardening pass intentionally disables flows that previously simulated secure login, promotions, wallet funding, support guarantees or order confirmation without the necessary trusted services. The app may build successfully while those production services remain unavailable.
+
+Do not merge or market the app as production-ready until the latest CI run passes and the external release blockers above are completed and tested.
