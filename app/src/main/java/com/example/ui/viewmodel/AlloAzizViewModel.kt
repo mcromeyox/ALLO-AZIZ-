@@ -670,24 +670,6 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             // Query user from Room database
             var user = repository.getUserByIdentifier(trimmedId)
 
-            // Auto-provision Super Admin if user logs in with mcromeyox@gmail.com
-            if (user == null && trimmedId.equals("mcromeyox@gmail.com", ignoreCase = true)) {
-                val adminUser = UserAccountEntity(
-                    id = "usr_super_admin",
-                    name = "المدير العام (Super Admin)",
-                    email = "mcromeyox@gmail.com",
-                    phone = "+212 600-000001",
-                    password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass.ifBlank { "abdomery" }),
-                    role = "SUPER_ADMIN",
-                    status = "ACTIVE",
-                    balance = 150000.0,
-                    avatarEmoji = "👑",
-                    authProvider = "EMAIL"
-                )
-                repository.insertUser(adminUser)
-                user = adminUser
-            }
-
             if (user == null) {
                 _authError.value = "هذا الحساب غير مسجل مسبقاً! يجب عليك إنشاء حساب جديد أولاً."
                 return@launch
@@ -728,15 +710,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 }
             }
 
-            // Verify password using hash verification and plain-text fallback
-            val passwordMatches = user.password.isBlank() ||
-                user.password == trimmedPass ||
-                com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password) ||
-                (user.role == "SUPER_ADMIN" && (trimmedPass == "admin1234" || trimmedPass == "abdomery"))
-
-            if (!passwordMatches) {
+            // Never accept empty/plaintext passwords or hard-coded administrator credentials.
+            if (!com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password)) {
                 _authError.value = "كلمة المرور غير صحيحة! يرجى التأكد وإعادة المحاولة."
                 return@launch
+            }
+
+            if (!com.example.data.auth.PasswordHasher.isCurrentHash(user.password)) {
+                repository.insertUser(user.copy(password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass)))
             }
 
             // Successful login
@@ -757,132 +738,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun loginWithGoogle(gmail: String, name: String) {
-        viewModelScope.launch {
-            clearAuthMessages()
-            val trimmedEmail = gmail.trim()
-
-            val existingUser = repository.getUserByEmail(trimmedEmail)
-            if (existingUser != null) {
-                // User exists in database: check database status & role
-                when (existingUser.status) {
-                    "PENDING_APPROVAL" -> {
-                        val roleMsg = if (existingUser.role == "RESTAURANT_OWNER") {
-                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو)."
-                        } else if (existingUser.role == "DRIVER") {
-                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو)."
-                        } else if (existingUser.role == "SUPPORT_AGENT") {
-                            "طلب الانضمام لفريق الدعم الفني (${existingUser.name}) قيد المراجعة والاعتماد من طرف مدير المنصة."
-                        } else {
-                            "حسابك قيد المراجعة والاعتماد من قبل إدارة DELIVIO."
-                        }
-                        _authPendingApprovalMessage.value = roleMsg
-                        return@launch
-                    }
-                    "SUSPENDED" -> {
-                        _authError.value = "هذا الحساب موقوف حالياً من قبل الإدارة."
-                        return@launch
-                    }
-                    "REJECTED" -> {
-                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة DELIVIO."
-                        return@launch
-                    }
-                    "DEACTIVATED" -> {
-                        _authError.value = "هذا الحساب معطل حالياً."
-                        return@launch
-                    }
-                }
-
-                _currentUser.value = existingUser
-                _currentUserId.value = existingUser.id
-                val matchedRole = UserRole.values().firstOrNull { it.name == existingUser.role } ?: UserRole.CUSTOMER
-                _currentRole.value = matchedRole
-
-                when (matchedRole) {
-                    UserRole.CUSTOMER -> _currentScreen.value = AppScreen.HOME
-                    UserRole.RESTAURANT_OWNER -> _currentScreen.value = AppScreen.RESTAURANT_DASHBOARD
-                    UserRole.DRIVER -> _currentScreen.value = AppScreen.DRIVER_DASHBOARD
-                    UserRole.SUPPORT_AGENT -> _currentScreen.value = AppScreen.SUPPORT_DASHBOARD
-                    UserRole.SUPER_ADMIN -> _currentScreen.value = AppScreen.ADMIN_DASHBOARD
-                }
-                _userAlertMessage.value = "تم الدخول بحساب Google: ${existingUser.name}! 🌟"
-            } else {
-                // Brand new Google user: defaults to role = CUSTOMER, status = ACTIVE
-                val newGoogleUser = UserAccountEntity(
-                    id = "usr_g_${System.currentTimeMillis()}",
-                    name = name.ifBlank { "عميل Google" },
-                    email = trimmedEmail,
-                    phone = "+212 600-000000",
-                    password = "google_authenticated",
-                    role = "CUSTOMER",
-                    status = "ACTIVE",
-                    balance = 0.0,
-                    avatarEmoji = "👤",
-                    authProvider = "GOOGLE"
-                )
-                repository.insertUser(newGoogleUser)
-
-                _currentUser.value = newGoogleUser
-                _currentUserId.value = newGoogleUser.id
-                _currentRole.value = UserRole.CUSTOMER
-                _currentScreen.value = AppScreen.HOME
-                _userAlertMessage.value = "مرحباً بك يا ${newGoogleUser.name}! تم إنشاء وتفعيل حسابك بحساب Google بنجاح 🛍️"
-            }
-        }
+        // Do not trust an email/name supplied by the UI as proof of Google identity.
+        // Integrate Firebase Authentication and verify the ID token before enabling this path.
+        _authError.value = "تسجيل الدخول عبر Google غير مفعّل حتى ربط Firebase Authentication والتحقق من الهوية."
     }
 
-    /**
-     * Seamless 1-Click Phone Number Login & Registration (No Gmail Required).
-     * If account exists, logs in immediately.
-     * If new customer, creates and activates customer account immediately.
-     */
     fun loginWithPhoneOnly(phoneNumber: String, customerName: String = "") {
-        viewModelScope.launch {
-            clearAuthMessages()
-            val cleanPhone = phoneNumber.trim()
-            if (cleanPhone.length < 8) {
-                _authError.value = "يرجى إدخال رقم هاتف صحيح مكون من 9 إلى 10 أرقام (مثال: 0612345678)."
-                return@launch
-            }
-
-            val existing = repository.getUserByPhone(cleanPhone)
-                ?: repository.getUserByIdentifier(cleanPhone)
-
-            if (existing != null) {
-                _currentUser.value = existing
-                _currentUserId.value = existing.id
-                val matchedRole = UserRole.values().firstOrNull { it.name == existing.role } ?: UserRole.CUSTOMER
-                _currentRole.value = matchedRole
-                _currentScreen.value = when (matchedRole) {
-                    UserRole.CUSTOMER -> AppScreen.HOME
-                    UserRole.RESTAURANT_OWNER -> AppScreen.RESTAURANT_DASHBOARD
-                    UserRole.DRIVER -> AppScreen.DRIVER_DASHBOARD
-                    UserRole.SUPPORT_AGENT -> AppScreen.SUPPORT_DASHBOARD
-                    UserRole.SUPER_ADMIN -> AppScreen.ADMIN_DASHBOARD
-                }
-                _userAlertMessage.value = "مرحباً بك مجدداً يا ${existing.name}! تم الدخول برقم الهاتف بنجاح 📱"
-            } else {
-                val displayName = customerName.trim().ifBlank { "زبون ديليفيو (${cleanPhone.takeLast(4)})" }
-                val newId = "usr_phone_${System.currentTimeMillis()}"
-                val newAccount = UserAccountEntity(
-                    id = newId,
-                    name = displayName,
-                    email = "$cleanPhone@delivio.ma",
-                    phone = cleanPhone,
-                    password = "phone_verified",
-                    role = UserRole.CUSTOMER.name,
-                    status = "ACTIVE",
-                    balance = 0.0,
-                    avatarEmoji = "📱",
-                    authProvider = "PHONE"
-                )
-                repository.insertUser(newAccount)
-                _currentUser.value = newAccount
-                _currentUserId.value = newAccount.id
-                _currentRole.value = UserRole.CUSTOMER
-                _currentScreen.value = AppScreen.HOME
-                _userAlertMessage.value = "أهلاً بك يا $displayName في ديليفيو! تم تفعيل حسابك برقم الهاتف فورياً 🚀"
-            }
-        }
+        // A phone number is not proof of ownership. Require a real, server-verified SMS OTP.
+        _authError.value = "تسجيل الدخول بالهاتف غير مفعّل حتى إضافة رمز SMS موثّق من الخادم."
     }
 
     fun registerUser(
@@ -954,8 +817,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 role = role.name,
                 status = initialStatus,
                 restaurantName = if (role == UserRole.RESTAURANT_OWNER) restaurantName.ifBlank { "متجر $trimmedName" } else null,
-                vehicleType = if (role == UserRole.DRIVER) vehicleType.ifBlank { null } else null,
-                plateNumber = if (role == UserRole.DRIVER) plateNumber.ifBlank { null } else null,
+                vehicleType = if (role == UserRole.DRIVER && vehicleType.isNotBlank()) vehicleType else null,
+                plateNumber = if (role == UserRole.DRIVER && plateNumber.isNotBlank()) plateNumber else null,
                 balance = 0.0,
                 avatarEmoji = role.emoji,
                 authProvider = if (trimmedEmail.isNotBlank()) "EMAIL" else "PHONE",
