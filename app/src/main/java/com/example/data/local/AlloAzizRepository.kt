@@ -85,6 +85,9 @@ class AlloAzizRepository(private val database: AppDatabase) {
 
     fun getOrdersByStore(storeId: String): Flow<List<OrderEntity>> = database.orderDao().getOrdersByStore(storeId)
     fun getOrdersForDriver(driverId: String): Flow<List<OrderEntity>> = database.orderDao().getOrdersForDriver(driverId)
+    fun getOrdersForCustomer(customerId: String): Flow<List<OrderEntity>> = database.orderDao().getOrdersForCustomer(customerId)
+    fun getActiveOrderForCustomer(customerId: String): Flow<OrderEntity?> = database.orderDao().getActiveOrderForCustomer(customerId)
+    fun getOrdersForStoreOwner(ownerId: String): Flow<List<OrderEntity>> = database.orderDao().getOrdersForStoreOwner(ownerId)
     fun getStoresByOwner(ownerId: String): Flow<List<StoreEntity>> = database.storeDao().getStoresByOwner(ownerId)
     fun getProductsByStore(storeId: String): Flow<List<ProductEntity>> = database.productDao().getProductsByStore(storeId)
 
