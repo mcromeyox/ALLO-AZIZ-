@@ -38,9 +38,9 @@ object AppStrings {
     }
 
     fun tabSupport(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "دعم 24/7"
-        AppLanguage.FRENCH -> "Support 24/7"
-        AppLanguage.ENGLISH -> "24/7 Support"
+        AppLanguage.ARABIC -> "الدعم"
+        AppLanguage.FRENCH -> "Assistance"
+        AppLanguage.ENGLISH -> "Support"
     }
 
     fun tabNotifications(lang: AppLanguage): String = when (lang) {
