@@ -1520,37 +1520,22 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
-            if (trimmedId.equals("mcromeyox@gmail.com", ignoreCase = true) && trimmedPass == "abdomery") {
-                val adminUser = repository.getUserByEmail("mcromeyox@gmail.com") ?: UserAccountEntity(
-                    id = "usr_super_admin",
-                    name = "المدير العام (Super Admin)",
-                    email = "mcromeyox@gmail.com",
-                    phone = "+212 600-000001",
-                    password = "abdomery",
-                    role = "SUPER_ADMIN",
-                    status = "ACTIVE",
-                    balance = 150000.0,
-                    avatarEmoji = "👑",
-                    authProvider = "EMAIL"
-                )
-                repository.insertUser(adminUser)
-                _currentUser.value = adminUser
-                _currentUserId.value = adminUser.id
-                _currentRole.value = UserRole.SUPER_ADMIN
-                _currentScreen.value = AppScreen.ADMIN_DASHBOARD
-                _userAlertMessage.value = "تم تسجيل الدخول كمدير عام بنجاح 👑"
-                return@launch
-            }
-
+            // No hard-coded administrator bypass: all staff accounts must pass normal verification.
             val user = repository.getUserByIdentifier(trimmedId)
             if (user == null) {
                 _authError.value = "حساب الموظف أو الشريك غير مسجل بالنظام."
                 return@launch
             }
 
-            if (user.password.isNotBlank() && user.password != trimmedPass) {
+            if (!com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password)) {
                 _authError.value = "كلمة المرور غير صحيحة."
                 return@launch
+            }
+
+            // Upgrade legacy SHA-256 hashes after successful verification.
+            val upgradedPasswordHash = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass)
+            if (upgradedPasswordHash != user.password) {
+                repository.insertUser(user.copy(password = upgradedPasswordHash))
             }
 
             val actualRole = UserRole.values().firstOrNull { it.name == user.role } ?: UserRole.CUSTOMER
@@ -1590,28 +1575,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun requestPasswordReset(identifier: String, onOtpGenerated: (String) -> Unit) {
-        viewModelScope.launch {
-            val trimmed = identifier.trim()
-            if (trimmed.isBlank()) {
-                _userAlertMessage.value = "يرجى كتابة البريد الإلكتروني أو رقم الهاتف."
-                return@launch
-            }
-            val otp = "842910"
-            _userAlertMessage.value = "📩 [وضع التطوير] رمز التحقق لتغيير كلمة المرور: $otp"
-            onOtpGenerated(otp)
-        }
+        // Do not issue a predictable OTP in the client. Wire this to a trusted email/SMS provider.
+        _authError.value = "استعادة كلمة المرور غير مفعّلة حالياً. يرجى التواصل مع الدعم بعد التحقق من هويتك."
     }
 
     fun confirmPasswordReset(identifier: String, newPass: String) {
-        viewModelScope.launch {
-            val user = repository.getUserByIdentifier(identifier.trim())
-            if (user != null) {
-                repository.insertUser(user.copy(password = newPass.trim()))
-                _authSuccessMessage.value = "تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول."
-            } else {
-                _authSuccessMessage.value = "تم حفظ كلمة المرور الجديدة بنجاح."
-            }
-        }
+        // Never change credentials without a verified, expiring, single-use reset token.
+        _authError.value = "لا يمكن تغيير كلمة المرور دون رمز تحقق صالح من الخادم."
     }
 
     fun navigateBack(): Boolean {
