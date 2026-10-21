@@ -9,7 +9,7 @@ data class UserAccountEntity(
     val name: String,
     val email: String,
     val phone: String,
-    val password: String = "abdomery",
+    val password: String = "",
     val role: String, // CUSTOMER, RESTAURANT_OWNER, DRIVER, SUPPORT_AGENT, SUPER_ADMIN
     val status: String = "PENDING_APPROVAL", // ACTIVE, PENDING_APPROVAL, SUSPENDED
     val restaurantId: String? = null,
