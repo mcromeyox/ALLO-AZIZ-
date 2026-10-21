@@ -421,10 +421,13 @@ object AiShoppingService {
             explanationAr = "بيانات توصيل هذا المتجر غير مهيأة. لم تتم إضافة أي منتج."
         }
         if (selectedProduct != null) mainStoreName = selectedProduct.storeName else mainStoreName = "DELIVIO"
-        val total = matchedItems.sumOf { it.product.price * it.quantity }
-        val deliveryFee = if (matchedItems.isEmpty()) 0.0 else selectedStore?.deliveryFee ?: 0.0
+        if (matchedItems.isEmpty()) {
+            explanationFr = "Aucun article correspondant n'a été trouvé dans le catalogue disponible."
+            explanationAr = "لم يتم العثور على منتج مطابق في الكتالوج المتاح."
+        }
+        val total = matchedItems.sumOf { (it.product.price.coerceAtLeast(0.0)) * it.quantity.coerceAtLeast(1) }
+        val deliveryFee = if (matchedItems.isEmpty()) 0.0 else (selectedStore?.deliveryFee ?: 0.0).coerceAtLeast(0.0)
         val grandTotal = total + deliveryFee
-        val isCatalogEcommerceOrder = selectedProduct?.category == StoreCategory.ECOMMERCE
 
         val itemsDescriptionFr = matchedItems.joinToString(" et ") { "${it.quantity} ${it.product.nameFr}" }
         val itemsDescriptionAr = matchedItems.joinToString(" و ") { "${it.quantity} ${it.product.nameAr}" }
