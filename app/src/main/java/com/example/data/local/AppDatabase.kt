@@ -38,7 +38,15 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         // Version 8 -> 9 contains no schema changes; older unsupported versions fail safely.
         private val MIGRATION_8_9 = object : Migration(8, 9) {
-            override fun migrate(db: SupportSQLiteDatabase) = Unit
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Remove only known demo identities and records; preserve other local accounts.
+                db.execSQL("DELETE FROM users WHERE id IN ('usr_customer_1','owner_mcdo','owner_tajine','drv_aziz','drv_pending_1','owner_pending_1','usr_support_1','usr_super_admin')")
+                db.execSQL("DELETE FROM addresses WHERE id IN ('addr_home_1','addr_work_1','addr_beach_1')")
+                db.execSQL("DELETE FROM reviews WHERE id IN ('rev_1','rev_2')")
+                db.execSQL("DELETE FROM support_tickets WHERE id IN ('TCK-801','TCK-802')")
+                db.execSQL("DELETE FROM notifications WHERE id IN ('notif_welcome','notif_wallet_gift')")
+                db.execSQL("DELETE FROM user_profiles WHERE userId = 'default_user'")
+            }
         }
 
         @Volatile
