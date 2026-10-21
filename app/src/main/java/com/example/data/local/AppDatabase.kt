@@ -20,7 +20,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AddressEntity::class,
         UserProfile::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -55,6 +55,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE notifications ADD COLUMN userId TEXT NOT NULL DEFAULT ''")
+                // Old notifications had no owner and could expose one account's details to another.
+                db.execSQL("DELETE FROM notifications WHERE userId = ''")
+            }
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -64,7 +72,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "allo_aziz_database.db"
-                ).addMigrations(MIGRATION_8_9, MIGRATION_9_10).build()
+                ).addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11).build()
                 INSTANCE = instance
                 instance
             }
