@@ -629,6 +629,16 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
+            // Never accept empty/plaintext passwords or hard-coded administrator credentials.
+            if (!com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password)) {
+                _authError.value = "كلمة المرور غير صحيحة! يرجى التأكد وإعادة المحاولة."
+                return@launch
+            }
+
+            if (!com.example.data.auth.PasswordHasher.isCurrentHash(user.password)) {
+                repository.insertUser(user.copy(password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass)))
+            }
+
             // Status checks
             when (user.status) {
                 "PENDING_APPROVAL" -> {
@@ -662,16 +672,6 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 else -> {
                     // Allowed
                 }
-            }
-
-            // Never accept empty/plaintext passwords or hard-coded administrator credentials.
-            if (!com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password)) {
-                _authError.value = "كلمة المرور غير صحيحة! يرجى التأكد وإعادة المحاولة."
-                return@launch
-            }
-
-            if (!com.example.data.auth.PasswordHasher.isCurrentHash(user.password)) {
-                repository.insertUser(user.copy(password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass)))
             }
 
             // Successful login
