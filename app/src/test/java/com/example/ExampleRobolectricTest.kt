@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -104,6 +106,18 @@ class ExampleRobolectricTest {
         assertTrue(com.example.data.auth.PasswordHasher.verifyPassword("test-only-password", retrievedAdmin?.password ?: ""))
         assertEquals("SUPER_ADMIN", retrievedAdmin?.role)
         assertEquals("ACTIVE", retrievedAdmin?.status)
+    }
+
+    @Test
+    fun passwordHasherUsesUniqueSaltsAndRejectsPlaintext() {
+        val first = com.example.data.auth.PasswordHasher.hashPassword("secure-test-password")
+        val second = com.example.data.auth.PasswordHasher.hashPassword("secure-test-password")
+
+        assertNotEquals(first, second)
+        assertTrue(com.example.data.auth.PasswordHasher.isCurrentHash(first))
+        assertTrue(com.example.data.auth.PasswordHasher.verifyPassword("secure-test-password", first))
+        assertFalse(com.example.data.auth.PasswordHasher.verifyPassword("wrong-password", first))
+        assertFalse(com.example.data.auth.PasswordHasher.verifyPassword("abdomery", "abdomery"))
     }
 
     @Test
