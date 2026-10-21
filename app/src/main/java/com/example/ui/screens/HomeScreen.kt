@@ -637,8 +637,8 @@ fun HomeScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = when (language) {
-                                                AppLanguage.FRENCH -> "Sara IA • Support Vocal 24/7"
-                                                AppLanguage.ENGLISH -> "Sara AI • 24/7 Voice Support"
+                                                AppLanguage.FRENCH -> "Sara IA • Assistance"
+                                                AppLanguage.ENGLISH -> "Sara AI • Assistance"
                                                 AppLanguage.ARABIC -> "سارة AI • الدعم الصوتي الفوري"
                                             },
                                             fontSize = 14.sp,
@@ -1128,7 +1128,7 @@ fun HomeScreen(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "• تتبع فوري مباشر لحركة المندوب على الخريطة بالمحمدية\n• دفع آمن 100% مع تشفير كامل للبيانات (نقداً أو بالبطاقة)\n• دعم فني 24/7 لحل أي مشكلة في ثوانٍ معدودة",
+                            text = "• التتبع يعتمد على توفر بيانات الموقع الفعلية\n• وسائل الدفع تظهر حسب الإعدادات المتاحة\n• تواصل مع الدعم للتحقق من الطلبات والمشكلات",
                             fontSize = 12.sp,
                             lineHeight = 18.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1546,7 +1546,7 @@ fun HeroDeliveryBanner(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "كود الخصم: DELIVIO20 (خصم 20%)",
+                        text = "العروض غير مفعّلة حالياً",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1558,11 +1558,11 @@ fun HeroDeliveryBanner(
                     color = AzizOrangePrimary,
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .clickable { onApplyCode("DELIVIO20") }
+                        .clickable(enabled = false) { }
                         .testTag("apply_hero_promo_button")
                 ) {
                     Text(
-                        text = AppStrings.apply(language),
+                        text = "غير متاح",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
