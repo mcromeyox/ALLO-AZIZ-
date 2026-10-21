@@ -5,7 +5,7 @@ DELIVIO is an Android/Kotlin prototype for a delivery marketplace with Arabic, F
 ## Current verified scope
 
 - Android app built with Kotlin and Jetpack Compose.
-- Local catalog browsing and AI-assisted cart preparation based on catalog product IDs.
+- Local catalog browsing and rule-based natural-language matching/cart preparation based on exact catalog product IDs. Remote Gemini and external voice APIs are disabled until a trusted backend proxy is configured.
 - Local Room persistence and user-scoped customer order/address/profile queries.
 - GitHub Actions workflow that runs unit tests before assembling a debug APK.
 - Build-time configuration for a restricted Google Maps API key.
@@ -28,7 +28,7 @@ The catalog data still needs to be verified against actual contracted merchants,
 - Role checks in the Android client are defence-in-depth only. Admin, driver, merchant and customer permissions must be enforced by backend authorization and Firebase Security Rules.
 - Android backup is disabled because the app models personal addresses, identity information and delivery locations.
 - Room migrations preserve unsupported old data rather than silently wiping it. The supported migration path currently starts at schema version 8; earlier distributed versions need explicit migration work before rollout.
-- A real Android-restricted `GOOGLE_MAPS_API_KEY`, Firebase project/configuration, secure Firestore rules, payment integration, and protected release-signing secrets must be configured before a production release.
+- A real Android-restricted `GOOGLE_MAPS_API_KEY`, Firebase project/configuration, reviewed collection-specific Firestore rules, server-side AI proxy, payment integration, and protected release-signing secrets must be configured before a production release. The checked-in `firestore.rules` is deny-all by design and must not be treated as a complete production ruleset.
 
 ## Build
 
