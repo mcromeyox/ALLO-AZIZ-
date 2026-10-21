@@ -242,6 +242,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun approveMerchantApplication(appId: String) {
+        if (!requireRole(UserRole.SUPER_ADMIN)) return
         _merchantApplications.value = _merchantApplications.value.map {
             if (it.id == appId) it.copy(status = "APPROVED", notes = "تمت المصادقة واعتماد المتجر رسمياً ✓")
             else it
@@ -250,6 +251,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun rejectMerchantApplication(appId: String, reason: String = "الوثائق غير مكتملة") {
+        if (!requireRole(UserRole.SUPER_ADMIN)) return
         _merchantApplications.value = _merchantApplications.value.map {
             if (it.id == appId) it.copy(status = "REJECTED", notes = "مرفوض: $reason")
             else it
@@ -650,6 +652,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     // Authentication & Account Verification (Strict Multi-Role Policy)
+    private fun requireRole(role: UserRole): Boolean {
+        val user = _currentUser.value
+        val allowed = user != null && user.role == role.name && _currentRole.value == role
+        if (!allowed) _userAlertMessage.value = "هذه العملية تتطلب تسجيل الدخول بحساب مخوّل."
+        return allowed
+    }
+
     fun clearAuthMessages() {
         _authError.value = null
         _authPendingApprovalMessage.value = null
@@ -1081,6 +1090,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun acceptDeliveryTask(orderId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.DRIVER)) return@launch
             val driver = _currentUser.value
             val driverName = driver?.name?.ifBlank { "كابتن التوصيل" } ?: "كابتن التوصيل"
             val driverPhone = driver?.phone?.ifBlank { "" } ?: ""
@@ -1127,6 +1137,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     // Support Agent functions
     fun approveDriverAccount(driverId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             repository.updateUserStatus(driverId, "ACTIVE")
             repository.addNotification(
                 NotificationEntity(
@@ -1146,6 +1157,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun rejectDriverAccount(driverId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             repository.updateUserStatus(driverId, "SUSPENDED")
             _userAlertMessage.value = "تم رفض طلب التسجيل مؤقتاً لعدم استيفاء الوثائق."
         }
@@ -1153,6 +1165,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun resolveTicket(ticketId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPPORT_AGENT)) return@launch
             repository.updateTicketStatus(ticketId, "RESOLVED")
             _userAlertMessage.value = "تم حل التذكرة #$ticketId بنجاح!"
         }
@@ -1175,6 +1188,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         imageUrl: String = ""
     ) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.RESTAURANT_OWNER)) return@launch
             val newProduct = ProductEntity(
                 id = "prod_${System.currentTimeMillis()}",
                 storeId = storeId,
@@ -1201,6 +1215,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleProductAvailability(productId: String, currentAvailable: Boolean) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.RESTAURANT_OWNER)) return@launch
             repository.toggleProductAvailability(productId, !currentAvailable)
             _userAlertMessage.value = if (!currentAvailable) "أصبحت الوجبة متاحة للطلب الآن ✓" else "تم تحديد الوجبة كغير متوفرة حالياً ✕"
         }
@@ -1208,6 +1223,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun deleteProduct(productId: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.RESTAURANT_OWNER)) return@launch
             repository.deleteProduct(productId)
             _userAlertMessage.value = "تم حذف الوجبة من القائمة بنجاح."
         }
@@ -1215,6 +1231,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun toggleStoreOpen(storeId: String, currentOpen: Boolean) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.RESTAURANT_OWNER)) return@launch
             repository.toggleStoreOpen(storeId, !currentOpen)
             _userAlertMessage.value = if (!currentOpen) "المطعم مفتوح الآن وجاهز لاستقبال الطلبات 🟢" else "المطعم مغلق حالياً 🔴"
         }
@@ -1222,6 +1239,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun updateOrderCookingStatus(orderId: String, restStatus: String, orderStatus: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.RESTAURANT_OWNER)) return@launch
             repository.updateRestaurantStatus(orderId, restStatus, orderStatus)
             HapticFeedbackHelper.vibrateAlert(getApplication())
             val statusText = when (restStatus) {
@@ -1242,6 +1260,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     // Super Admin functions
     fun updateUserStatus(userId: String, newStatus: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             repository.updateUserStatus(userId, newStatus)
             _userAlertMessage.value = "تم تحديث حالة المستخدم إلى: $newStatus"
         }
@@ -1249,6 +1268,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun updateUserRole(userId: String, newRole: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             repository.updateUserRole(userId, newRole)
             _userAlertMessage.value = "تم تغيير رتبة المستخدم إلى: $newRole"
         }
@@ -1263,6 +1283,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         emoji: String
     ) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             val newStore = StoreEntity(
                 id = "store_${System.currentTimeMillis()}",
                 name = name,
@@ -1288,6 +1309,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun broadcastSystemAnnouncement(title: String, body: String) {
         viewModelScope.launch {
+            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
             val notif = NotificationEntity(
                 id = "broadcast_${System.currentTimeMillis()}",
                 titleAr = title,
