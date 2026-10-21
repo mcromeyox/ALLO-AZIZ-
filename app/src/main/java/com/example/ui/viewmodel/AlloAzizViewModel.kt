@@ -529,17 +529,19 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-        allNotifications = repository.allNotifications.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            emptyList()
-        )
+        allNotifications = _currentUserId
+            .flatMapLatest { userId ->
+                if (userId.isBlank()) kotlinx.coroutines.flow.flowOf(emptyList())
+                else repository.getNotificationsForUser(userId)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-        unreadNotificationsCount = repository.unreadCount.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            0
-        )
+        unreadNotificationsCount = _currentUserId
+            .flatMapLatest { userId ->
+                if (userId.isBlank()) kotlinx.coroutines.flow.flowOf(0)
+                else repository.getUnreadCountForUser(userId)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
         allReviews = repository.allReviews.stateIn(
             viewModelScope,
@@ -841,7 +843,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         bodyAr = "سجل المتجر (${restaurantName.ifBlank { trimmedName }}) وهو بانتظار مراجعة واعتماد الإدارة.",
                         bodyFr = "${trimmedName} a postulé pour un commerce (${restaurantName}).",
                         bodyEn = "${trimmedName} registered store (${restaurantName}) and awaits activation.",
-                        timestamp = System.currentTimeMillis(),
+                        userId = newAccount.id,
+                    timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
                 )
@@ -858,7 +861,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         bodyAr = "سجل العضو ${trimmedName} (${trimmedPhone}) في قسم الدعم وبانتظار اعتماد الإدارة.",
                         bodyFr = "Candidature support de ${trimmedName}.",
                         bodyEn = "Support application for ${trimmedName} awaiting admin approval.",
-                        timestamp = System.currentTimeMillis(),
+                        userId = newAccount.id,
+                    timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
                 )
@@ -875,7 +879,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         bodyAr = "سجل الكابتن ${trimmedName} (${vehicleType.ifBlank { "دراجة نارية" }}) وهو بانتظار مراجعة واعتماد الإدارة.",
                         bodyFr = "Candidature chauffeur de ${trimmedName}.",
                         bodyEn = "Driver registration for ${trimmedName} awaiting admin approval.",
-                        timestamp = System.currentTimeMillis(),
+                        userId = newAccount.id,
+                    timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
                 )
@@ -896,6 +901,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     bodyAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
                     bodyFr = "Votre demande a été approuvée par l'administration DELIVIO.",
                     bodyEn = "Your application was approved. You can now login and start working.",
+                    userId = newAccount.id,
                     timestamp = System.currentTimeMillis(),
                     type = "APPROVAL"
                 )
@@ -917,6 +923,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     bodyAr = "نأسف لإبلاغك بأنه تم رفض طلب الانضمام لعدم استيفاء الشروط والمعايير المطلوبة. يمكنك التواصل مع الدعم الفني لمزيد من المعلومات.",
                     bodyFr = "Votre demande a été refusée pour non-conformité aux critères requis.",
                     bodyEn = "Your application was rejected as it does not meet requirements.",
+                    userId = userId,
                     timestamp = System.currentTimeMillis(),
                     type = "REJECTION"
                 )
@@ -1088,6 +1095,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     bodyAr = "تمت مراجعة الوثائق وتفعيل حساب السائق للبدء في استقبال طلبات التوصيل.",
                     bodyFr = "Vos documents ont été validés avec succès.",
                     bodyEn = "Your documents have been approved successfully.",
+                    userId = userId,
                     timestamp = System.currentTimeMillis()
                 )
             )
@@ -1242,7 +1250,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 bodyAr = body,
                 bodyFr = body,
                 bodyEn = body,
-                timestamp = System.currentTimeMillis(),
+                userId = driverId,
+                    timestamp = System.currentTimeMillis(),
                 type = "SYSTEM"
             )
             repository.addNotification(notif)
@@ -1628,13 +1637,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun markNotificationRead(id: String) {
         viewModelScope.launch {
-            repository.markNotificationRead(id)
+            repository.markNotificationRead(id, _currentUserId.value)
         }
     }
 
     fun markAllNotificationsRead() {
         viewModelScope.launch {
-            repository.markAllNotificationsRead()
+            repository.markAllNotificationsRead(_currentUserId.value)
         }
     }
 
