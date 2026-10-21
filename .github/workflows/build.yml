@@ -74,6 +74,9 @@ jobs:
             yes | "$SDK_MGR" --sdk_root="${ANDROID_SDK_ROOT}" "platform-tools" "platforms;android-36" "build-tools;36.0.0" || true
           fi
 
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
