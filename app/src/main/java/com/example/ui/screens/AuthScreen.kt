@@ -1857,6 +1857,7 @@ fun AuthScreen(
                                     }
                                 }
                             },
+                            enabled = false,
                             colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
@@ -1870,7 +1871,6 @@ fun AuthScreen(
                             shape = RoundedCornerShape(10.dp),
                             color = AzizMint.copy(alpha = 0.12f),
                             modifier = Modifier.fillMaxWidth()
-                            enabled = false,
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Text(
