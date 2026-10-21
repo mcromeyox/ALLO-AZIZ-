@@ -1240,30 +1240,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun broadcastSystemAnnouncement(title: String, body: String) {
-        viewModelScope.launch {
-            if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
-            val notif = NotificationEntity(
-                id = "broadcast_${System.currentTimeMillis()}",
-                titleAr = title,
-                titleFr = title,
-                titleEn = title,
-                bodyAr = body,
-                bodyFr = body,
-                bodyEn = body,
-                userId = driverId,
-                    timestamp = System.currentTimeMillis(),
-                type = "SYSTEM"
-            )
-            repository.addNotification(notif)
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            AndroidNotificationHelper.showPromoNotification(
-                context = getApplication(),
-                title = title,
-                body = body
-            )
-            _userAlertMessage.value = "تم إرسال الإشعار الترويجي العام لجميع مستخدمي التطبيق بنجاح! 📢"
-        }
+        _userAlertMessage.value = "إرسال الإعلانات متوقف حتى ربط خادم يوزع الإشعارات على الحسابات المستهدفة."
     }
+
 
     // Navigation with RBAC Authorization
     fun navigateTo(screen: AppScreen) {
