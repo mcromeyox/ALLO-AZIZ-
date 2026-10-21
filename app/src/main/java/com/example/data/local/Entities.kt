@@ -156,7 +156,7 @@ data class SupportTicketEntity(
 @Entity(tableName = "addresses")
 data class AddressEntity(
     @PrimaryKey val id: String,
-    val userId: String = "usr_customer_1",
+    val userId: String = "",
     val title: String, // "المنزل", "العمل", "مكتب المحمدية"
     val type: String = "HOME", // HOME, WORK, OTHER
     val city: String = "المحمدية",
