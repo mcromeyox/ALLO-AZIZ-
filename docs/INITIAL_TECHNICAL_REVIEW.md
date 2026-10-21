@@ -25,9 +25,9 @@ This is a source-level hardening pass. The latest CI run must pass before mergin
 
 ### Orders and customer data
 - Order queries are scoped by customer, driver or store owner where applicable; customer order history and active-order views no longer query every order indiscriminately.
-- Added a customer ownership field to order records with a Room migration.
+- Added a customer ownership field to order records and per-user ownership to notifications with Room migrations.
 - Address deletion is scoped to the owning user, and address/profile state follows the authenticated local user rather than a fixed demo account.
-- Removed fabricated local tickets, reviews, addresses, demo profiles and promotional notifications.
+- Removed fabricated local tickets, reviews, addresses, demo profiles and promotional notifications. Old notifications without an owner and the old shared local wallet row are purged during migration to prevent cross-account leakage.
 - Checkout is deliberately disabled until a trusted backend can verify identity, prices, stock, payment and fulfillment. The app must not call a local-only order "confirmed".
 
 ### Support and operational claims
@@ -37,7 +37,7 @@ This is a source-level hardening pass. The latest CI run must pass before mergin
 - Promotions are disabled until validated promotion rules are provided by a trusted source.
 
 ### Storage, privacy and build configuration
-- Removed Room's destructive migration fallback. Added targeted migrations from version 8 to 10; unsupported older versions now fail rather than silently wiping the database. If versions below 8 were ever distributed, their upgrade path must be explicitly implemented before rollout.
+- Removed Room's destructive migration fallback. Added targeted migrations from version 8 to 11; unsupported older versions now fail rather than silently wiping the database. If versions below 8 were ever distributed, their upgrade path must be explicitly implemented before rollout.
 - Disabled Android backup/data transfer for local app data containing personal information.
 - Replaced the dummy Maps key with a build-time `GOOGLE_MAPS_API_KEY` value. A valid, Android-restricted key is still required for maps to work.
 - CI now runs `testDebugUnitTest` before `assembleDebug`.
