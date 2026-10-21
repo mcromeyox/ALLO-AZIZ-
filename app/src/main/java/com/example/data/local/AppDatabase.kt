@@ -60,6 +60,8 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE notifications ADD COLUMN userId TEXT NOT NULL DEFAULT ''")
                 // Old notifications had no owner and could expose one account's details to another.
                 db.execSQL("DELETE FROM notifications WHERE userId = ''")
+                // Wallet balances were local-only and were never backed by a verified payment ledger.
+                db.execSQL("DELETE FROM wallet_profile WHERE id = 1")
             }
         }
 
