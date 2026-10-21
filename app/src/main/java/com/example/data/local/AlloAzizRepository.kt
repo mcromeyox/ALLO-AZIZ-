@@ -18,7 +18,6 @@ class AlloAzizRepository(private val database: AppDatabase) {
     val allTickets: Flow<List<SupportTicketEntity>> = database.supportTicketDao().getAllTickets()
     // Always query addresses for the authenticated account, not a hard-coded demo user.
     fun addressesForUser(userId: String): Flow<List<AddressEntity>> = database.addressDao().getAddressesForUser(userId)
-    val userProfile: Flow<UserProfile?> = database.userProfileDao().getDefaultUserProfile()
 
     fun getUserProfile(userId: String): Flow<UserProfile?> = database.userProfileDao().getUserProfile(userId)
     suspend fun getUserProfileOnce(userId: String): UserProfile? = database.userProfileDao().getUserProfileOnce(userId)
