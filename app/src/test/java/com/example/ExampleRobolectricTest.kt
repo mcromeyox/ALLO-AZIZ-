@@ -121,6 +121,18 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun unknownShoppingRequestDoesNotInventCatalogItems() {
+        val result = com.example.data.services.AiShoppingService.matchLocalCatalogWithNlp(
+            "product-that-does-not-exist-9f71",
+            emptyList()
+        )
+
+        assertTrue(result.items.isEmpty())
+        assertEquals(0.0, result.estimatedTotal, 0.0)
+        assertEquals(0.0, result.grandTotal, 0.0)
+    }
+
+    @Test
     fun multilingualStrings_renderCorrectly() {
         val arTitle = AppStrings.tabHome(AppLanguage.ARABIC)
         val frTitle = AppStrings.tabHome(AppLanguage.FRENCH)
