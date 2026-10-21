@@ -991,6 +991,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun logout() {
         _currentUser.value = null
+        _currentUserId.value = ""
+        _currentRole.value = UserRole.CUSTOMER
+        _driverIsOnline.value = false
         _currentScreen.value = AppScreen.AUTH
         _userAlertMessage.value = "تم تسجيل الخروج بنجاح."
     }
@@ -1064,12 +1067,18 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun setDefaultAddress(addressId: String) {
         viewModelScope.launch {
-            repository.setDefaultAddress(_currentUserId.value, addressId)
+            val userId = _currentUserId.value
+            if (userId.isBlank()) {
+                _userAlertMessage.value = "يرجى تسجيل الدخول قبل تغيير العنوان الافتراضي."
+                return@launch
+            }
+            repository.setDefaultAddress(userId, addressId)
             _userAlertMessage.value = "تم تعيين العنوان كعنوان افتراضي"
         }
     }
 
     fun updateCommissionRates(merchantPercent: Double, driverPayout: Double, serviceFee: Double) {
+        if (!requireRole(UserRole.SUPER_ADMIN)) return
         _merchantCommissionPercent.value = merchantPercent
         _driverPayoutPercent.value = driverPayout
         _platformServiceFee.value = serviceFee
@@ -1077,6 +1086,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun toggleDeliveryZone(zoneId: String) {
+        if (!requireRole(UserRole.SUPER_ADMIN)) return
         _deliveryZones.value = _deliveryZones.value.map { zone ->
             if (zone.id == zoneId) zone.copy(isActive = !zone.isActive) else zone
         }
@@ -1102,6 +1112,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     // Driver Partner functions
     fun toggleDriverOnline() {
+        if (!requireRole(UserRole.DRIVER)) return
         _driverIsOnline.value = !_driverIsOnline.value
         _userAlertMessage.value = if (_driverIsOnline.value) "أنت متصل الآن ومتاح لتلقي الطلبات 🟢" else "أنت غير متصل حالياً 🔴"
     }
