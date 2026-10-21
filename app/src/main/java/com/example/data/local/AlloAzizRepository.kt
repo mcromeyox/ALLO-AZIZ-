@@ -19,7 +19,8 @@ class AlloAzizRepository(private val database: AppDatabase) {
     val allReviews: Flow<List<ReviewEntity>> = database.reviewDao().getAllReviews()
     val wallet: Flow<WalletProfileEntity?> = database.walletDao().getWallet()
     val allTickets: Flow<List<SupportTicketEntity>> = database.supportTicketDao().getAllTickets()
-    val allAddresses: Flow<List<AddressEntity>> = database.addressDao().getAddressesForUser("usr_customer_1")
+    // Always query addresses for the authenticated account, not a hard-coded demo user.
+    fun addressesForUser(userId: String): Flow<List<AddressEntity>> = database.addressDao().getAddressesForUser(userId)
     val userProfile: Flow<UserProfile?> = database.userProfileDao().getDefaultUserProfile()
 
     fun getUserProfile(userId: String): Flow<UserProfile?> = database.userProfileDao().getUserProfile(userId)
@@ -205,8 +206,8 @@ class AlloAzizRepository(private val database: AppDatabase) {
             return
         }
 
-        // 1. Seed Multi-role accounts with SHA-256 hashed passwords
-        val defaultHashedPassword = PasswordHasher.hashPassword("abdomery")
+        // Seeded demo accounts receive unique random passwords that are never disclosed.
+        // Real staff accounts must be provisioned by a trusted authentication backend.
 
         val defaultUsers = listOf(
             UserAccountEntity(
@@ -214,7 +215,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
                 name = "كريم التازي",
                 email = "karim.tazi@gmail.com",
                 phone = "+212 611-223344",
-                password = defaultHashedPassword,
+                password = PasswordHasher.hashPassword(UUID.randomUUID().toString()),
                 role = "CUSTOMER",
                 status = "ACTIVE",
                 balance = 0.0,
