@@ -403,28 +403,36 @@ object AiShoppingService {
             explanationAr = "لم أجد هذا المنتج في الكتالوج المتاح. لم تتم إضافة أي منتج إلى السلة."
         }
 
-        val total = matchedItems.sumOf { it.subtotal }
-        // E-Commerce parcel delivery fee is 18.0 DH (insured parcel), while food is 8.0 DH
-        val deliveryFee = when {
-            matchedItems.isEmpty() -> 0.0
-            isEcommerceOrder -> 18.0
-            else -> 8.0
+        // Keep a single seller per cart and derive the displayed seller and fees from the catalog.
+        val storeIds = matchedItems.map { it.product.storeId }.distinct()
+        if (storeIds.size > 1) {
+            matchedItems.clear()
+            explanationFr = "Les articles sélectionnés proviennent de plusieurs commerces. Aucun article n'a été ajouté."
+            explanationAr = "المنتجات المطلوبة من متاجر مختلفة. لم تتم إضافة أي منتجات إلى السلة."
         }
+        val selectedProduct = matchedItems.firstOrNull()?.product
+        val selectedStore = selectedProduct?.let { product ->
+            CatalogData.stores.firstOrNull { it.id == product.storeId }
+        }
+        if (selectedProduct != null) mainStoreName = selectedProduct.storeName
+        val total = matchedItems.sumOf { it.product.price * it.quantity }
+        val deliveryFee = if (matchedItems.isEmpty()) 0.0 else selectedStore?.deliveryFee ?: 0.0
         val grandTotal = total + deliveryFee
+        val isCatalogEcommerceOrder = selectedProduct?.category == StoreCategory.ECOMMERCE
 
         val itemsDescriptionFr = matchedItems.joinToString(" et ") { "${it.quantity} ${it.product.nameFr}" }
         val itemsDescriptionAr = matchedItems.joinToString(" و ") { "${it.quantity} ${it.product.nameAr}" }
 
-        val speechFr = if (isEcommerceOrder) {
-            "Parfait ! J'ai bien sélectionné votre article e-commerce chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} DH avec expédition colis sécurisée et garantie. Vous pouvez valider en un clic !"
+        val speechFr = if (matchedItems.isEmpty()) {
+            "Je n'ai trouvé aucun article correspondant dans le catalogue disponible. Aucun article n'a été ajouté. La confirmation de commande n'est pas encore disponible."
         } else {
-            "Parfait ! J'ai bien préparé votre commande chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} dirhams, livraison incluse. Vous pouvez confirmer en un clic !"
+            "J'ai préparé une sélection à partir du catalogue de $mainStoreName : $itemsDescriptionFr. Le montant indicatif est de ${grandTotal.toInt()} DH, selon les données du catalogue. Vérifiez les articles avant de continuer ; la confirmation de commande n'est pas encore disponible."
         }
 
-        val speechAr = if (isEcommerceOrder) {
-            "ممتاز وعلى راسي وعيني! اخترت لك منتجك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم شامل شحن الطرد المؤمن مع الضمان. اضغط على تأكيد الآن لشحنه إليك!"
+        val speechAr = if (matchedItems.isEmpty()) {
+            "لم أجد منتجاً مطابقاً في الكتالوج المتاح، ولم تتم إضافة أي منتج. تأكيد الطلبات غير متاح حالياً."
         } else {
-            "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق كابتن ديليفيو DELIVIO إليك!"
+            "حضّرت لك اختياراً من كتالوج $mainStoreName: $itemsDescriptionAr. المبلغ التقديري ${grandTotal.toInt()} درهم حسب بيانات الكتالوج. راجع المنتجات قبل المتابعة؛ تأكيد الطلبات غير متاح حالياً."
         }
 
         return AiShoppingRecommendation(
@@ -436,8 +444,8 @@ object AiShoppingService {
             deliveryFee = deliveryFee,
             grandTotal = grandTotal,
             targetStoreName = mainStoreName,
-            estimatedTimeMins = if (isEcommerceOrder) 30 else 18,
-            confidenceScore = 99,
+            estimatedTimeMins = selectedStore?.deliveryTimeMins ?: 0,
+            confidenceScore = if (matchedItems.isEmpty()) 0 else 80,
             speechAudioTextFr = speechFr,
             speechAudioTextAr = speechAr,
             detectedNotes = detectedNotes,
