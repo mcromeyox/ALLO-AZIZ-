@@ -1087,57 +1087,24 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     // Driver Partner functions
     fun toggleDriverOnline() {
         if (!requireRole(UserRole.DRIVER)) return
-        _driverIsOnline.value = !_driverIsOnline.value
-        _userAlertMessage.value = if (_driverIsOnline.value) "أنت متصل الآن ومتاح لتلقي الطلبات 🟢" else "أنت غير متصل حالياً 🔴"
+        _userAlertMessage.value = "تغيير حالة السائق غير متاح حتى ربط النظام بالخادم."
     }
 
     fun acceptDeliveryTask(orderId: String) {
-        viewModelScope.launch {
-            if (!requireRole(UserRole.DRIVER)) return@launch
-            val driver = _currentUser.value
-            val driverName = driver?.name?.ifBlank { "كابتن التوصيل" } ?: "كابتن التوصيل"
-            val driverPhone = driver?.phone?.ifBlank { "" } ?: ""
-            repository.assignDriverToOrder(orderId, driver?.id ?: "drv_aziz", driverName, driverPhone)
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تم إسناد الطلب #$orderId إليك 🛵",
-                body = "توجه إلى المطعم لاستلام الوجبة والتحقق من تفاصيل الطلب."
-            )
-            _userAlertMessage.value = "تم قبول مهمة التوصيل للطلب #$orderId! توجه للمطعم 🛵"
-        }
+        if (!requireRole(UserRole.DRIVER)) return
+        _userAlertMessage.value = "هذه العملية متوقفة حتى ربط خادم موثوق لتحديث حالة الطلبات وتتبع المندوبين."
     }
 
     fun markOrderPickedUpFromKitchen(orderId: String) {
-        viewModelScope.launch {
-            repository.updateOrderStatus(orderId, "ON_THE_WAY", 0.60f, 10)
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تم استلام الطلب من المطعم 📦",
-                body = "الطلب #$orderId في حوزتك الآن، يرجى التوجه لعنوان العميل."
-            )
-            _userAlertMessage.value = "تم تأكيد استلام الطلب من المطعم! انطلق نحو موقع العميل 📍"
-        }
+        if (!requireRole(UserRole.DRIVER)) return
+        _userAlertMessage.value = "هذه العملية متوقفة حتى ربط خادم موثوق لتحديث حالة الطلبات وتتبع المندوبين."
     }
 
     fun markOrderDeliveredToCustomer(orderId: String) {
-        viewModelScope.launch {
-            repository.updateOrderStatus(orderId, "DELIVERED", 1.0f, 0)
-            HapticFeedbackHelper.vibrateSuccess(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تم إكمال التوصيل بنجاح! 🏆",
-                body = "أحسنت! تم تسليم الطلب #$orderId وإيداع عمولة التوصيل في رصيدك."
-            )
-            _userAlertMessage.value = "تم تأكيد تسليم الطلب للعميل بنجاح! تمت إضافة عمولة التوصيل لمحفظتك 🎉"
-        }
+        if (!requireRole(UserRole.DRIVER)) return
+        _userAlertMessage.value = "هذه العملية متوقفة حتى ربط خادم موثوق لتحديث حالة الطلبات وتتبع المندوبين."
     }
 
-    // Support Agent functions
     fun approveDriverAccount(driverId: String) {
         viewModelScope.launch {
             if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
@@ -1241,26 +1208,10 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun updateOrderCookingStatus(orderId: String, restStatus: String, orderStatus: String) {
-        viewModelScope.launch {
-            if (!requireRole(UserRole.RESTAURANT_OWNER)) return@launch
-            repository.updateRestaurantStatus(orderId, restStatus, orderStatus)
-            HapticFeedbackHelper.vibrateAlert(getApplication())
-            val statusText = when (restStatus) {
-                "COOKING" -> "المطعم بدأ في تحضير الطلب #$orderId 👨‍🍳"
-                "READY_FOR_PICKUP" -> "الطلب #$orderId جاهز وفي انتظار استلام المندوب 📦"
-                else -> "تحديث حالة الطلب #$orderId: $restStatus"
-            }
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تحديث من المطعم 🏪",
-                body = statusText
-            )
-            _userAlertMessage.value = "تم تحديث حالة الطلب إلى: $restStatus"
-        }
+        if (!requireRole(UserRole.RESTAURANT_OWNER)) return
+        _userAlertMessage.value = "هذه العملية متوقفة حتى ربط خادم موثوق لتحديث حالة الطلبات وتتبع المندوبين."
     }
 
-    // Super Admin functions
     fun updateUserStatus(userId: String, newStatus: String) {
         viewModelScope.launch {
             if (!requireRole(UserRole.SUPER_ADMIN)) return@launch
@@ -1568,71 +1519,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun advanceOrderTrackingStage(orderId: String) {
-        viewModelScope.launch {
-            val order = allOrders.value.firstOrNull { it.id == orderId } ?: activeOrder.value ?: return@launch
-            when (order.status) {
-                "RECEIVED", "PLACED" -> {
-                    repository.updateOrderStatus(orderId, "PREPARING", 0.35f, 18)
-                    repository.updateRestaurantStatus(orderId, "COOKING", "PREPARING")
-                    HapticFeedbackHelper.vibrateAlert(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "المطعم يجهز وجبتك بعناية 👨‍🍳",
-                        body = "طلبك #$orderId قيد التحضير في المطبخ الآن."
-                    )
-                    _userAlertMessage.value = "المطعم بدأ في تحضير الطلب الآن 👨‍🍳"
-                }
-                "PREPARING" -> {
-                    val savedPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication())
-                    val courierPhone = if (!ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
-                        order.courierPhone
-                    } else if (!ExternalShareHelper.isPlaceholderOrInvalid(savedPhone)) {
-                        savedPhone
-                    } else {
-                        ""
-                    }
-                    val courierName = if (order.courierName.contains("جاري") || order.courierName.isBlank()) {
-                        "الكابتن عزيز برادة"
-                    } else {
-                        order.courierName
-                    }
-                    repository.assignDriverToOrder(orderId, order.driverId ?: "drv_aziz", courierName, courierPhone)
-                    repository.updateOrderStatus(orderId, "ON_THE_WAY", 0.65f, 10)
-                    repository.updateRestaurantStatus(orderId, "READY_FOR_PICKUP", "ON_THE_WAY")
-                    HapticFeedbackHelper.vibrateAlert(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "الكابتن استلم الطلب وهو في الطريق إليك! 🛵💨",
-                        body = "الكابتن انطلق بدراجته النارية لتسليم طلبك."
-                    )
-                    _userAlertMessage.value = "الكابتن استلم الطلب وهو في الطريق إليك 🛵💨"
-                }
-                "ON_THE_WAY" -> {
-                    repository.updateOrderStatus(orderId, "ARRIVED", 0.90f, 2)
-                    HapticFeedbackHelper.vibrateAlert(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "الكابتن وصل أمام العنوان! 📍🚪",
-                        body = "الكابتن متواجد أمام المبنى لتسليمك الطلب ساخناً."
-                    )
-                    _userAlertMessage.value = "الكابتن وصل عند بابك لتسليم الطلب 📍🚪"
-                }
-                "ARRIVED" -> {
-                    repository.updateOrderStatus(orderId, "DELIVERED", 1.0f, 0)
-                    HapticFeedbackHelper.vibrateSuccess(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
-                        body = "شكراً لاختيارك ديليفيو DELIVIO! شاركنا تقييمك للخدمة."
-                    )
-                    _userAlertMessage.value = "تم تأكيد تسليم واستلام الطلب بنجاح! 🎉"
-                }
-            }
-        }
+        _userAlertMessage.value = "هذه العملية متوقفة حتى ربط خادم موثوق لتحديث حالة الطلبات وتتبع المندوبين."
     }
 
     fun setTrackingOrder(orderId: String) {
@@ -1786,16 +1673,10 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun updateCourierGpsFromDriver(orderId: String, lat: Double, lng: Double, customerLat: Double, customerLng: Double) {
-        viewModelScope.launch {
-            val distKm = LocationServiceManager.calculateDistanceKm(lat, lng, customerLat, customerLng)
-            val minsLeft = LocationServiceManager.estimateMinutesLeft(distKm)
-            val progress = ((1.0 - (distKm / 3.0)).toFloat()).coerceIn(0.1f, 0.98f)
-            repository.updateCourierGps(orderId, lat, lng, progress, minsLeft)
-            FirestoreSyncManager.updateCourierGpsCloud(orderId, lat, lng, progress, minsLeft)
-        }
+        if (!requireRole(UserRole.DRIVER)) return
+        _userAlertMessage.value = "هذه العملية متوقفة حتى ربط خادم موثوق لتحديث حالة الطلبات وتتبع المندوبين."
     }
 
-    // Submit Review
     fun submitReview(
         orderId: String,
         storeName: String,
