@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Safe default: no mobile client can read or write production data until
+    // reviewed, collection-specific rules and server-side authorization exist.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
