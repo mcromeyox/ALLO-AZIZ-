@@ -13,8 +13,6 @@ class AlloAzizRepository(private val database: AppDatabase) {
     val allStores: Flow<List<StoreEntity>> = database.storeDao().getAllStores()
     val allProducts: Flow<List<ProductEntity>> = database.productDao().getAllProducts()
     val allOrders: Flow<List<OrderEntity>> = database.orderDao().getAllOrders()
-    val allNotifications: Flow<List<NotificationEntity>> = database.notificationDao().getAllNotifications()
-    val unreadCount: Flow<Int> = database.notificationDao().getUnreadCount()
     val allReviews: Flow<List<ReviewEntity>> = database.reviewDao().getAllReviews()
     val wallet: Flow<WalletProfileEntity?> = database.walletDao().getWallet()
     val allTickets: Flow<List<SupportTicketEntity>> = database.supportTicketDao().getAllTickets()
@@ -175,16 +173,25 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.reviewDao().insertReview(review)
     }
 
+    fun getNotificationsForUser(userId: String): Flow<List<NotificationEntity>> =
+        database.notificationDao().getNotificationsForUser(userId)
+
+    fun getUnreadCountForUser(userId: String): Flow<Int> =
+        database.notificationDao().getUnreadCountForUser(userId)
+
     suspend fun addNotification(notification: NotificationEntity) {
+        if (notification.userId.isBlank()) return
         database.notificationDao().insertNotification(notification)
     }
 
-    suspend fun markNotificationRead(id: String) {
-        database.notificationDao().markAsRead(id)
+    suspend fun markNotificationRead(id: String, userId: String) {
+        if (userId.isBlank()) return
+        database.notificationDao().markAsRead(id, userId)
     }
 
-    suspend fun markAllNotificationsRead() {
-        database.notificationDao().markAllAsRead()
+    suspend fun markAllNotificationsRead(userId: String) {
+        if (userId.isBlank()) return
+        database.notificationDao().markAllAsRead(userId)
     }
 
     suspend fun topUpWallet(amount: Double) {
