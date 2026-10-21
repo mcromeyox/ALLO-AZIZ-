@@ -1,5 +1,6 @@
 package com.example.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -103,7 +104,7 @@ data class OrderEntity(
     val customerLng: Double = -7.3849,
     val courierLat: Double = 33.6900,
     val courierLng: Double = -7.3835,
-    val customerId: String = ""
+    @ColumnInfo(defaultValue = "''") val customerId: String = ""
 )
 
 @Entity(tableName = "reviews")
