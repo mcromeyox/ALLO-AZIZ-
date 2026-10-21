@@ -168,20 +168,20 @@ interface ReviewDao {
 
 @Dao
 interface NotificationDao {
-    @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
-    fun getAllNotifications(): Flow<List<NotificationEntity>>
+    @Query("SELECT * FROM notifications WHERE userId = :userId ORDER BY timestamp DESC")
+    fun getNotificationsForUser(userId: String): Flow<List<NotificationEntity>>
 
-    @Query("SELECT COUNT(*) FROM notifications WHERE isRead = 0")
-    fun getUnreadCount(): Flow<Int>
+    @Query("SELECT COUNT(*) FROM notifications WHERE userId = :userId AND isRead = 0")
+    fun getUnreadCountForUser(userId: String): Flow<Int>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotification(notification: NotificationEntity)
 
-    @Query("UPDATE notifications SET isRead = 1 WHERE id = :id")
-    suspend fun markAsRead(id: String)
+    @Query("UPDATE notifications SET isRead = 1 WHERE id = :id AND userId = :userId")
+    suspend fun markAsRead(id: String, userId: String)
 
-    @Query("UPDATE notifications SET isRead = 1")
-    suspend fun markAllAsRead()
+    @Query("UPDATE notifications SET isRead = 1 WHERE userId = :userId")
+    suspend fun markAllAsRead(userId: String)
 }
 
 @Dao
