@@ -741,6 +741,24 @@ fun AiVoiceShoppingDialog(
                                         }
                                     }
                                 }
+                            } else if (recommendation != null && recommendation.isUnavailableNotice) {
+                                Card(
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.6f)),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f, fill = false)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Text(
+                                            text = "ℹ️ " + if (language == AppLanguage.ARABIC) recommendation.aiExplanationAr else recommendation.aiExplanationFr,
+                                            fontSize = 12.sp,
+                                            color = Color.White,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+                                }
                             } else {
                                 // Fast Voice Suggestions Chips
                                 LazyRow(

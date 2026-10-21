@@ -1294,7 +1294,7 @@ fun OrderTrackingScreen(
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "تواصل مباشر مع كابتن التوصيل أو إدارة ديليفيو DELIVIO بخصوص طلبك #${order.id}.",
+                        text = "تواصل مباشر مع كابتن التوصيل أو إدارة فيلورا ون VELORA ONE بخصوص طلبك #${order.id}.",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1541,7 +1541,7 @@ fun LiveTrackingMapCanvas(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "DELIVIO",
+                        text = "VELORA ONE",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Black,
                         color = AzizOrangePrimary

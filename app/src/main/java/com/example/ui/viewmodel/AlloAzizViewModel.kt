@@ -633,16 +633,16 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     private fun initSupportChat() {
         val greeting = when (_selectedLanguage.value) {
-            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء ديليفيو DELIVIO 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
-            AppLanguage.FRENCH -> "Bienvenue au support DELIVIO 24/7 ! Je suis Sara, comment puis-je vous aider ?"
-            AppLanguage.ENGLISH -> "Welcome to DELIVIO 24/7 Support! I'm Sara, how can I assist you today?"
+            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء فيلورا ون VELORA ONE 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
+            AppLanguage.FRENCH -> "Bienvenue au support VELORA ONE 24/7 ! Je suis Sara, comment puis-je vous aider ?"
+            AppLanguage.ENGLISH -> "Welcome to VELORA ONE 24/7 Support! I'm Sara, how can I assist you today?"
         }
         _supportMessages.value = listOf(
             SupportChatMessage(
                 id = "msg_init",
                 text = greeting,
                 isUser = false,
-                agentName = "سارة - دعم ديليفيو DELIVIO"
+                agentName = "سارة - دعم فيلورا ون (VELORA ONE)"
             )
         )
     }
@@ -695,13 +695,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             when (user.status) {
                 "PENDING_APPROVAL" -> {
                     val roleMsg = if (user.role == "RESTAURANT_OWNER") {
-                        "طلب الانضمام كشريك مطعم (${user.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو). ستتمكن من تشغيل متجرك فور اعتماد الحساب."
+                        "طلب الانضمام كشريك مطعم (${user.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE). ستتمكن من تشغيل متجرك فور اعتماد الحساب."
                     } else if (user.role == "DRIVER") {
-                        "طلب الانضمام كسائق مندوب (${user.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو). ستتمكن من استقبال الطلبات فور اعتماد الحساب."
+                        "طلب الانضمام كسائق مندوب (${user.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE). ستتمكن من استقبال الطلبات فور اعتماد الحساب."
                     } else if (user.role == "SUPPORT_AGENT") {
                         "طلب الانضمام لفريق الدعم الفني (${user.name}) قيد المراجعة والاعتماد من طرف مدير المنصة لتعيين الصلاحيات."
                     } else {
-                        "حسابك (${user.name}) قيد المراجعة والاعتماد من قبل إدارة DELIVIO (ديليفيو)."
+                        "حسابك (${user.name}) قيد المراجعة والاعتماد من قبل إدارة فيلورا ون (VELORA ONE)."
                     }
                     _authPendingApprovalMessage.value = roleMsg
                     return@launch
@@ -711,7 +711,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     return@launch
                 }
                 "REJECTED" -> {
-                    _authError.value = "عذراً، تم رفض طلب التسجيل من طرف إدارة DELIVIO لعدم استيفاء الشروط. للتواصل مع الدعم: support@delivio.ma"
+                    _authError.value = "عذراً، تم رفض طلب التسجيل من طرف إدارة فيلورا ون لعدم استيفاء الشروط. للتواصل مع الدعم: support@velora.one"
                     return@launch
                 }
                 "DEACTIVATED" -> {
@@ -726,11 +726,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 }
             }
 
-            // Verify password using hash verification and plain-text fallback
+            // Verify password securely using salted hash verification
             val passwordMatches = user.password.isBlank() ||
-                user.password == trimmedPass ||
-                com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password) ||
-                (user.role == "SUPER_ADMIN" && (trimmedPass == "admin1234" || trimmedPass == "abdomery"))
+                com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password)
 
             if (!passwordMatches) {
                 _authError.value = "كلمة المرور غير صحيحة! يرجى التأكد وإعادة المحاولة."
@@ -765,13 +763,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 when (existingUser.status) {
                     "PENDING_APPROVAL" -> {
                         val roleMsg = if (existingUser.role == "RESTAURANT_OWNER") {
-                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو)."
+                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE)."
                         } else if (existingUser.role == "DRIVER") {
-                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة DELIVIO (ديليفيو)."
+                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE)."
                         } else if (existingUser.role == "SUPPORT_AGENT") {
                             "طلب الانضمام لفريق الدعم الفني (${existingUser.name}) قيد المراجعة والاعتماد من طرف مدير المنصة."
                         } else {
-                            "حسابك قيد المراجعة والاعتماد من قبل إدارة DELIVIO."
+                            "حسابك قيد المراجعة والاعتماد من قبل إدارة فيلورا ون (VELORA ONE)."
                         }
                         _authPendingApprovalMessage.value = roleMsg
                         return@launch
@@ -781,7 +779,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         return@launch
                     }
                     "REJECTED" -> {
-                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة DELIVIO."
+                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة فيلورا ون (VELORA ONE)."
                         return@launch
                     }
                     "DEACTIVATED" -> {
@@ -973,10 +971,10 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_welcome_${System.currentTimeMillis()}",
-                        titleAr = "مرحباً بك في DELIVIO! 🇲🇦",
-                        titleFr = "Bienvenue sur DELIVIO !",
-                        titleEn = "Welcome to DELIVIO!",
-                        bodyAr = "تم تفعيل حسابك بنجاح. استمتع بأشهى المأكولات والتسوق السريع.",
+                        titleAr = "مرحباً بك في فيلورا ون (VELORA ONE)! 🇲🇦",
+                        titleFr = "Bienvenue sur VELORA ONE !",
+                        titleEn = "Welcome to VELORA ONE!",
+                        bodyAr = "تم تفعيل حسابك بنجاح. استمتع بأشهى المأكولات والتسوق السريع الذكي.",
                         bodyFr = "Votre compte a été activé avec succès.",
                         bodyEn = "Your account is now active.",
                         timestamp = System.currentTimeMillis(),
@@ -1002,7 +1000,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 )
                 _merchantApplications.value = listOf(mApp) + _merchantApplications.value
 
-                _authPendingApprovalMessage.value = "تم استلام ملف الشريك التجاري (${restaurantName.ifBlank { trimmedName }}) بنجاح! 📄 حسابك قيد التدقيق الإداري من طرف إدارة DELIVIO أو الدعم الفني، وسيتم تفعيله فور اعتماد الوثائق."
+                _authPendingApprovalMessage.value = "تم استلام ملف الشريك التجاري (${restaurantName.ifBlank { trimmedName }}) بنجاح! 📄 حسابك قيد التدقيق الإداري من طرف إدارة فيلورا ون (VELORA ONE) أو الدعم الفني، وسيتم تفعيله فور اعتماد الوثائق."
 
                 repository.addNotification(
                     NotificationEntity(
@@ -1036,7 +1034,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 )
             } else {
                 // Driver Partner: Requires Admin / Support Approval
-                _authPendingApprovalMessage.value = "تم استلام ملف السائق (${trimmedName}) بنجاح! 🛵 حسابك قيد التدقيق الإداري من قبل إدارة DELIVIO، وسيتم تفعيله فور اعتماد البيانات."
+                _authPendingApprovalMessage.value = "تم استلام ملف السائق (${trimmedName}) بنجاح! 🛵 حسابك قيد التدقيق الإداري من قبل إدارة فيلورا ون (VELORA ONE)، وسيتم تفعيله فور اعتماد البيانات."
 
                 repository.addNotification(
                     NotificationEntity(
@@ -1061,12 +1059,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_appr_${System.currentTimeMillis()}",
-                    titleAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح 🎉",
-                    titleFr = "Demande acceptée avec succès 🎉",
-                    titleEn = "Partner Application Approved 🎉",
-                    bodyAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
-                    bodyFr = "Votre demande a été approuvée par l'administration DELIVIO.",
-                    bodyEn = "Your application was approved. You can now login and start working.",
+                    titleAr = "تم قبول طلب انضمامك إلى فيلورا ون (VELORA ONE) بنجاح 🎉",
+                    titleFr = "Demande acceptée avec succès sur VELORA ONE 🎉",
+                    titleEn = "Partner Application Approved on VELORA ONE 🎉",
+                    bodyAr = "تم قبول طلب انضمامك إلى فيلورا ون بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
+                    bodyFr = "Votre demande a été approuvée par l'administration VELORA ONE.",
+                    bodyEn = "Your application was approved by VELORA ONE. You can now login and start working.",
                     timestamp = System.currentTimeMillis(),
                     type = "APPROVAL"
                 )
@@ -1081,7 +1079,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_rej_${System.currentTimeMillis()}",
-                    titleAr = "تحديث بخصوص طلب الانضمام إلى DELIVIO",
+                    titleAr = "تحديث بخصوص طلب الانضمام إلى فيلورا ون (VELORA ONE)",
                     titleFr = "Mise à jour concernant votre demande",
                     titleEn = "Application Status Update",
                     bodyAr = "نأسف لإبلاغك بأنه تم رفض طلب الانضمام لعدم استيفاء الشروط والمعايير المطلوبة. يمكنك التواصل مع الدعم الفني لمزيد من المعلومات.",
@@ -1520,13 +1518,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 return@launch
             }
 
-            if (trimmedId.equals("mcromeyox@gmail.com", ignoreCase = true) && trimmedPass == "abdomery") {
-                val adminUser = repository.getUserByEmail("mcromeyox@gmail.com") ?: UserAccountEntity(
+            var user = repository.getUserByIdentifier(trimmedId)
+            if (user == null && trimmedId.equals("mcromeyox@gmail.com", ignoreCase = true)) {
+                val adminUser = UserAccountEntity(
                     id = "usr_super_admin",
                     name = "المدير العام (Super Admin)",
                     email = "mcromeyox@gmail.com",
                     phone = "+212 600-000001",
-                    password = "abdomery",
+                    password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass),
                     role = "SUPER_ADMIN",
                     status = "ACTIVE",
                     balance = 150000.0,
@@ -1534,21 +1533,18 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     authProvider = "EMAIL"
                 )
                 repository.insertUser(adminUser)
-                _currentUser.value = adminUser
-                _currentUserId.value = adminUser.id
-                _currentRole.value = UserRole.SUPER_ADMIN
-                _currentScreen.value = AppScreen.ADMIN_DASHBOARD
-                _userAlertMessage.value = "تم تسجيل الدخول كمدير عام بنجاح 👑"
-                return@launch
+                user = adminUser
             }
 
-            val user = repository.getUserByIdentifier(trimmedId)
             if (user == null) {
                 _authError.value = "حساب الموظف أو الشريك غير مسجل بالنظام."
                 return@launch
             }
 
-            if (user.password.isNotBlank() && user.password != trimmedPass) {
+            val isPasswordValid = user.password.isBlank() ||
+                com.example.data.auth.PasswordHasher.verifyPassword(trimmedPass, user.password)
+
+            if (!isPasswordValid) {
                 _authError.value = "كلمة المرور غير صحيحة."
                 return@launch
             }
@@ -1697,29 +1693,29 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun applyPromoCode(code: String): Boolean {
         val cleanCode = code.trim().uppercase()
-        if (cleanCode == "DELIVIO20" || cleanCode == "AZIZ20") {
-            _appliedPromoCode.value = "DELIVIO20"
+        if (cleanCode == "VELORA20" || cleanCode == "DELIVIO20" || cleanCode == "AZIZ20") {
+            _appliedPromoCode.value = "VELORA20"
             _promoDiscountPercent.value = 0.20 // 20%
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود DELIVIO20 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code DELIVIO20 appliqué ! -20% sur la commande 🎉"
-                AppLanguage.ENGLISH -> "Code DELIVIO20 applied! 20% off your order 🎉"
+                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود VELORA20 مفعل 🎉"
+                AppLanguage.FRENCH -> "Code VELORA20 appliqué ! -20% sur la commande 🎉"
+                AppLanguage.ENGLISH -> "Code VELORA20 applied! 20% off your order 🎉"
             }
             return true
-        } else if (cleanCode == "DELIVIO10" || cleanCode == "ALLO10") {
-            _appliedPromoCode.value = "DELIVIO10"
+        } else if (cleanCode == "VELORA10" || cleanCode == "DELIVIO10" || cleanCode == "ALLO10") {
+            _appliedPromoCode.value = "VELORA10"
             _promoDiscountPercent.value = 0.10 // 10%
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود DELIVIO10 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code DELIVIO10 appliqué ! -10% 🎉"
-                AppLanguage.ENGLISH -> "Code DELIVIO10 applied! 10% off 🎉"
+                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود VELORA10 مفعل 🎉"
+                AppLanguage.FRENCH -> "Code VELORA10 appliqué ! -10% 🎉"
+                AppLanguage.ENGLISH -> "Code VELORA10 applied! 10% off 🎉"
             }
             return true
         } else {
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب DELIVIO20"
-                AppLanguage.FRENCH -> "Code promo invalide. Essayez DELIVIO20"
-                AppLanguage.ENGLISH -> "Invalid promo code. Try DELIVIO20"
+                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب VELORA20"
+                AppLanguage.FRENCH -> "Code promo invalide. Essayez VELORA20"
+                AppLanguage.ENGLISH -> "Invalid promo code. Try VELORA20"
             }
             return false
         }
@@ -1766,8 +1762,17 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val paymentMethodStr = when (_selectedPaymentMethod.value) {
             PaymentMethodType.CREDIT_CARD -> "بطاقة مصرفية آمنة (Visa/Mastercard)"
             PaymentMethodType.CASH_ON_DELIVERY -> "الدفع عند الاستلام (كاش)"
-            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة DELIVIO Pay"
+            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة فيلورا (VELORA Pay)"
             PaymentMethodType.DIGITAL_WALLET -> "Google Pay / Apple Pay"
+        }
+
+        // Wallet balance payment safeguard
+        if (_selectedPaymentMethod.value == PaymentMethodType.ALLO_PAY_WALLET) {
+            val currentBalance = wallet.value?.balance ?: 0.0
+            if (currentBalance < total) {
+                _userAlertMessage.value = "رصيد المحفظة غير كافٍ (${String.format(Locale.US, "%.1f", currentBalance)} د.م) لإتمام هذا الطلب (${String.format(Locale.US, "%.1f", total)} د.م). يرجى شحن الرصيد أو اختيار وسيلة دفع أخرى."
+                return
+            }
         }
 
         viewModelScope.launch {
@@ -1904,7 +1909,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         context = getApplication(),
                         orderId = orderId,
                         title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
-                        body = "شكراً لاختيارك ديليفيو DELIVIO! شاركنا تقييمك للخدمة."
+                        body = "شكراً لاختيارك فيلورا ون (VELORA ONE)! شاركنا تقييمك للخدمة."
                     )
                     _userAlertMessage.value = "تم تأكيد تسليم واستلام الطلب بنجاح! 🎉"
                 }
@@ -2136,9 +2141,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 text = responseText,
                 isUser = false,
                 agentName = when (lang) {
-                    AppLanguage.FRENCH -> "Sara (IA Support DELIVIO 24/7)"
-                    AppLanguage.ENGLISH -> "Sara (DELIVIO 24/7 AI Support)"
-                    AppLanguage.ARABIC -> "سارة - دعم ديليفيو DELIVIO"
+                    AppLanguage.FRENCH -> "Sara (IA Support VELORA ONE 24/7)"
+                    AppLanguage.ENGLISH -> "Sara (VELORA ONE 24/7 AI Support)"
+                    AppLanguage.ARABIC -> "سارة - دعم فيلورا ون (VELORA ONE)"
                 }
             )
             _supportMessages.value = _supportMessages.value + botMsg
@@ -2154,9 +2159,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     titleAr = "شحن المحفظة بنجاح 💳",
                     titleFr = "Portefeuille rechargé 💳",
                     titleEn = "Wallet Topped Up 💳",
-                    bodyAr = "تمت إضافة $amount د.م إلى محفظة DELIVIO Pay بنجاح.",
-                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille DELIVIO Pay.",
-                    bodyEn = "$amount MAD successfully added to your DELIVIO Pay balance.",
+                    bodyAr = "تمت إضافة $amount د.م إلى محفظة VELORA Pay بنجاح.",
+                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille VELORA Pay.",
+                    bodyEn = "$amount MAD successfully added to your VELORA Pay balance.",
                     timestamp = System.currentTimeMillis(),
                     type = "WALLET"
                 )
@@ -2198,7 +2203,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         return ExternalShareHelper.openWhatsApp(
             context = context,
             phoneE164 = targetPhone,
-            prefilledText = "السلام عليكم كابتن ديليفيو، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+            prefilledText = "السلام عليكم كابتن فيلورا ون، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
         )
     }
 
@@ -2213,7 +2218,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         return ExternalShareHelper.openWhatsApp(
             context = context,
             phoneE164 = targetPhone,
-            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة ديليفيو DELIVIO بخصوص تطبيق التوصيل."
+            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة فيلورا ون VELORA ONE بخصوص تطبيق التوصيل."
         )
     }
 

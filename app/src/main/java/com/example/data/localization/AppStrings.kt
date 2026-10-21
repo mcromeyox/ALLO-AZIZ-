@@ -4,13 +4,9 @@ import com.example.data.model.AppLanguage
 
 object AppStrings {
 
-    fun appName(lang: AppLanguage): String = "DELIVIO"
+    fun appName(lang: AppLanguage): String = com.example.data.config.BrandConfig.BRAND_NAME
 
-    fun slogan(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "ديليفيو • سرعة فائقة، مطاعم فاخرة وسوق تجارة إلكترونية ذكي!"
-        AppLanguage.FRENCH -> "DELIVIO • Super-App de livraison express & marketplace moderne !"
-        AppLanguage.ENGLISH -> "DELIVIO • Premium express delivery & smart marketplace super-app!"
-    }
+    fun slogan(lang: AppLanguage): String = com.example.data.config.BrandConfig.slogan(lang)
 
     // Tabs
     fun tabHome(lang: AppLanguage): String = when (lang) {
@@ -93,9 +89,9 @@ object AppStrings {
     }
 
     fun expressBannerTitle(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "خدمة ديليفيو إكسبريس ⚡"
-        AppLanguage.FRENCH -> "Service DELIVIO Express ⚡"
-        AppLanguage.ENGLISH -> "DELIVIO Express ⚡"
+        AppLanguage.ARABIC -> "خدمة فيلورا إكسبريس ⚡"
+        AppLanguage.FRENCH -> "Service VELORA ONE Express ⚡"
+        AppLanguage.ENGLISH -> "VELORA ONE Express ⚡"
     }
 
     fun expressBannerDesc(lang: AppLanguage): String = when (lang) {
@@ -178,9 +174,9 @@ object AppStrings {
     }
 
     fun promoCodePrompt(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "كود الخصم (جرب: DELIVIO20)"
-        AppLanguage.FRENCH -> "Code Promo (ex: DELIVIO20)"
-        AppLanguage.ENGLISH -> "Promo Code (try: DELIVIO20)"
+        AppLanguage.ARABIC -> "كود الخصم (جرب: VELORA20)"
+        AppLanguage.FRENCH -> "Code Promo (ex: VELORA20)"
+        AppLanguage.ENGLISH -> "Promo Code (try: VELORA20)"
     }
 
     fun apply(lang: AppLanguage): String = when (lang) {
@@ -215,9 +211,9 @@ object AppStrings {
     }
 
     fun payWallet(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "محفظة DELIVIO Pay (رصيدك:"
-        AppLanguage.FRENCH -> "Portefeuille DELIVIO Pay (Solde:"
-        AppLanguage.ENGLISH -> "DELIVIO Pay Wallet (Balance:"
+        AppLanguage.ARABIC -> "محفظة VELORA Pay (رصيدك:"
+        AppLanguage.FRENCH -> "Portefeuille VELORA Pay (Solde:"
+        AppLanguage.ENGLISH -> "VELORA Pay Wallet (Balance:"
     }
 
     fun payAppleGoogle(lang: AppLanguage): String = when (lang) {
@@ -337,9 +333,9 @@ object AppStrings {
     }
 
     fun courierRating(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "تقييم كابتن التوصيل (ديليفيو)"
-        AppLanguage.FRENCH -> "Note du livreur DELIVIO"
-        AppLanguage.ENGLISH -> "DELIVIO Courier Rating"
+        AppLanguage.ARABIC -> "تقييم كابتن التوصيل (فيلورا ون)"
+        AppLanguage.FRENCH -> "Note du livreur VELORA ONE"
+        AppLanguage.ENGLISH -> "VELORA ONE Courier Rating"
     }
 
     fun writeReviewPlaceholder(lang: AppLanguage): String = when (lang) {
@@ -467,9 +463,9 @@ object AppStrings {
     }
 
     fun aboutApp(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "حول تطبيق ديليفيو DELIVIO"
-        AppLanguage.FRENCH -> "À propos de DELIVIO"
-        AppLanguage.ENGLISH -> "About DELIVIO"
+        AppLanguage.ARABIC -> "حول تطبيق فيلورا ون VELORA ONE"
+        AppLanguage.FRENCH -> "À propos de VELORA ONE"
+        AppLanguage.ENGLISH -> "About VELORA ONE"
     }
 
     fun appVersion(lang: AppLanguage): String = when (lang) {

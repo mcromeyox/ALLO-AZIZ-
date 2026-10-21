@@ -1,6 +1,6 @@
 {
-  "name": "DELIVIO",
-  "description": "Super-App DELIVIO : Livraison express de restaurants gastronomiques, courses et marketplace e-commerce avec assistant IA et suivi GPS en direct",
+  "name": "VELORA ONE",
+  "description": "Super-App VELORA ONE : Livraison express de restaurants gastronomiques, courses et marketplace e-commerce avec assistant IA et suivi GPS en direct au Maroc",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

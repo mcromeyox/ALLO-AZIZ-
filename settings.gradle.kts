@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "DELIVIO"
+rootProject.name = "VELORA ONE"
 
 include(":app")

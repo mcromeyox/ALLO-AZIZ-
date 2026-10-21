@@ -116,9 +116,9 @@ fun FavoritesScreen(
                         Column {
                             Text(
                                 text = when (language) {
-                                    AppLanguage.FRENCH -> "Mes Favoris chez DELIVIO ❤️"
-                                    AppLanguage.ENGLISH -> "My Favorites on DELIVIO ❤️"
-                                    AppLanguage.ARABIC -> "مفضلاتي في ديليفيو DELIVIO ❤️"
+                                    AppLanguage.FRENCH -> "Mes Favoris chez VELORA ONE ❤️"
+                                    AppLanguage.ENGLISH -> "My Favorites on VELORA ONE ❤️"
+                                    AppLanguage.ARABIC -> "مفضلاتي في فيلورا ون (VELORA ONE) ❤️"
                                 },
                                 fontWeight = FontWeight.Black,
                                 fontSize = 16.sp

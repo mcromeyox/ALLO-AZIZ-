@@ -44,7 +44,7 @@ class ExampleRobolectricTest {
     @Test
     fun readStringFromContext_matchesAppName() {
         val appName = context.getString(R.string.app_name)
-        assertEquals("DELIVIO", appName)
+        assertEquals("VELORA ONE", appName)
     }
 
     @Test
@@ -87,12 +87,13 @@ class ExampleRobolectricTest {
 
     @Test
     fun superAdmin_credentialsVerification() = runBlocking {
+        val secureSaltedHash = com.example.data.auth.PasswordHasher.hashPassword("SuperAdminSecure2026#")
         val admin = com.example.data.local.UserAccountEntity(
             id = "usr_super_admin",
             name = "المدير العام",
             email = "mcromeyox@gmail.com",
             phone = "+212 600-000001",
-            password = "abdomery",
+            password = secureSaltedHash,
             role = "SUPER_ADMIN",
             status = "ACTIVE"
         )
@@ -101,9 +102,39 @@ class ExampleRobolectricTest {
         val retrievedAdmin = database.userDao().getUserByEmail("mcromeyox@gmail.com")
         assertNotNull(retrievedAdmin)
         assertEquals("mcromeyox@gmail.com", retrievedAdmin?.email)
-        assertEquals("abdomery", retrievedAdmin?.password)
+        assertTrue(com.example.data.auth.PasswordHasher.verifyPassword("SuperAdminSecure2026#", retrievedAdmin?.password ?: ""))
         assertEquals("SUPER_ADMIN", retrievedAdmin?.role)
         assertEquals("ACTIVE", retrievedAdmin?.status)
+    }
+
+    @Test
+    fun aiShoppingService_safeguard_rejectsExternalPlatformsWithoutHallucination() = runBlocking {
+        val query = "Je veux une robe de chez Zara et des écouteurs Apple sur Amazon"
+        val recommendation = com.example.data.services.AiShoppingService.matchLocalCatalogWithNlp(query, CatalogData.products)
+
+        assertNotNull(recommendation)
+        assertTrue(recommendation.isUnavailableNotice)
+        assertTrue(recommendation.items.isEmpty())
+        assertTrue(recommendation.aiExplanationFr.contains("disponible") || recommendation.aiExplanationFr.contains("VELORA"))
+    }
+
+    @Test
+    fun brandConfig_centralizedTokens_areConsistent() {
+        assertEquals("VELORA ONE", com.example.data.config.BrandConfig.BRAND_NAME)
+        assertEquals("فيلورا ون", com.example.data.config.BrandConfig.BRAND_TITLE_AR)
+        assertTrue(com.example.data.config.BrandConfig.slogan(AppLanguage.ARABIC).contains("فيلورا ون"))
+        assertTrue(com.example.data.config.BrandConfig.slogan(AppLanguage.FRENCH).contains("VELORA ONE"))
+        assertTrue(com.example.data.config.BrandConfig.slogan(AppLanguage.ENGLISH).contains("VELORA ONE"))
+        assertEquals("support@velora.one", com.example.data.config.BrandConfig.SUPPORT_EMAIL)
+    }
+
+    @Test
+    fun passwordHasher_correctlyHashesAndVerifies() {
+        val pass = "MoroccoSuperSecretPass123"
+        val hash = com.example.data.auth.PasswordHasher.hashPassword(pass)
+        assertTrue(hash.length == 64)
+        assertTrue(com.example.data.auth.PasswordHasher.verifyPassword(pass, hash))
+        assertTrue(!com.example.data.auth.PasswordHasher.verifyPassword("WrongPassword", hash))
     }
 
     @Test

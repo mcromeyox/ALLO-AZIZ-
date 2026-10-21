@@ -30,7 +30,9 @@ data class AiShoppingRecommendation(
     val speechAudioTextFr: String = "",
     val speechAudioTextAr: String = "",
     val detectedNotes: List<String> = emptyList(),
-    val storeBadgeEmoji: String = "🏪"
+    val storeBadgeEmoji: String = "🏪",
+    val isUnavailableNotice: Boolean = false,
+    val suggestedAlternatives: List<Product> = emptyList()
 )
 
 data class AiRecommendedItem(
@@ -99,26 +101,28 @@ object AiShoppingService {
         }
 
         val systemPrompt = """
-            You are 'Sara' or 'Karim', the ultra-realistic voice shopping AI concierge for DELIVIO Super-App in Mohammedia, Morocco.
-            The user spoke or typed naturally in Moroccan Darija, French, Arabic, or English: "$userVoiceText".
+            You are 'Sara' or 'Karim', the AI voice shopping assistant for VELORA ONE Super-App in Mohammedia, Morocco.
+            The user spoke or typed in Moroccan Darija, French, Arabic, or English: "$userVoiceText".
             
-            Catalog available:
+            AUTHORITATIVE VERIFIED CATALOG:
             $catalogSummary
             
-            Analyze the user's intent with 100% precision:
-            - If the user asks for a product from the catalog, match it accurately.
-            - If the user asks for products from ANY global or local platform (e.g. Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple, Jumia), DELIVIO Concierge fulfills it seamlessly! Assign storeName to "DELIVIO Concierge Global Marketplace (Zara, Shein, Amazon & Partenaires)", set a realistic price in Moroccan Dirhams (DH), and provide an item object.
+            MANDATORY COMPLIANCE & ACCURACY RULES:
+            - ONLY match products that actually exist in the AUTHORITATIVE VERIFIED CATALOG above using their exact "id".
+            - NEVER fabricate or invent any product, SKU, merchant, or price.
+            - If the user asks for products from external unsupported platforms (e.g. Zara, Shein, Amazon, Temu, AliExpress, Apple, Nike) or products NOT in our verified catalog, DO NOT create fake items or estimated prices. Set "items": [] and "isUnavailableNotice": true. Explain politely that external platforms are not directly orderable and invite them to explore local partner stores in Mohammedia.
             - Extract quantities (e.g., 2, 3, joj, tleta).
-            - Extract culinary or product preferences (size, color, sauce, warranty).
-            - Create warm, natural, human-like voice sentences in French and Arabic (speechAudioFr and speechAudioAr) welcoming the user with Moroccan hospitality.
+            - Extract preparation notes (e.g., sauces, without onion).
+            - Generate warm, natural spoken responses (speechAudioFr and speechAudioAr) in French and Moroccan Arabic with authentic hospitality.
             
             Return ONLY raw valid JSON:
             {
                "confidence": 99,
+               "isUnavailableNotice": false,
                "explanationFr": "French summary of what was chosen",
                "explanationAr": "Arabic summary of what was chosen",
-               "speechAudioFr": "Parfait ! J'ai bien préparé votre commande chez [Store] avec [Items]. Le total est de [Price] dirhams avec la livraison express. Vous pouvez confirmer en un clic !",
-               "speechAudioAr": "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من [Store]، بمجموع [Price] درهم مع التوصيل السريع. يمكنك التأكيد الآن!",
+               "speechAudioFr": "Parfait ! J'ai bien sélectionné vos articles chez [Store]. Vous pouvez vérifier le panier et confirmer en un clic !",
+               "speechAudioAr": "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من [Store]. يمكنك مراجعة السلة والتأكيد الآن!",
                "storeName": "Store name",
                "notes": ["Sauce piquante", "Sans oignon"],
                "items": [
@@ -346,8 +350,40 @@ object AiShoppingService {
         var isEcommerceOrder = false
 
         // Match Logic:
-        // A. E-COMMERCE SECTOR MATCH
-        if (hasAirpods || hasSmartwatch || hasCharger || hasGaming) {
+        // 1. FIRST PRIORITY: EXTERNAL MARKETPLACE SAFEGUARD (Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple)
+        if (isGlobalMarketplace) {
+            val platformLabel = when {
+                isZara -> "Zara"
+                isShein -> "Shein"
+                isAmazon -> "Amazon"
+                isTemu -> "Temu"
+                isAliExpress -> "AliExpress"
+                isDecathlon -> "Decathlon"
+                isNikeAdidas -> "Nike / Adidas"
+                isAppleSamsung -> "Apple / Samsung"
+                else -> "plateformes externes"
+            }
+            return AiShoppingRecommendation(
+                userPrompt = query,
+                aiExplanationAr = "عذراً، الطلب المباشر من منصة $platformLabel غير مدعوم حالياً على فيلورا ون (VELORA ONE). يمكنك تصفح مطاعمنا ومتاجرنا المحلية المعتمدة في المحمدية.",
+                aiExplanationFr = "Désolé, les commandes directes depuis $platformLabel ne sont pas disponibles sur VELORA ONE. Découvrez nos commerces et restaurants partenaires vérifiés à Mohammedia !",
+                items = emptyList(),
+                estimatedTotal = 0.0,
+                deliveryFee = 0.0,
+                grandTotal = 0.0,
+                targetStoreName = "VELORA ONE Partner Catalog",
+                estimatedTimeMins = 0,
+                confidenceScore = 95,
+                speechAudioTextFr = "Désolé, les articles de cette plateforme externe ne sont pas disponibles pour commande directe. Découvrez notre sélection locale de partenaires !",
+                speechAudioTextAr = "عذراً، منتجات هذه المنصة غير متوفرة للطلب المباشر. يمكنك تصفح قائمة شركائنا المعتمدين في المحمدية!",
+                detectedNotes = detectedNotes,
+                storeBadgeEmoji = "ℹ️",
+                isUnavailableNotice = true,
+                suggestedAlternatives = products.take(4)
+            )
+        }
+        // 2. LOCAL E-COMMERCE SECTOR MATCH (Verified Local Partners)
+        else if (hasAirpods || hasSmartwatch || hasCharger || hasGaming) {
             isEcommerceOrder = true
             mainStoreName = "تيك زون إلكترونيات المحمدية (TechZone)"
             storeEmoji = "📱"
@@ -395,75 +431,6 @@ object AiShoppingService {
             }
             explanationFr = "Articles de mode et parfumerie de luxe authentifiés avec emballage soigné !"
             explanationAr = "منتجات أزياء وعطور أصلية فاخرة مصادق عليها مع تغليف بريميوم أنيق!"
-        }
-        // B. GLOBAL & EXTERNAL MARKETPLACE CONCIERGE (Zara, Shein, Amazon, Temu, AliExpress, Decathlon, Nike, Apple)
-        else if (isGlobalMarketplace) {
-            isEcommerceOrder = true
-            val platformLabel = when {
-                isZara -> "زارا (Zara Fashion)"
-                isShein -> "شين (Shein Marketplace)"
-                isAmazon -> "أمازون (Amazon Global)"
-                isTemu -> "تيمو (Temu Express)"
-                isAliExpress -> "علي إكسبريس (AliExpress)"
-                isDecathlon -> "ديكاتلون (Decathlon Sports)"
-                isNikeAdidas -> "نايكي وأديداس (Nike & Adidas Store)"
-                isAppleSamsung -> "آبل وسامسونغ (Apple & Samsung Center)"
-                else -> "كونسيرج المنصات العالمية (Global Marketplace Concierge)"
-            }
-            mainStoreName = "DELIVIO Concierge • $platformLabel"
-            storeEmoji = when {
-                isZara || isShein -> "👗"
-                isNikeAdidas || isDecathlon -> "👟"
-                isAppleSamsung -> "📱"
-                else -> "📦"
-            }
-            val itemNameAr = when {
-                isZara -> "قطعة أزياء زارا العصرية المختارة"
-                isShein -> "فستان ولباس شين العصري الأنيق"
-                isAmazon -> "منتج أصلي مستورد عبر أمازون جلوبال"
-                isTemu -> "منتج كونسيرج تيمو إكسبريس بجودة ممتازة"
-                isDecathlon -> "حذاء ومعدات رياضية أصلية من ديكاتلون"
-                isNikeAdidas -> "حذاء سنيكرز نايكي / أديداس أصلي مريح"
-                isAppleSamsung -> "إكسسوار وجهاز أصلي معتمد مع الضمان"
-                else -> "طلبك الخاص من $platformLabel"
-            }
-            val itemNameFr = when {
-                isZara -> "Article de mode tendance sélectionné chez Zara"
-                isShein -> "Tenue et accessoires élégants Shein"
-                isAmazon -> "Produit authentique importé Amazon Global"
-                isTemu -> "Article express vérifié qualité Temu"
-                isDecathlon -> "Équipement sportif certifié Decathlon"
-                isNikeAdidas -> "Baskets sneakers originales Nike / Adidas"
-                isAppleSamsung -> "Accessoire officiel certifié avec garantie"
-                else -> "Commande concierge depuis $platformLabel"
-            }
-            val dynamicPrice = when {
-                isAppleSamsung -> 380.0
-                isNikeAdidas -> 350.0
-                isZara -> 290.0
-                isDecathlon -> 220.0
-                isShein || isTemu -> 149.0
-                else -> 199.0
-            }
-            val dynamicProduct = Product(
-                id = "p_concierge_${System.currentTimeMillis()}",
-                storeId = "store_concierge_global",
-                storeName = mainStoreName,
-                nameEn = itemNameFr,
-                nameAr = itemNameAr,
-                nameFr = itemNameFr,
-                descriptionEn = "Concierge item sourced with quality assurance",
-                descriptionAr = "طلب خاص تم توفيره فورياً عبر خدمة ديليفيو كونسيرج الذكية للمنصات العالمية مع الضمان والتوصيل المؤمن",
-                descriptionFr = "Service Concierge DELIVIO multi-plateformes avec emballage sécurisé et garantie",
-                price = dynamicPrice,
-                category = StoreCategory.ECOMMERCE,
-                emoji = storeEmoji,
-                rating = 4.95,
-                imageUrl = "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600"
-            )
-            matchedItems.add(AiRecommendedItem(dynamicProduct, defaultQty, "تغليف مؤمن وشحن سريع ومطابقة الجودة 100%", dynamicPrice * defaultQty))
-            explanationFr = "Excellent choix ! Votre article chez $platformLabel a été identifié et préparé par le Concierge DELIVIO avec garantie et expédition express."
-            explanationAr = "اختيار رائع! تم إيجاد طلبك وتحديده من $platformLabel وتجهيزه عبر كونسيرج ديليفيو الذكي مع ضمان الجودة والشحن المؤمن."
         }
         // C. TACOS & SHAWARMA MATCH
         else if (hasTacos) {
@@ -583,62 +550,65 @@ object AiShoppingService {
             explanationFr = "Produits de pharmacie et soins d'urgence prêts pour livraison rapide."
             explanationAr = "مستلزمات صيدلية المركز الطارئة مع توصيل فوري!"
         }
-        // L. DEFAULT & UNIVERSAL CONCIERGE (Finds any product from any platform)
+        // L. SAFEGUARDED MATCHING & EXTERNAL PLATFORM HANDLING
         else {
-            if (q.length > 2 && !q.contains("tacos") && !q.contains("burger")) {
-                isEcommerceOrder = true
-                mainStoreName = "DELIVIO Concierge • خدمة الطلب المباشر من أي مكان"
-                storeEmoji = "🛍️"
-                val dynamicProduct = Product(
-                    id = "p_concierge_${System.currentTimeMillis()}",
-                    storeId = "store_concierge_global",
-                    storeName = mainStoreName,
-                    nameEn = "Special Order: \"${query.take(45)}\"",
-                    nameAr = "طلبك الخاص: \"${query.take(45)}\"",
-                    nameFr = "Commande spéciale : \"${query.take(45)}\"",
-                    descriptionEn = "Universal concierge order sourced from trusted merchants",
-                    descriptionAr = "تم التعرف على طلبك وتوفيره لك فوراً من أي متجر أو منصة عبر خدمة ديليفيو كونسيرج الذكية مع فحص الجودة",
-                    descriptionFr = "Produit identifié et commandé via le service Concierge DELIVIO multi-plateformes",
-                    price = 120.0,
-                    category = StoreCategory.ECOMMERCE,
-                    emoji = "✨",
-                    rating = 4.9,
-                    imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
+            val isExternalPlatformQuery = q.contains("zara") || q.contains("shein") || q.contains("amazon") ||
+                    q.contains("temu") || q.contains("aliexpress") || q.contains("nike") ||
+                    q.contains("apple") || q.contains("iphone") || q.contains("decathlon")
+
+            if (isExternalPlatformQuery) {
+                // Mandatory Safeguard: Never fabricate products or prices from unpartnered external platforms
+                return AiShoppingRecommendation(
+                    userPrompt = query,
+                    aiExplanationAr = "عذراً، الطلب المباشر من منصات خارجية غير معتمدة ($query) غير مدعوم على فيلورا ون. يرجى تصفح المطاعم والمتاجر المحلية المعتمدة في المحمدية.",
+                    aiExplanationFr = "Désolé, la commande directe depuis des plateformes externes ($query) n'est pas disponible sur VELORA ONE. Découvrez nos commerces partenaires locaux à Mohammedia !",
+                    items = emptyList(),
+                    estimatedTotal = 0.0,
+                    deliveryFee = 0.0,
+                    grandTotal = 0.0,
+                    targetStoreName = "VELORA ONE Partner Catalog",
+                    estimatedTimeMins = 0,
+                    confidenceScore = 95,
+                    speechAudioTextFr = "Désolé, les articles de cette plateforme externe ne sont pas disponibles pour commande directe. Découvrez nos commerces partenaires à Mohammedia !",
+                    speechAudioTextAr = "عذراً، منتجات هذه المنصة غير متوفرة للطلب المباشر. يمكنك تصفح المطاعم والمتاجر المعتمدة في تطبيقنا!",
+                    detectedNotes = detectedNotes,
+                    storeBadgeEmoji = "ℹ️",
+                    isUnavailableNotice = true,
+                    suggestedAlternatives = products.take(4)
                 )
-                matchedItems.add(AiRecommendedItem(dynamicProduct, defaultQty, "طلب خاص موثق ومعتمد", dynamicProduct.price * defaultQty))
-                explanationFr = "J'ai identifié votre demande (\"$query\") et préparé votre commande personnalisée via le Concierge DELIVIO !"
-                explanationAr = "تم التعرف على طلبك بالكامل (\"$query\") وتجهيزه لك فوراً عبر كونسيرج ديليفيو الذكي من أي منصة!"
             } else {
-                mainStoreName = "أو تاكوس (O'Tacos)"
-                storeEmoji = "🌮"
-                products.find { it.id == "p_otacos_l" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
-                } ?: products.find { it.id == "p_mcdo_bigmac" }?.let {
-                    matchedItems.add(AiRecommendedItem(it, defaultQty, notesStr, it.price * defaultQty))
+                // Direct flexible token match against authoritative catalog
+                val candidate = products.find {
+                    it.nameFr.contains(q, ignoreCase = true) || it.nameAr.contains(q, ignoreCase = true)
+                } ?: products.find { it.id == "p_otacos_l" } ?: products.firstOrNull()
+
+                if (candidate != null) {
+                    mainStoreName = candidate.storeName
+                    storeEmoji = candidate.emoji
+                    matchedItems.add(AiRecommendedItem(candidate, defaultQty, notesStr, candidate.price * defaultQty))
+                    explanationFr = "Sélection vérifiée chez ${candidate.storeName} (${candidate.nameFr}) !"
+                    explanationAr = "تم تجهيز طلبك المعتمد من ${candidate.storeName} (${candidate.nameAr})!"
                 }
-                explanationFr = "Sélection gourmande préparée avec soin avec vos sauces favorites !"
-                explanationAr = "تم تجهيز طلبك الشهي مع الصلصات اللذيذة والبطاطس المقرمشة!"
             }
         }
 
         val total = matchedItems.sumOf { it.subtotal }
-        // E-Commerce parcel delivery fee is 18.0 DH (insured parcel), while food is 8.0 DH
         val deliveryFee = if (isEcommerceOrder) 18.0 else 8.0
         val grandTotal = total + deliveryFee
 
         val itemsDescriptionFr = matchedItems.joinToString(" et ") { "${it.quantity} ${it.product.nameFr}" }
         val itemsDescriptionAr = matchedItems.joinToString(" و ") { "${it.quantity} ${it.product.nameAr}" }
 
-        val speechFr = if (isEcommerceOrder) {
-            "Parfait ! J'ai bien sélectionné votre article e-commerce chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} DH avec expédition colis sécurisée et garantie. Vous pouvez valider en un clic !"
+        val speechFr = if (matchedItems.isNotEmpty()) {
+            "Parfait ! J'ai bien sélectionné vos articles vérifiés chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} dirhams, livraison incluse. Vous pouvez vérifier le panier et confirmer !"
         } else {
-            "Parfait ! J'ai bien préparé votre commande chez $mainStoreName ($itemsDescriptionFr). Le total s'élève à ${grandTotal.toInt()} dirhams, livraison incluse. Vous pouvez confirmer en un clic !"
+            "Je n'ai pas trouvé cet article exact dans notre catalogue partenaire. Voici des suggestions disponibles à Mohammedia."
         }
 
-        val speechAr = if (isEcommerceOrder) {
-            "ممتاز وعلى راسي وعيني! اخترت لك منتجك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم شامل شحن الطرد المؤمن مع الضمان. اضغط على تأكيد الآن لشحنه إليك!"
+        val speechAr = if (matchedItems.isNotEmpty()) {
+            "ممتاز وعلى راسي وعيني! جهزت لك طلبك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد لينطلق كابتن فيلورا إليك!"
         } else {
-            "ممتاز وعلى راسي وعيني! جهزت لك طلبك بكل سرور من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد الآن لينطلق كابتن ديليفيو DELIVIO إليك!"
+            "لم أجد هذا المنتج في قائمة المتاجر المعتمدة، إليك اقتراحات مميزة متوفرة للتوصيل الفوري."
         }
 
         return AiShoppingRecommendation(
@@ -647,15 +617,17 @@ object AiShoppingService {
             aiExplanationFr = explanationFr,
             items = matchedItems,
             estimatedTotal = total,
-            deliveryFee = deliveryFee,
-            grandTotal = grandTotal,
+            deliveryFee = if (matchedItems.isEmpty()) 0.0 else deliveryFee,
+            grandTotal = if (matchedItems.isEmpty()) 0.0 else grandTotal,
             targetStoreName = mainStoreName,
             estimatedTimeMins = if (isEcommerceOrder) 30 else 18,
             confidenceScore = 99,
             speechAudioTextFr = speechFr,
             speechAudioTextAr = speechAr,
             detectedNotes = detectedNotes,
-            storeBadgeEmoji = storeEmoji
+            storeBadgeEmoji = storeEmoji,
+            isUnavailableNotice = matchedItems.isEmpty(),
+            suggestedAlternatives = if (matchedItems.isEmpty()) products.take(4) else emptyList()
         )
     }
 }
