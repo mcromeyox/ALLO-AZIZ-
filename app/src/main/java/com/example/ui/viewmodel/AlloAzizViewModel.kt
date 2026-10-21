@@ -803,6 +803,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_welcome_${System.currentTimeMillis()}",
+                        userId = newAccount.id,
                         titleAr = "مرحباً بك في DELIVIO! 🇲🇦",
                         titleFr = "Bienvenue sur DELIVIO !",
                         titleEn = "Welcome to DELIVIO!",
@@ -837,13 +838,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_reg_${System.currentTimeMillis()}",
+                        userId = newAccount.id,
                         titleAr = "طلب انضمام شريك متجر/مطعم جديد بانتظار الاعتماد 🔔",
                         titleFr = "Nouvelle demande de partenaire marchand",
                         titleEn = "New Merchant Partner Application",
                         bodyAr = "سجل المتجر (${restaurantName.ifBlank { trimmedName }}) وهو بانتظار مراجعة واعتماد الإدارة.",
                         bodyFr = "${trimmedName} a postulé pour un commerce (${restaurantName}).",
                         bodyEn = "${trimmedName} registered store (${restaurantName}) and awaits activation.",
-                        userId = newAccount.id,
+
                     timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
@@ -855,13 +857,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_reg_supp_${System.currentTimeMillis()}",
+                        userId = newAccount.id,
                         titleAr = "طلب انضمام عضو دعم فني جديد بانتظار الاعتماد 🔔",
                         titleFr = "Nouvelle demande agent de support",
                         titleEn = "New Technical Support Application",
                         bodyAr = "سجل العضو ${trimmedName} (${trimmedPhone}) في قسم الدعم وبانتظار اعتماد الإدارة.",
                         bodyFr = "Candidature support de ${trimmedName}.",
                         bodyEn = "Support application for ${trimmedName} awaiting admin approval.",
-                        userId = newAccount.id,
+
                     timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
@@ -873,13 +876,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_reg_drv_${System.currentTimeMillis()}",
+                        userId = newAccount.id,
                         titleAr = "طلب انضمام سائق توصيل جديد بانتظار الاعتماد 🔔",
                         titleFr = "Nouvelle candidature livreur",
                         titleEn = "New Driver Application",
                         bodyAr = "سجل الكابتن ${trimmedName} (${vehicleType.ifBlank { "دراجة نارية" }}) وهو بانتظار مراجعة واعتماد الإدارة.",
                         bodyFr = "Candidature chauffeur de ${trimmedName}.",
                         bodyEn = "Driver registration for ${trimmedName} awaiting admin approval.",
-                        userId = newAccount.id,
+
                     timestamp = System.currentTimeMillis(),
                         type = "SECURITY"
                     )
@@ -895,13 +899,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_appr_${System.currentTimeMillis()}",
+                    userId = userId,
                     titleAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح 🎉",
                     titleFr = "Demande acceptée avec succès 🎉",
                     titleEn = "Partner Application Approved 🎉",
                     bodyAr = "تم قبول طلب انضمامك إلى DELIVIO بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
                     bodyFr = "Votre demande a été approuvée par l'administration DELIVIO.",
                     bodyEn = "Your application was approved. You can now login and start working.",
-                    userId = newAccount.id,
+
                     timestamp = System.currentTimeMillis(),
                     type = "APPROVAL"
                 )
@@ -917,13 +922,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_rej_${System.currentTimeMillis()}",
+                    userId = userId,
                     titleAr = "تحديث بخصوص طلب الانضمام إلى DELIVIO",
                     titleFr = "Mise à jour concernant votre demande",
                     titleEn = "Application Status Update",
                     bodyAr = "نأسف لإبلاغك بأنه تم رفض طلب الانضمام لعدم استيفاء الشروط والمعايير المطلوبة. يمكنك التواصل مع الدعم الفني لمزيد من المعلومات.",
                     bodyFr = "Votre demande a été refusée pour non-conformité aux critères requis.",
                     bodyEn = "Your application was rejected as it does not meet requirements.",
-                    userId = userId,
+
                     timestamp = System.currentTimeMillis(),
                     type = "REJECTION"
                 )
@@ -1089,13 +1095,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_drv_appr_${System.currentTimeMillis()}",
+                    userId = driverId,
                     titleAr = "تم تفعيل حساب السائق بنجاح! 🎉",
                     titleFr = "Compte chauffeur activé ! 🎉",
                     titleEn = "Driver Account Activated! 🎉",
                     bodyAr = "تمت مراجعة الوثائق وتفعيل حساب السائق للبدء في استقبال طلبات التوصيل.",
                     bodyFr = "Vos documents ont été validés avec succès.",
                     bodyEn = "Your documents have been approved successfully.",
-                    userId = userId,
+
                     timestamp = System.currentTimeMillis()
                 )
             )
