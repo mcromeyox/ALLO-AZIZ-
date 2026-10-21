@@ -75,8 +75,9 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.addressDao().setDefaultAddress(userId, addressId)
     }
 
-    suspend fun deleteAddress(addressId: String) {
-        database.addressDao().deleteAddress(addressId)
+    suspend fun deleteAddress(addressId: String, userId: String) {
+        if (userId.isBlank()) return
+        database.addressDao().deleteAddress(addressId, userId)
     }
 
     suspend fun getUserByEmail(email: String): UserAccountEntity? = database.userDao().getUserByEmail(email)
