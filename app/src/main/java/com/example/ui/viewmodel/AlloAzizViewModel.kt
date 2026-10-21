@@ -1533,8 +1533,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             }
 
             // Upgrade legacy SHA-256 hashes after successful verification.
-            val upgradedPasswordHash = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass)
-            if (upgradedPasswordHash != user.password) {
+            if (!com.example.data.auth.PasswordHasher.isCurrentHash(user.password)) {
+                val upgradedPasswordHash = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass)
                 repository.insertUser(user.copy(password = upgradedPasswordHash))
             }
 
