@@ -911,32 +911,24 @@ fun AuthScreen(
                 item {
                     Button(
                         onClick = {
-                            val recipient = regCustPhone.ifBlank { regCustEmail }
-                            val otp = com.example.data.services.ServiceManager.generateDevOtp(recipient)
-                            activeOtpCode = otp
-                            enteredOtpCode = ""
-                            otpRecipient = recipient
-                            pendingRegistrationAction = {
-                                onRegister(
-                                    regCustName,
-                                    regCustEmail,
-                                    regCustPhone,
-                                    regCustPassword,
-                                    UserRole.CUSTOMER,
-                                    "",
-                                    "",
-                                    "",
-                                    "FOOD",
-                                    "",
-                                    "",
-                                    "",
-                                    "",
-                                    ""
-                                )
-                            }
-                            showOtpDialog = true
+                            onRegister(
+                                regCustName,
+                                regCustEmail,
+                                regCustPhone,
+                                regCustPassword,
+                                UserRole.CUSTOMER,
+                                "",
+                                "",
+                                "",
+                                "FOOD",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""
+                            )
                         },
-                        enabled = regCustName.isNotBlank() && (regCustPhone.isNotBlank() || regCustEmail.isNotBlank()) && regCustPassword.isNotBlank(),
+                        enabled = regCustName.isNotBlank() && regCustEmail.isNotBlank() && regCustPassword.length >= 8,
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -945,7 +937,7 @@ fun AuthScreen(
                             .testTag("register_customer_button")
                     ) {
                         Text(
-                            text = "تأكيد برمز التحقق وإنشاء الحساب 🚀",
+                            text = "إنشاء حساب محلي (البريد غير موثّق)",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = Color.White
@@ -1209,7 +1201,7 @@ fun AuthScreen(
                             }
                             showOtpDialog = true
                         },
-                        enabled = regBusinessStoreName.isNotBlank() && (regBusinessPhone.isNotBlank() || regBusinessEmail.isNotBlank()) && regBusinessPassword.isNotBlank(),
+                        enabled = false,
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -1218,7 +1210,7 @@ fun AuthScreen(
                             .testTag("register_partner_button")
                     ) {
                         Text(
-                            text = "تأكيد برمز التحقق وإرسال ملف الشريك 📄",
+                            text = "التسجيل غير متاح حتى تفعيل التحقق الآمن",
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             color = Color.White
@@ -1483,7 +1475,7 @@ fun AuthScreen(
                             }
                             showOtpDialog = true
                         },
-                        enabled = isDriverFormValid,
+                        enabled = false,
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -1667,7 +1659,7 @@ fun AuthScreen(
                             }
                             showOtpDialog = true
                         },
-                        enabled = isSupportFormValid,
+                        enabled = false,
                         colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
@@ -1869,7 +1861,7 @@ fun AuthScreen(
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("إرسال رمز التأكيد OTP", color = Color.White)
+                            Text("استعادة كلمة المرور غير متاحة حالياً", color = Color.White)
                         }
                     }
 
@@ -1878,6 +1870,7 @@ fun AuthScreen(
                             shape = RoundedCornerShape(10.dp),
                             color = AzizMint.copy(alpha = 0.12f),
                             modifier = Modifier.fillMaxWidth()
+                            enabled = false,
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Text(
@@ -1978,33 +1971,11 @@ fun AuthScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Quick-fill tester badge
-                    Surface(
-                        onClick = { enteredOtpCode = activeOtpCode },
-                        shape = RoundedCornerShape(10.dp),
-                        color = AzizMint.copy(alpha = 0.15f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, AzizMint.copy(alpha = 0.4f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "كود التحقق التجريبي: $activeOtpCode",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = AzizMint
-                            )
-                            Text(
-                                text = "اضغط للتعبئة ✓",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AzizOrangePrimary
-                            )
-                        }
-                    }
+                    Text(
+                        text = "التحقق عبر SMS أو البريد غير مفعّل حالياً.",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
 
                     OutlinedTextField(
                         value = enteredOtpCode,
@@ -2035,7 +2006,7 @@ fun AuthScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (enteredOtpCode == activeOtpCode || enteredOtpCode == "123456" || enteredOtpCode == "1234") {
+                        if (activeOtpCode.isNotBlank() && enteredOtpCode == activeOtpCode) {
                             showOtpDialog = false
                             pendingRegistrationAction?.invoke()
                             pendingRegistrationAction = null
