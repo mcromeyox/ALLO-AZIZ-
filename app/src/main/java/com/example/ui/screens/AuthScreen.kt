@@ -464,13 +464,9 @@ fun AuthScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = {
-                                if (onLoginWithPhone != null) {
-                                    onLoginWithPhone(fastPhoneInput, "")
-                                } else {
-                                    onLoginCredentials(fastPhoneInput, "phone_verified")
-                                }
+                                onLoginWithPhone?.invoke(fastPhoneInput, "")
                             },
-                            enabled = fastPhoneInput.trim().length >= 8,
+                            enabled = fastPhoneInput.trim().length >= 8 && onLoginWithPhone != null,
                             colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
