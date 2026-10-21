@@ -24,6 +24,12 @@ object FirestoreSyncManager {
     private const val TAG = "FirestoreSyncManager"
     const val COLLECTION_ORDERS = "orders"
 
+    private fun currentFirebaseUser() = try {
+        FirebaseAuth.getInstance().currentUser
+    } catch (_: Exception) {
+        null
+    }
+
     private val firestore: FirebaseFirestore? by lazy {
         try {
             FirebaseFirestore.getInstance()
@@ -38,7 +44,7 @@ object FirestoreSyncManager {
      */
     suspend fun syncOrderToCloud(order: OrderEntity): Boolean {
         val db = firestore ?: return false
-        val authUser = FirebaseAuth.getInstance().currentUser ?: return false
+        val authUser = currentFirebaseUser() ?: return false
         if (order.customerId.isBlank() || order.customerId != authUser.uid) return false
         return try {
             val orderMap = hashMapOf(
@@ -93,7 +99,7 @@ object FirestoreSyncManager {
      */
     suspend fun updateCourierGpsCloud(orderId: String, lat: Double, lng: Double, progress: Float, minsLeft: Int) {
         val db = firestore ?: return
-        if (FirebaseAuth.getInstance().currentUser == null) return
+        if (currentFirebaseUser() == null) return
         try {
             db.collection(COLLECTION_ORDERS)
                 .document(orderId)
@@ -171,7 +177,7 @@ object FirestoreSyncManager {
      */
     fun listenToAllOrdersRealtime(): Flow<List<OrderEntity>> = callbackFlow {
         val db = firestore
-        val authUser = FirebaseAuth.getInstance().currentUser
+        val authUser = currentFirebaseUser()
         if (db == null || authUser == null) {
             trySend(emptyList())
             close()
