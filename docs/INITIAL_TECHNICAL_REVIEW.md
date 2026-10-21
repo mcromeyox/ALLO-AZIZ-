@@ -9,14 +9,14 @@ This review is based on source inspection. A successful build, device run, Fireb
 ## Findings
 
 ### Critical — Authentication and authorization
-- `AlloAzizViewModel.loginStaff` contains a hard-coded administrator email/password bypass.
+- Removed the hard-coded administrator email/password bypass from `AlloAzizViewModel.loginStaff` in this patch; staff must pass normal password verification.
 - `AlloAzizRepository` seeds a privileged SUPER_ADMIN account and other staff accounts using a known default password hashed with a fixed salt.
-- `PasswordHasher` uses SHA-256 with a hard-coded salt and accepts plaintext legacy values. This is not suitable for production password storage.
+- Replaced new local password hashes with PBKDF2-HMAC-SHA256 and random per-password salts; legacy salted SHA-256 hashes can be verified and upgraded after successful login. This remains a local helper, not a substitute for server-managed production authentication.
 - Role switching and local UI state are not a security boundary. Sensitive admin, support, merchant approval, driver activation, and order actions require server-side authorization.
-- Password reset uses a fixed OTP (`842910`) and writes the new password directly rather than through a verified, secure reset flow.
+- Disabled the fixed OTP (`842910`) reset flow and direct password change until a trusted backend can issue and verify expiring, single-use reset tokens. Password reset is temporarily unavailable.
 - Some management actions modify local state without proving authorization at a trusted backend.
 
-**Status:** Not fully remediated in this initial patch. Requires a proper authentication/authorization design and secure account provisioning. Do not use the current build with real customer or staff accounts.
+**Status:** Improved but not production-secure. The repository still seeds demo accounts with a known shared default password, and all roles/data remain locally controlled without a trusted server authorization boundary. Do not use the current build with real customer or staff accounts.
 
 ### Critical — AI product integrity
 - The Gemini prompt instructed the model to invent a concierge product and a realistic price for requests from external marketplaces.
@@ -64,6 +64,7 @@ This review is based on source inspection. A successful build, device run, Fireb
 - Remove fabricated local concierge products for unmatched requests.
 - Replace the dummy Maps key with build-time configuration.
 - Change the admin password test to use a hash and add unit tests to CI.
+- Remove the hard-coded staff administrator login bypass, use PBKDF2 hashes with per-password salts for new local hashes, upgrade verified legacy hashes, and disable the predictable client-side password reset.
 
 ## Remaining release blockers
 1. Replace local/hard-coded staff authentication and default privileged accounts with secure account provisioning and server-side authorization.
