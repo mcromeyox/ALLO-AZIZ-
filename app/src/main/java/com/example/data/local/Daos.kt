@@ -114,8 +114,14 @@ interface OrderDao {
     @Query("SELECT * FROM orders WHERE id = :orderId LIMIT 1")
     fun getOrderById(orderId: String): Flow<OrderEntity?>
 
-    @Query("SELECT * FROM orders WHERE status != 'DELIVERED' ORDER BY timestamp DESC LIMIT 1")
-    fun getActiveOrder(): Flow<OrderEntity?>
+    @Query("SELECT * FROM orders WHERE customerId = :customerId AND status != 'DELIVERED' ORDER BY timestamp DESC LIMIT 1")
+    fun getActiveOrderForCustomer(customerId: String): Flow<OrderEntity?>
+
+    @Query("SELECT * FROM orders WHERE customerId = :customerId ORDER BY timestamp DESC")
+    fun getOrdersForCustomer(customerId: String): Flow<List<OrderEntity>>
+
+    @Query("SELECT orders.* FROM orders INNER JOIN stores ON orders.storeId = stores.id WHERE stores.ownerId = :ownerId ORDER BY orders.timestamp DESC")
+    fun getOrdersForStoreOwner(ownerId: String): Flow<List<OrderEntity>>
 
     @Query("SELECT * FROM orders WHERE storeId = :storeId ORDER BY timestamp DESC")
     fun getOrdersByStore(storeId: String): Flow<List<OrderEntity>>
