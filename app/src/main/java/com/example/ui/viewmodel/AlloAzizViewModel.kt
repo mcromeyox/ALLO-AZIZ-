@@ -1408,6 +1408,10 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     // Cart Operations
     fun addToCart(product: Product, quantity: Int = 1, notes: String = "") {
+        if (!product.isAvailable || !product.isApproved || !product.price.isFinite() || product.price <= 0.0 || product.stockCount <= 0 || quantity <= 0) {
+            _userAlertMessage.value = "هذا المنتج غير متاح أو أن بيانات سعره أو مخزونه غير صالحة."
+            return
+        }
         val current = _cartItems.value.toMutableList()
         val existingIndex = current.indexOfFirst { it.product.id == product.id }
         if (existingIndex >= 0) {
