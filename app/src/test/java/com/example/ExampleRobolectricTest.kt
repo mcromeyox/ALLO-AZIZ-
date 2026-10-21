@@ -86,13 +86,13 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun superAdmin_credentialsVerification() = runBlocking {
+    fun superAdminTestAccount_usesHashedPassword() = runBlocking {
         val admin = com.example.data.local.UserAccountEntity(
             id = "usr_super_admin",
             name = "المدير العام",
             email = "mcromeyox@gmail.com",
             phone = "+212 600-000001",
-            password = "abdomery",
+            password = com.example.data.auth.PasswordHasher.hashPassword("test-only-password"),
             role = "SUPER_ADMIN",
             status = "ACTIVE"
         )
@@ -101,7 +101,7 @@ class ExampleRobolectricTest {
         val retrievedAdmin = database.userDao().getUserByEmail("mcromeyox@gmail.com")
         assertNotNull(retrievedAdmin)
         assertEquals("mcromeyox@gmail.com", retrievedAdmin?.email)
-        assertEquals("abdomery", retrievedAdmin?.password)
+        assertTrue(com.example.data.auth.PasswordHasher.verifyPassword("test-only-password", retrievedAdmin?.password ?: ""))
         assertEquals("SUPER_ADMIN", retrievedAdmin?.role)
         assertEquals("ACTIVE", retrievedAdmin?.status)
     }
