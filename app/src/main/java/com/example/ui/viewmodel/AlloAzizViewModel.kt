@@ -149,6 +149,8 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     // Merchant KYC & Documents (Glovo & Temu Standard)
     private val _merchantApplications = MutableStateFlow<List<com.example.data.model.MerchantApplication>>(emptyList())
 
+    val merchantApplications: StateFlow<List<com.example.data.model.MerchantApplication>> = _merchantApplications.asStateFlow()
+
     private val _showMerchantRegistration = MutableStateFlow(false)
     val showMerchantRegistration: StateFlow<Boolean> = _showMerchantRegistration.asStateFlow()
 
