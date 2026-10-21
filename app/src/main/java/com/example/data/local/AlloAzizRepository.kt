@@ -370,7 +370,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             SupportTicketEntity(
                 id = "TCK-802",
                 customerName = "مريم الوهابي (عميل)",
-                subject = "استفسار بخصوص خصم كود DELIVIO20",
+                subject = "استفسار بخصوص العروض",
                 status = "RESOLVED",
                 assignedAgent = "سارة المنصوري",
                 lastMessage = "تم تفعيل الخصم 20% بنجاح وشكراً لتعاونكم السريع."
@@ -408,12 +408,12 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.notificationDao().insertNotification(
             NotificationEntity(
                 id = "notif_wallet_gift",
-                titleAr = "كود الخصم الترحيبي: DELIVIO20 🏷️",
-                titleFr = "Code promo de bienvenue: DELIVIO20 🏷️",
-                titleEn = "Welcome Promo Code: DELIVIO20 🏷️",
-                bodyAr = "استخدم كود DELIVIO20 عند إتمام الطلب للاستفادة من خصم 20% على وجبتك المفضلة!",
-                bodyFr = "Utilisez le code DELIVIO20 pour obtenir 20% de réduction sur votre commande !",
-                bodyEn = "Use code DELIVIO20 at checkout for 20% off your order!",
+                titleAr = "العروض غير مفعّلة حالياً",
+                titleFr = "Promotions non configurées",
+                titleEn = "Promotions are not configured",
+                bodyAr = "سيتم عرض العروض بعد تفعيلها والتحقق من شروطها.",
+                bodyFr = "Les promotions seront affichées après leur configuration et validation.",
+                bodyEn = "Promotions will appear after they are configured and validated.",
                 timestamp = System.currentTimeMillis() - 1800000,
                 isRead = false,
                 type = "PROMO"
