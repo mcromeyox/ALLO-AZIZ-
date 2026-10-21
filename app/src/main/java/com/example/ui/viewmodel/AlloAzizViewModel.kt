@@ -573,17 +573,24 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             emptyList()
         )
 
-        allOrders = repository.allOrders.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            emptyList()
-        )
+        allOrders = kotlinx.coroutines.flow.combine(_currentUserId, _currentRole) { userId, role -> userId to role }
+            .flatMapLatest { (userId, role) ->
+                if (userId.isBlank()) kotlinx.coroutines.flow.flowOf(emptyList())
+                else when (role) {
+                    UserRole.SUPER_ADMIN -> repository.allOrders
+                    UserRole.DRIVER -> repository.getOrdersForDriver(userId)
+                    UserRole.RESTAURANT_OWNER -> repository.getOrdersForStoreOwner(userId)
+                    else -> repository.getOrdersForCustomer(userId)
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-        activeOrder = repository.activeOrder.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            null
-        )
+        activeOrder = _currentUserId
+            .flatMapLatest { userId ->
+                if (userId.isBlank()) kotlinx.coroutines.flow.flowOf(null)
+                else repository.getActiveOrderForCustomer(userId)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
         allNotifications = repository.allNotifications.stateIn(
             viewModelScope,
@@ -1555,105 +1562,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     }
 
     // Checkout & Place Order
-    fun placeOrder(
-        onSuccess: (orderId: String) -> Unit
-    ) {
-        val items = _cartItems.value
-        if (items.isEmpty()) return
-
-        val storeName = items.first().product.storeName
-        val storeId = items.first().product.storeId
-        val subtotal = items.sumOf { (it.product.price + it.extraOptionsPrice) * it.quantity }
-        val hasEcommerce = items.any { it.product.category == StoreCategory.ECOMMERCE }
-        val deliveryFee = if (hasEcommerce) 18.0 else 8.0
-        val discount = subtotal * _promoDiscountPercent.value
-        val tip = _courierTip.value
-        val total = (subtotal - discount + deliveryFee + tip).coerceAtLeast(0.0)
-
-        val orderNum = Random.nextInt(1000, 9999)
-        val orderId = "AZ-$orderNum"
-
-        val itemsSummary = items.joinToString(", ") { "${it.quantity}x ${it.product.nameAr}" }
-        val itemsCount = items.sumOf { it.quantity }
-
-        val paymentMethodStr = when (_selectedPaymentMethod.value) {
-            PaymentMethodType.CREDIT_CARD -> "بطاقة مصرفية آمنة (Visa/Mastercard)"
-            PaymentMethodType.CASH_ON_DELIVERY -> "الدفع عند الاستلام (كاش)"
-            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة DELIVIO Pay"
-            PaymentMethodType.DIGITAL_WALLET -> "Google Pay / Apple Pay"
-        }
-
-        viewModelScope.launch {
-            if (_selectedPaymentMethod.value == PaymentMethodType.ALLO_PAY_WALLET) {
-                repository.deductWallet(total)
-            }
-
-            val scheduledTimeInfo = _scheduledDeliveryTime.value ?: "توصيل فوري"
-            val combinedNotes = buildString {
-                if (_deliveryNotes.value.isNotBlank()) append(_deliveryNotes.value)
-                append(" • [موعد التسليم: $scheduledTimeInfo]")
-                if (tip > 0) append(" • [إكرامية السائق: $tip د.م]")
-            }
-
-            val newOrder = OrderEntity(
-                id = orderId,
-                storeId = storeId,
-                storeName = storeName,
-                itemsSummary = itemsSummary,
-                itemsCount = itemsCount,
-                subtotal = subtotal,
-                deliveryFee = deliveryFee,
-                discount = discount,
-                total = total,
-                status = "RECEIVED",
-                restaurantStatus = "PENDING_ACCEPTANCE",
-                driverId = null,
-                paymentMethod = paymentMethodStr,
-                deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
-                deliveryNotes = combinedNotes,
-                timestamp = System.currentTimeMillis(),
-                courierName = "الكابتن عزيز برادة 🛵",
-                courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
-                courierRating = 4.9,
-                courierVehicle = "دراجة نارية Honda SH",
-                courierProgress = 0.15f,
-                estimatedMinsLeft = 25,
-                hasReviewed = false,
-                customerLat = _customerLat.value,
-                customerLng = _customerLng.value
-            )
-
-            repository.insertOrder(newOrder)
-            FirestoreSyncManager.syncOrderToCloud(newOrder)
-
-            HapticFeedbackHelper.vibrateSuccess(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
-                body = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك."
-            )
-
-            repository.addNotification(
-                NotificationEntity(
-                    id = "notif_${System.currentTimeMillis()}",
-                    titleAr = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
-                    titleFr = "Commande #$orderId confirmée ! 🛵",
-                    titleEn = "Order #$orderId Confirmed! 🛵",
-                    bodyAr = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك.",
-                    bodyFr = "Votre commande chez \"$storeName\" est confirmée.",
-                    bodyEn = "Your order at \"$storeName\" is confirmed.",
-                    timestamp = System.currentTimeMillis(),
-                    isRead = false,
-                    type = "ORDER",
-                    orderId = orderId
-                )
-            )
-
-            clearCart()
-            _trackingOrderId.value = orderId
-            navigateTo(AppScreen.ORDER_TRACKING)
-            onSuccess(orderId)
+    fun placeOrder(onSuccess: (orderId: String) -> Unit) {
+        // Order creation requires a trusted backend that validates identity, prices, stock,
+        // payment and fulfillment. Never mark a local-only order as confirmed.
+        _userAlertMessage.value = when (_selectedLanguage.value) {
+            AppLanguage.ARABIC -> "تأكيد الطلبات متوقف مؤقتاً حتى ربط خادم موثوق للتحقق من الحساب والأسعار والدفع والتوصيل. لم يتم إنشاء طلب."
+            AppLanguage.FRENCH -> "La validation des commandes est temporairement désactivée jusqu'à l'intégration d'un serveur fiable pour vérifier l'identité, les prix, le paiement et la livraison. Aucune commande n'a été créée."
+            AppLanguage.ENGLISH -> "Checkout is temporarily disabled until a trusted backend can verify identity, catalog prices, payment and fulfillment. No order was created."
         }
     }
 
