@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -18,7 +20,7 @@ import androidx.room.RoomDatabase
         AddressEntity::class,
         UserProfile::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +36,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
 
     companion object {
+        // Version 8 -> 9 contains no schema changes; older unsupported versions fail safely.
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) = Unit
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -43,7 +50,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "allo_aziz_database.db"
-                ).fallbackToDestructiveMigration().build()
+                ).addMigrations(MIGRATION_8_9).build()
                 INSTANCE = instance
                 instance
             }
