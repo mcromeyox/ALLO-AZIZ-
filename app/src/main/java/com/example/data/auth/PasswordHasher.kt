@@ -24,13 +24,13 @@ object PasswordHasher {
     fun hashPassword(plainText: String): String {
         val salt = ByteArray(SALT_BYTES).also { SecureRandom().nextBytes(it) }
         val hash = derive(plainText, salt, ITERATIONS)
-        return "${PREFIX}\\$${ITERATIONS}\\$${Base64.encodeToString(salt, Base64.NO_WRAP)}\\$${Base64.encodeToString(hash, Base64.NO_WRAP)}"
+        return "${PREFIX}\$${ITERATIONS}\$${Base64.encodeToString(salt, Base64.NO_WRAP)}\$${Base64.encodeToString(hash, Base64.NO_WRAP)}"
     }
 
-    fun isCurrentHash(storedHash: String): Boolean = storedHash.startsWith("${PREFIX}\\$")
+    fun isCurrentHash(storedHash: String): Boolean = storedHash.startsWith("${PREFIX}\$")
 
     fun verifyPassword(candidatePlain: String, storedHashOrPlain: String): Boolean {
-        if (storedHashOrPlain.startsWith("${PREFIX}\\$")) {
+        if (storedHashOrPlain.startsWith("${PREFIX}\$")) {
             val parts = storedHashOrPlain.split('$')
             if (parts.size != 4) return false
             val iterations = parts[1].toIntOrNull() ?: return false
