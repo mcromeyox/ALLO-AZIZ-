@@ -18,6 +18,7 @@ This is a source-level hardening pass. The latest CI run must pass before mergin
 - These checks are defence-in-depth only; a mobile app is not a trusted authorization boundary. Production permissions must be enforced by a server/Firebase Security Rules.
 
 ### Catalog and AI shopping
+- Removed direct Gemini API calls and embedded client key usage; catalog matching currently runs locally with exact catalog IDs and rejects unavailable/unapproved/invalid-priced items. Remote AI requires a trusted backend proxy.
 - AI instructions no longer tell the model to invent marketplace items or realistic prices.
 - Product selection accepts exact catalog IDs rather than partial IDs/name matches.
 - Unknown requests no longer produce a fabricated purchasable item.
@@ -32,7 +33,7 @@ This is a source-level hardening pass. The latest CI run must pass before mergin
 
 ### Support and operational claims
 - Removed the invented support hotline action/number and unverified claims about 24/7 staffing, 15–25 minute delivery, guaranteed immediate refunds/reshipments, card security, and active courier locations.
-- The support assistant no longer sends a Gemini key directly from the app or presents invented operational facts. AI-backed support should be proxied through a trusted backend using verified order data.
+- The support assistant no longer sends a Gemini key directly from the app or presents invented operational facts. Remote Gemini and ElevenLabs voice calls are disabled; AI-backed support/voice should be proxied through a trusted backend using verified order data.
 - Wallet top-ups and local compensation are disabled because no verified payment/refund backend is configured.
 - Promotions are disabled until validated promotion rules are provided by a trusted source.
 
@@ -40,6 +41,7 @@ This is a source-level hardening pass. The latest CI run must pass before mergin
 - Removed Room's destructive migration fallback. Added targeted migrations from version 8 to 11; unsupported older versions now fail rather than silently wiping the database. If versions below 8 were ever distributed, their upgrade path must be explicitly implemented before rollout.
 - Disabled Android backup/data transfer for local app data containing personal information.
 - Replaced the dummy Maps key with a build-time `GOOGLE_MAPS_API_KEY` value. A valid, Android-restricted key is still required for maps to work.
+- Added deny-by-default `firestore.rules` and `firebase.json`; this is a safe starting point, not a usable production ruleset. Collection-specific rules must be reviewed and deployed after backend authorization exists.
 - CI now runs `testDebugUnitTest` before `assembleDebug`.
 - Added password-hashing tests. CI results for the latest commit must be checked; earlier successful runs do not certify later changes.
 
