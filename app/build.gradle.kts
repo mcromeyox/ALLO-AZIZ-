@@ -21,7 +21,7 @@ android {
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-    // Safe fallbacks for optional external services in Development / Preview mode
+    manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = "AIzaSyDummyMapsKeyForDevMohammedia"
     buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"\"")
     buildConfigField("String", "PAYMENT_PROVIDER_KEY", "\"\"")
     buildConfigField("String", "FIREBASE_PROJECT_ID", "\"allo-aziz\"")

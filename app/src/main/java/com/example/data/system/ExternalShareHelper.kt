@@ -15,12 +15,17 @@ import com.example.data.local.OrderEntity
  */
 object ExternalShareHelper {
 
-    private const val PREFS_NAME = "allo_aziz_whatsapp_prefs"
+    private const val PREFS_NAME = "waslixa_whatsapp_prefs"
+    private const val LEGACY_PREFS_NAME = "allo_aziz_whatsapp_prefs"
     private const val KEY_SAVED_WHATSAPP = "saved_whatsapp_phone"
 
     fun getSavedWhatsAppNumber(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val saved = prefs.getString(KEY_SAVED_WHATSAPP, "") ?: ""
+        var saved = prefs.getString(KEY_SAVED_WHATSAPP, "") ?: ""
+        if (saved.isBlank()) {
+            val legacyPrefs = context.getSharedPreferences(LEGACY_PREFS_NAME, Context.MODE_PRIVATE)
+            saved = legacyPrefs.getString(KEY_SAVED_WHATSAPP, "") ?: ""
+        }
         return saved.ifBlank { "+212661458920" }
     }
 
@@ -91,7 +96,7 @@ object ExternalShareHelper {
      */
     fun shareOrderReceipt(context: Context, order: OrderEntity) {
         val receiptText = buildString {
-            appendLine("🧾 *إيصال طلب - ديليفيو (DELIVIO)*")
+            appendLine("🧾 *إيصال طلب - ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} (${com.example.data.config.BrandConfig.BRAND_NAME})*")
             appendLine("━━━━━━━━━━━━━━━━━━━")
             appendLine("🔢 *رقم الطلب:* #${order.id}")
             appendLine("🏪 *المتجر:* ${order.storeName}")
@@ -109,12 +114,12 @@ object ExternalShareHelper {
             appendLine("🛵 رسوم التوصيل: ${order.deliveryFee} درهم")
             appendLine("💵 *الإجمالي النهائي:* ${order.total} درهم مغربي")
             appendLine("━━━━━━━━━━━━━━━━━━━")
-            appendLine("شكراً لاختياركم ديليفيو DELIVIO! تتبع فوري وتوصيل سريع في الدار البيضاء والمحمدية.")
+            appendLine("شكراً لاختياركم ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}! تتبع فوري وتوصيل سريع في الدار البيضاء والمحمدية.")
         }
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "إيصال طلبك #${order.id} - ديليفيو DELIVIO")
+            putExtra(Intent.EXTRA_SUBJECT, "إيصال طلبك #${order.id} - ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}")
             putExtra(Intent.EXTRA_TEXT, receiptText)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
@@ -144,7 +149,7 @@ object ExternalShareHelper {
      */
     fun shareSplitBill(context: Context, total: Double, count: Int, perPerson: Double, summary: String = "") {
         val splitText = buildString {
-            appendLine("🍕 *قسمة فاتورة طلب - ديليفيو (DELIVIO)*")
+            appendLine("🍕 *قسمة فاتورة طلب - ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} (${com.example.data.config.BrandConfig.BRAND_NAME})*")
             appendLine("━━━━━━━━━━━━━━━━━━━")
             if (summary.isNotBlank()) {
                 appendLine("🛒 *الطلبات:* $summary")
@@ -155,12 +160,12 @@ object ExternalShareHelper {
             appendLine("💵 *نصيب كل شخص:* ${"%.2f".format(perPerson)} درهم مغربي")
             appendLine("━━━━━━━━━━━━━━━━━━━")
             appendLine("يرجى تحويل أو دفع حصتك عبر كاش أو تطبيق البنك.")
-            appendLine("تطبيق ديليفيو DELIVIO • توصيل فوري وطعام شهي 🚀")
+            appendLine("تطبيق ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} • توصيل فوري وطعام شهي 🚀")
         }
 
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "قسمة الفاتورة ($count أفراد) - ديليفيو DELIVIO")
+            putExtra(Intent.EXTRA_SUBJECT, "قسمة الفاتورة ($count أفراد) - ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}")
             putExtra(Intent.EXTRA_TEXT, splitText)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }

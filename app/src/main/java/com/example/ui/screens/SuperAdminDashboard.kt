@@ -590,7 +590,7 @@ fun SuperAdminDashboard(
                         fontSize = 15.sp
                     )
                     Text(
-                        text = "تحديد نسبة عمولة فيلورا ون VELORA ONE على المطاعم ونسبة ربح السائقين ورسوم الخدمة",
+                        text = "تحديد نسبة عمولة وصلـيكسا WASLIXA على المطاعم ونسبة ربح السائقين ورسوم الخدمة",
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -173,20 +173,20 @@ fun LiveSupportScreen(
     val faqs = when (language) {
         AppLanguage.FRENCH -> listOf(
             Pair(
-                "Combien de temps prend la livraison avec DELIVIO ?",
+                "Combien de temps prend la livraison avec ${com.example.data.config.BrandConfig.BRAND_NAME} ?",
                 "La livraison prend entre 15 et 25 minutes grâce à notre réseau de coursiers déployés partout à Mohammedia et ses environs."
             ),
             Pair(
                 "Le paiement via l'application est-il sécurisé ?",
-                "Oui, tous les paiements par carte bancaire sont 100% sécurisés (cryptage bancaire 256-bit SSL). Nous proposons aussi le paiement en espèces à la livraison et le portefeuille DELIVIO Pay."
+                "Oui, tous les paiements par carte bancaire sont 100% sécurisés (cryptage bancaire 256-bit SSL). Nous proposons aussi le paiement en espèces à la livraison et le portefeuille ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay."
             ),
             Pair(
                 "Comment contacter le coursier directement ?",
-                "Dès l'acceptation de la commande, le numéro de téléphone et les boutons d'appel et chat directs avec le coursier DELIVIO apparaissent dans l'écran de suivi en direct."
+                "Dès l'acceptation de la commande, le numéro de téléphone et les boutons d'appel et chat directs avec le coursier ${com.example.data.config.BrandConfig.BRAND_NAME} apparaissent dans l'écran de suivi en direct."
             ),
             Pair(
                 "Que faire si un article manque à ma commande ?",
-                "L'équipe support 24/7 vous indemnise immédiatement : soit par réexpédition gratuite et immédiate, soit par recrédit direct sur votre portefeuille DELIVIO Pay en 1 minute."
+                "L'équipe support 24/7 vous indemnise immédiatement : soit par réexpédition gratuite et immédiate, soit par recrédit direct sur votre portefeuille ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay en 1 minute."
             )
         )
         AppLanguage.ENGLISH -> listOf(
@@ -196,11 +196,11 @@ fun LiveSupportScreen(
             ),
             Pair(
                 "Is payment through the app secure?",
-                "Yes, 100% encrypted with 256-bit SSL banking security. We also accept Cash on Delivery and DELIVIO Pay wallet."
+                "Yes, 100% encrypted with 256-bit SSL banking security. We also accept Cash on Delivery and ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay wallet."
             ),
             Pair(
                 "How can I contact the courier directly?",
-                "As soon as an order is accepted, you can call or message the DELIVIO courier directly from the live tracking screen."
+                "As soon as an order is accepted, you can call or message the ${com.example.data.config.BrandConfig.BRAND_NAME} courier directly from the live tracking screen."
             ),
             Pair(
                 "What if an item is missing from my order?",
@@ -209,12 +209,12 @@ fun LiveSupportScreen(
         )
         AppLanguage.ARABIC -> listOf(
             Pair(
-                "كم يستغرق التوصيل مع ديليفيو DELIVIO عادةً؟",
+                "كم يستغرق التوصيل مع ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} عادةً؟",
                 "يستغرق التوصيل ما بين 15 إلى 25 دقيقة كحد أقصى بفضل شبكة مناديبنا المتواجدين في كافة أرجاء المدينة."
             ),
             Pair(
                 "هل الدفع عبر التطبيق آمن ومضمون؟",
-                "نعم، جميع المعاملات مشفرة بأعلى بروتوكول بنكي ومعتمدة رسمياً، كما نوفر الدفع نقداً ومحفظة DELIVIO Pay."
+                "نعم، جميع المعاملات مشفرة بأعلى بروتوكول بنكي ومعتمدة رسمياً، كما نوفر الدفع نقداً ومحفظة ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay."
             ),
             Pair(
                 "كيف أتواصل مع المندوب مباشرة؟",
@@ -299,9 +299,9 @@ fun LiveSupportScreen(
                                         context = context,
                                         phoneE164 = saved,
                                         prefilledText = if (language == AppLanguage.FRENCH) {
-                                            "Bonjour, j'ai besoin d'une assistance du support DELIVIO."
+                                            "Bonjour, j'ai besoin d'une assistance du support ${com.example.data.config.BrandConfig.BRAND_NAME}."
                                         } else {
-                                            "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ديليفيو DELIVIO."
+                                            "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}."
                                         }
                                     )
                                 } else {
@@ -354,9 +354,9 @@ fun LiveSupportScreen(
                     ) {
                         Text(
                             text = when (language) {
-                                AppLanguage.FRENCH -> "Hotline Gratuite : 0800-DELIVIO (24h/24)"
-                                AppLanguage.ENGLISH -> "Toll-Free Hotline: 0800-DELIVIO (24/7)"
-                                AppLanguage.ARABIC -> "خط المساعدة المجاني: 0800-DELIVIO (24h/24)"
+                                AppLanguage.FRENCH -> "Hotline Gratuite : 0800-${com.example.data.config.BrandConfig.BRAND_SHORT} (24h/24)"
+                                AppLanguage.ENGLISH -> "Toll-Free Hotline: 0800-${com.example.data.config.BrandConfig.BRAND_SHORT} (24/7)"
+                                AppLanguage.ARABIC -> "خط المساعدة المجاني: 0800-${com.example.data.config.BrandConfig.BRAND_SHORT} (24h/24)"
                             },
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -734,9 +734,9 @@ fun LiveSupportScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = when (language) {
-                            AppLanguage.FRENCH -> "Support WhatsApp DELIVIO 🇲🇦"
-                            AppLanguage.ENGLISH -> "DELIVIO WhatsApp Support 🇲🇦"
-                            AppLanguage.ARABIC -> "دعم ديليفيو DELIVIO عبر واتساب (WhatsApp 🇲🇦)"
+                            AppLanguage.FRENCH -> "Support WhatsApp ${com.example.data.config.BrandConfig.BRAND_NAME} 🇲🇦"
+                            AppLanguage.ENGLISH -> "${com.example.data.config.BrandConfig.BRAND_NAME} WhatsApp Support 🇲🇦"
+                            AppLanguage.ARABIC -> "دعم ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} عبر واتساب (WhatsApp 🇲🇦)"
                         },
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
@@ -747,9 +747,9 @@ fun LiveSupportScreen(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = when (language) {
-                            AppLanguage.FRENCH -> "Contact direct et immédiat avec le support et la direction de DELIVIO via WhatsApp."
-                            AppLanguage.ENGLISH -> "Instant contact with DELIVIO customer care via WhatsApp."
-                            AppLanguage.ARABIC -> "تواصل فوري ومباشر مع الدعم الفني وإدارة ديليفيو DELIVIO عبر تطبيق واتساب."
+                            AppLanguage.FRENCH -> "Contact direct et immédiat avec le support et la direction de ${com.example.data.config.BrandConfig.BRAND_NAME} via WhatsApp."
+                            AppLanguage.ENGLISH -> "Instant contact with ${com.example.data.config.BrandConfig.BRAND_NAME} customer care via WhatsApp."
+                            AppLanguage.ARABIC -> "تواصل فوري ومباشر مع الدعم الفني وإدارة ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} عبر تطبيق واتساب."
                         },
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -784,9 +784,9 @@ fun LiveSupportScreen(
                                 context = context,
                                 phoneE164 = phoneToUse,
                                 prefilledText = when (language) {
-                                    AppLanguage.FRENCH -> "Bonjour, j'ai besoin d'une assistance du support DELIVIO."
-                                    AppLanguage.ENGLISH -> "Hello, I need assistance from DELIVIO support."
-                                    AppLanguage.ARABIC -> "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ديليفيو DELIVIO."
+                                    AppLanguage.FRENCH -> "Bonjour, j'ai besoin d'une assistance du support ${com.example.data.config.BrandConfig.BRAND_NAME}."
+                                    AppLanguage.ENGLISH -> "Hello, I need assistance from ${com.example.data.config.BrandConfig.BRAND_NAME} support."
+                                    AppLanguage.ARABIC -> "السلام عليكم، أحتاج مساعدة ودعم فني من فريق ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}."
                                 }
                             )
                             showWhatsAppDialog = false

@@ -198,7 +198,7 @@ fun OrderHistoryScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("فاتورة رسمية - ديليفيو DELIVIO", fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    Text("فاتورة رسمية - ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}", fontWeight = FontWeight.Black, fontSize = 16.sp)
                 }
             },
             text = {

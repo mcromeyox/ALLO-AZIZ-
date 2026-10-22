@@ -65,7 +65,7 @@ enum class VoicePersona(
 }
 
 /**
- * Ultra-Realistic Human Voice Engine for ALLO AZIZ AI.
+ * Ultra-Realistic Human Voice Engine for WASLIXA (وصلـيكسا) AI.
  * Dual-Engine Architecture:
  * 1. Cloud AI Engine: Google Gemini Generative Audio (gemini-2.5-flash-preview-tts) with studio fidelity
  * 2. On-Device Fallback: Android Native Neural TextToSpeech with humanized prosody

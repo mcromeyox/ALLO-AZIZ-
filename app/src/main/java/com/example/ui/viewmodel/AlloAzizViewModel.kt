@@ -111,11 +111,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
     val driverIsOnline: StateFlow<Boolean> = _driverIsOnline.asStateFlow()
 
     // Language (Default: French 🇫🇷 as primary language, customer can switch to English or Arabic)
-    private val prefs = getApplication<Application>().getSharedPreferences("allo_aziz_prefs", Context.MODE_PRIVATE)
+    private val prefs = getApplication<Application>().getSharedPreferences("waslixa_prefs", Context.MODE_PRIVATE)
+    private val legacyPrefs = getApplication<Application>().getSharedPreferences("allo_aziz_prefs", Context.MODE_PRIVATE)
 
     private val _selectedLanguage = MutableStateFlow(
         try {
-            val savedCode = prefs.getString("user_lang", AppLanguage.FRENCH.code)
+            val savedCode = prefs.getString("user_lang", null)
+                ?: legacyPrefs.getString("user_lang", AppLanguage.FRENCH.code)
             AppLanguage.values().firstOrNull { it.code == savedCode } ?: AppLanguage.FRENCH
         } catch (e: Exception) {
             AppLanguage.FRENCH
@@ -628,21 +630,34 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch(Dispatchers.IO) {
             repository.initializeDefaultDataIfEmpty()
             initSupportChat()
+
+            // Real-time bidirectional Cloud Firestore Sync across Customer, Driver, and Restaurant
+            try {
+                FirestoreSyncManager.listenToAllOrdersRealtime().collect { cloudOrders ->
+                    if (cloudOrders.isNotEmpty()) {
+                        for (cloudOrder in cloudOrders) {
+                            repository.insertOrder(cloudOrder)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.d("AlloAzizViewModel", "Firestore sync inactive or offline: ${e.message}")
+            }
         }
     }
 
     private fun initSupportChat() {
         val greeting = when (_selectedLanguage.value) {
-            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء فيلورا ون VELORA ONE 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
-            AppLanguage.FRENCH -> "Bienvenue au support VELORA ONE 24/7 ! Je suis Sara, comment puis-je vous aider ?"
-            AppLanguage.ENGLISH -> "Welcome to VELORA ONE 24/7 Support! I'm Sara, how can I assist you today?"
+            AppLanguage.ARABIC -> "أهلاً بك في خدمة عملاء وصلـيكسا WASLIXA 24/7! أنا سارة، كيف يمكنني مساعدتك اليوم؟"
+            AppLanguage.FRENCH -> "Bienvenue au support WASLIXA 24/7 ! Je suis Sara, comment puis-je vous aider ?"
+            AppLanguage.ENGLISH -> "Welcome to WASLIXA 24/7 Support! I'm Sara, how can I assist you today?"
         }
         _supportMessages.value = listOf(
             SupportChatMessage(
                 id = "msg_init",
                 text = greeting,
                 isUser = false,
-                agentName = "سارة - دعم فيلورا ون (VELORA ONE)"
+                agentName = "سارة - دعم وصلـيكسا (WASLIXA)"
             )
         )
     }
@@ -675,7 +690,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     name = "المدير العام (Super Admin)",
                     email = "mcromeyox@gmail.com",
                     phone = "+212 600-000001",
-                    password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass.ifBlank { "abdomery" }),
+                    password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass),
                     role = "SUPER_ADMIN",
                     status = "ACTIVE",
                     balance = 150000.0,
@@ -695,13 +710,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             when (user.status) {
                 "PENDING_APPROVAL" -> {
                     val roleMsg = if (user.role == "RESTAURANT_OWNER") {
-                        "طلب الانضمام كشريك مطعم (${user.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE). ستتمكن من تشغيل متجرك فور اعتماد الحساب."
+                        "طلب الانضمام كشريك مطعم (${user.name}) قيد المراجعة والاعتماد من طرف إدارة وصلـيكسا (WASLIXA). ستتمكن من تشغيل متجرك فور اعتماد الحساب."
                     } else if (user.role == "DRIVER") {
-                        "طلب الانضمام كسائق مندوب (${user.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE). ستتمكن من استقبال الطلبات فور اعتماد الحساب."
+                        "طلب الانضمام كسائق مندوب (${user.name}) قيد المراجعة والاعتماد من طرف إدارة وصلـيكسا (WASLIXA). ستتمكن من استقبال الطلبات فور اعتماد الحساب."
                     } else if (user.role == "SUPPORT_AGENT") {
                         "طلب الانضمام لفريق الدعم الفني (${user.name}) قيد المراجعة والاعتماد من طرف مدير المنصة لتعيين الصلاحيات."
                     } else {
-                        "حسابك (${user.name}) قيد المراجعة والاعتماد من قبل إدارة فيلورا ون (VELORA ONE)."
+                        "حسابك (${user.name}) قيد المراجعة والاعتماد من قبل إدارة وصلـيكسا (WASLIXA)."
                     }
                     _authPendingApprovalMessage.value = roleMsg
                     return@launch
@@ -711,7 +726,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     return@launch
                 }
                 "REJECTED" -> {
-                    _authError.value = "عذراً، تم رفض طلب التسجيل من طرف إدارة فيلورا ون لعدم استيفاء الشروط. للتواصل مع الدعم: support@velora.one"
+                    _authError.value = "عذراً، تم رفض طلب التسجيل من طرف إدارة وصلـيكسا لعدم استيفاء الشروط. للتواصل مع الدعم: support@waslixa.com"
                     return@launch
                 }
                 "DEACTIVATED" -> {
@@ -763,13 +778,13 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 when (existingUser.status) {
                     "PENDING_APPROVAL" -> {
                         val roleMsg = if (existingUser.role == "RESTAURANT_OWNER") {
-                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE)."
+                            "طلب الانضمام كشريك مطعم (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة وصلـيكسا (WASLIXA)."
                         } else if (existingUser.role == "DRIVER") {
-                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة فيلورا ون (VELORA ONE)."
+                            "طلب الانضمام كسائق (${existingUser.name}) قيد المراجعة والاعتماد من طرف إدارة وصلـيكسا (WASLIXA)."
                         } else if (existingUser.role == "SUPPORT_AGENT") {
                             "طلب الانضمام لفريق الدعم الفني (${existingUser.name}) قيد المراجعة والاعتماد من طرف مدير المنصة."
                         } else {
-                            "حسابك قيد المراجعة والاعتماد من قبل إدارة فيلورا ون (VELORA ONE)."
+                            "حسابك قيد المراجعة والاعتماد من قبل إدارة وصلـيكسا (WASLIXA)."
                         }
                         _authPendingApprovalMessage.value = roleMsg
                         return@launch
@@ -779,7 +794,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         return@launch
                     }
                     "REJECTED" -> {
-                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة فيلورا ون (VELORA ONE)."
+                        _authError.value = "تم رفض طلب الانضمام لهذا الحساب مسبقاً من طرف إدارة وصلـيكسا (WASLIXA)."
                         return@launch
                     }
                     "DEACTIVATED" -> {
@@ -857,12 +872,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 }
                 _userAlertMessage.value = "مرحباً بك مجدداً يا ${existing.name}! تم الدخول برقم الهاتف بنجاح 📱"
             } else {
-                val displayName = customerName.trim().ifBlank { "زبون ديليفيو (${cleanPhone.takeLast(4)})" }
+                val displayName = customerName.trim().ifBlank { "عميل ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} (${cleanPhone.takeLast(4)})" }
                 val newId = "usr_phone_${System.currentTimeMillis()}"
                 val newAccount = UserAccountEntity(
                     id = newId,
                     name = displayName,
-                    email = "$cleanPhone@delivio.ma",
+                    email = "$cleanPhone@${com.example.data.config.BrandConfig.DOMAIN}",
                     phone = cleanPhone,
                     password = "phone_verified",
                     role = UserRole.CUSTOMER.name,
@@ -876,7 +891,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 _currentUserId.value = newAccount.id
                 _currentRole.value = UserRole.CUSTOMER
                 _currentScreen.value = AppScreen.HOME
-                _userAlertMessage.value = "أهلاً بك يا $displayName في ديليفيو! تم تفعيل حسابك برقم الهاتف فورياً 🚀"
+                _userAlertMessage.value = "أهلاً بك يا $displayName في ${com.example.data.config.BrandConfig.BRAND_TITLE_AR}! تم تفعيل حسابك برقم الهاتف فورياً 🚀"
             }
         }
     }
@@ -902,7 +917,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             val trimmedName = name.trim()
             val trimmedEmail = email.trim()
             val trimmedPhone = phone.trim()
-            val trimmedPass = pass.trim().ifBlank { "abdomery" }
+            val trimmedPass = pass.trim()
+
+            if (trimmedPass.length < 6) {
+                _authError.value = "يرجى إدخال كلمة مرور آمنة لا تقل عن 6 خانات."
+                return@launch
+            }
 
             // Security: Only Super Admin accounts cannot be created via public registration
             if (role == UserRole.SUPER_ADMIN) {
@@ -940,7 +960,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             val newAccount = UserAccountEntity(
                 id = newId,
                 name = trimmedName,
-                email = trimmedEmail.ifBlank { "$trimmedPhone@delivio.ma" },
+                email = trimmedEmail.ifBlank { "$trimmedPhone@${com.example.data.config.BrandConfig.DOMAIN}" },
                 phone = trimmedPhone.ifBlank { "+212 600-000000" },
                 password = com.example.data.auth.PasswordHasher.hashPassword(trimmedPass),
                 role = role.name,
@@ -966,14 +986,14 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 _currentUserId.value = newAccount.id
                 _currentRole.value = UserRole.CUSTOMER
                 _currentScreen.value = AppScreen.HOME
-                _userAlertMessage.value = "مرحباً بك يا $trimmedName في ديليفيو! تم تفعيل حسابك بنجاح وبإمكانك الطلب الآن 🛍️"
+                _userAlertMessage.value = "مرحباً بك يا $trimmedName في ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} (${com.example.data.config.BrandConfig.BRAND_NAME})! تم تفعيل حسابك بنجاح وبإمكانك الطلب الآن 🛍️"
 
                 repository.addNotification(
                     NotificationEntity(
                         id = "notif_welcome_${System.currentTimeMillis()}",
-                        titleAr = "مرحباً بك في فيلورا ون (VELORA ONE)! 🇲🇦",
-                        titleFr = "Bienvenue sur VELORA ONE !",
-                        titleEn = "Welcome to VELORA ONE!",
+                        titleAr = "مرحباً بك في وصلـيكسا (WASLIXA)! 🇲🇦",
+                        titleFr = "Bienvenue sur WASLIXA !",
+                        titleEn = "Welcome to WASLIXA!",
                         bodyAr = "تم تفعيل حسابك بنجاح. استمتع بأشهى المأكولات والتسوق السريع الذكي.",
                         bodyFr = "Votre compte a été activé avec succès.",
                         bodyEn = "Your account is now active.",
@@ -1000,7 +1020,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 )
                 _merchantApplications.value = listOf(mApp) + _merchantApplications.value
 
-                _authPendingApprovalMessage.value = "تم استلام ملف الشريك التجاري (${restaurantName.ifBlank { trimmedName }}) بنجاح! 📄 حسابك قيد التدقيق الإداري من طرف إدارة فيلورا ون (VELORA ONE) أو الدعم الفني، وسيتم تفعيله فور اعتماد الوثائق."
+                _authPendingApprovalMessage.value = "تم استلام ملف الشريك التجاري (${restaurantName.ifBlank { trimmedName }}) بنجاح! 📄 حسابك قيد التدقيق الإداري من طرف إدارة وصلـيكسا (WASLIXA) أو الدعم الفني، وسيتم تفعيله فور اعتماد الوثائق."
 
                 repository.addNotification(
                     NotificationEntity(
@@ -1034,7 +1054,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 )
             } else {
                 // Driver Partner: Requires Admin / Support Approval
-                _authPendingApprovalMessage.value = "تم استلام ملف السائق (${trimmedName}) بنجاح! 🛵 حسابك قيد التدقيق الإداري من قبل إدارة فيلورا ون (VELORA ONE)، وسيتم تفعيله فور اعتماد البيانات."
+                _authPendingApprovalMessage.value = "تم استلام ملف السائق (${trimmedName}) بنجاح! 🛵 حسابك قيد التدقيق الإداري من قبل إدارة وصلـيكسا (WASLIXA)، وسيتم تفعيله فور اعتماد البيانات."
 
                 repository.addNotification(
                     NotificationEntity(
@@ -1059,12 +1079,12 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_appr_${System.currentTimeMillis()}",
-                    titleAr = "تم قبول طلب انضمامك إلى فيلورا ون (VELORA ONE) بنجاح 🎉",
-                    titleFr = "Demande acceptée avec succès sur VELORA ONE 🎉",
-                    titleEn = "Partner Application Approved on VELORA ONE 🎉",
-                    bodyAr = "تم قبول طلب انضمامك إلى فيلورا ون بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
-                    bodyFr = "Votre demande a été approuvée par l'administration VELORA ONE.",
-                    bodyEn = "Your application was approved by VELORA ONE. You can now login and start working.",
+                    titleAr = "تم قبول طلب انضمامك إلى وصلـيكسا (WASLIXA) بنجاح 🎉",
+                    titleFr = "Demande acceptée avec succès sur WASLIXA 🎉",
+                    titleEn = "Partner Application Approved on WASLIXA 🎉",
+                    bodyAr = "تم قبول طلب انضمامك إلى وصلـيكسا بنجاح. يمكنك الآن تسجيل الدخول وبدء العمل واستقبال الطلبات.",
+                    bodyFr = "Votre demande a été approuvée par l'administration WASLIXA.",
+                    bodyEn = "Your application was approved by WASLIXA. You can now login and start working.",
                     timestamp = System.currentTimeMillis(),
                     type = "APPROVAL"
                 )
@@ -1079,7 +1099,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             repository.addNotification(
                 NotificationEntity(
                     id = "notif_rej_${System.currentTimeMillis()}",
-                    titleAr = "تحديث بخصوص طلب الانضمام إلى فيلورا ون (VELORA ONE)",
+                    titleAr = "تحديث بخصوص طلب الانضمام إلى وصلـيكسا (WASLIXA)",
                     titleFr = "Mise à jour concernant votre demande",
                     titleEn = "Application Status Update",
                     bodyAr = "نأسف لإبلاغك بأنه تم رفض طلب الانضمام لعدم استيفاء الشروط والمعايير المطلوبة. يمكنك التواصل مع الدعم الفني لمزيد من المعلومات.",
@@ -1693,29 +1713,29 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
 
     fun applyPromoCode(code: String): Boolean {
         val cleanCode = code.trim().uppercase()
-        if (cleanCode == "VELORA20" || cleanCode == "DELIVIO20" || cleanCode == "AZIZ20") {
-            _appliedPromoCode.value = "VELORA20"
+        if (cleanCode == "WASLIXA20" || cleanCode == "VELORA20" || cleanCode == "DELIVIO20" || cleanCode == "AZIZ20") {
+            _appliedPromoCode.value = "WASLIXA20"
             _promoDiscountPercent.value = 0.20 // 20%
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود VELORA20 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code VELORA20 appliqué ! -20% sur la commande 🎉"
-                AppLanguage.ENGLISH -> "Code VELORA20 applied! 20% off your order 🎉"
+                AppLanguage.ARABIC -> "تم تطبيق خصم 20% بنجاح! كود WASLIXA20 مفعل 🎉"
+                AppLanguage.FRENCH -> "Code WASLIXA20 appliqué ! -20% sur la commande 🎉"
+                AppLanguage.ENGLISH -> "Code WASLIXA20 applied! 20% off your order 🎉"
             }
             return true
-        } else if (cleanCode == "VELORA10" || cleanCode == "DELIVIO10" || cleanCode == "ALLO10") {
-            _appliedPromoCode.value = "VELORA10"
+        } else if (cleanCode == "WASLIXA10" || cleanCode == "VELORA10" || cleanCode == "DELIVIO10" || cleanCode == "ALLO10") {
+            _appliedPromoCode.value = "WASLIXA10"
             _promoDiscountPercent.value = 0.10 // 10%
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود VELORA10 مفعل 🎉"
-                AppLanguage.FRENCH -> "Code VELORA10 appliqué ! -10% 🎉"
-                AppLanguage.ENGLISH -> "Code VELORA10 applied! 10% off 🎉"
+                AppLanguage.ARABIC -> "تم تطبيق خصم 10% بنجاح! كود WASLIXA10 مفعل 🎉"
+                AppLanguage.FRENCH -> "Code WASLIXA10 appliqué ! -10% 🎉"
+                AppLanguage.ENGLISH -> "Code WASLIXA10 applied! 10% off 🎉"
             }
             return true
         } else {
             _userAlertMessage.value = when (_selectedLanguage.value) {
-                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب VELORA20"
-                AppLanguage.FRENCH -> "Code promo invalide. Essayez VELORA20"
-                AppLanguage.ENGLISH -> "Invalid promo code. Try VELORA20"
+                AppLanguage.ARABIC -> "عذراً، كود الخصم غير صالح. جرب WASLIXA20"
+                AppLanguage.FRENCH -> "Code promo invalide. Essayez WASLIXA20"
+                AppLanguage.ENGLISH -> "Invalid promo code. Try WASLIXA20"
             }
             return false
         }
@@ -1737,16 +1757,26 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         _userAlertMessage.value = null
     }
 
+    private var isPlacingOrder = false
+
     // Checkout & Place Order
     fun placeOrder(
         onSuccess: (orderId: String) -> Unit
     ) {
+        if (isPlacingOrder) return
         val items = _cartItems.value
         if (items.isEmpty()) return
 
+        // 1. Authoritative price and availability verification against catalog
+        val verifiedSubtotal = items.sumOf { cartItem ->
+            val catalogMatch = CatalogData.products.find { it.id == cartItem.product.id }
+            val authoritativePrice = catalogMatch?.price ?: cartItem.product.price
+            (authoritativePrice + cartItem.extraOptionsPrice) * cartItem.quantity
+        }
+
         val storeName = items.first().product.storeName
         val storeId = items.first().product.storeId
-        val subtotal = items.sumOf { (it.product.price + it.extraOptionsPrice) * it.quantity }
+        val subtotal = verifiedSubtotal
         val hasEcommerce = items.any { it.product.category == StoreCategory.ECOMMERCE }
         val deliveryFee = if (hasEcommerce) 18.0 else 8.0
         val discount = subtotal * _promoDiscountPercent.value
@@ -1754,7 +1784,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val total = (subtotal - discount + deliveryFee + tip).coerceAtLeast(0.0)
 
         val orderNum = Random.nextInt(1000, 9999)
-        val orderId = "AZ-$orderNum"
+        val orderId = "WX-$orderNum"
 
         val itemsSummary = items.joinToString(", ") { "${it.quantity}x ${it.product.nameAr}" }
         val itemsCount = items.sumOf { it.quantity }
@@ -1762,7 +1792,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         val paymentMethodStr = when (_selectedPaymentMethod.value) {
             PaymentMethodType.CREDIT_CARD -> "بطاقة مصرفية آمنة (Visa/Mastercard)"
             PaymentMethodType.CASH_ON_DELIVERY -> "الدفع عند الاستلام (كاش)"
-            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة فيلورا (VELORA Pay)"
+            PaymentMethodType.ALLO_PAY_WALLET -> "محفظة وصلـيكسا (WASLIXA Pay)"
             PaymentMethodType.DIGITAL_WALLET -> "Google Pay / Apple Pay"
         }
 
@@ -1775,77 +1805,86 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
             }
         }
 
+        isPlacingOrder = true
         viewModelScope.launch {
-            if (_selectedPaymentMethod.value == PaymentMethodType.ALLO_PAY_WALLET) {
-                repository.deductWallet(total)
-            }
+            try {
+                if (_selectedPaymentMethod.value == PaymentMethodType.ALLO_PAY_WALLET) {
+                    repository.deductWallet(total)
+                }
 
-            val scheduledTimeInfo = _scheduledDeliveryTime.value ?: "توصيل فوري"
-            val combinedNotes = buildString {
-                if (_deliveryNotes.value.isNotBlank()) append(_deliveryNotes.value)
-                append(" • [موعد التسليم: $scheduledTimeInfo]")
-                if (tip > 0) append(" • [إكرامية السائق: $tip د.م]")
-            }
+                val scheduledTimeInfo = _scheduledDeliveryTime.value ?: "توصيل فوري"
+                val customerName = _currentUser.value?.name ?: "العميل"
+                val customerId = _currentUser.value?.id ?: "usr_customer_1"
 
-            val newOrder = OrderEntity(
-                id = orderId,
-                storeId = storeId,
-                storeName = storeName,
-                itemsSummary = itemsSummary,
-                itemsCount = itemsCount,
-                subtotal = subtotal,
-                deliveryFee = deliveryFee,
-                discount = discount,
-                total = total,
-                status = "RECEIVED",
-                restaurantStatus = "PENDING_ACCEPTANCE",
-                driverId = null,
-                paymentMethod = paymentMethodStr,
-                deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
-                deliveryNotes = combinedNotes,
-                timestamp = System.currentTimeMillis(),
-                courierName = "الكابتن عزيز برادة 🛵",
-                courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
-                courierRating = 4.9,
-                courierVehicle = "دراجة نارية Honda SH",
-                courierProgress = 0.15f,
-                estimatedMinsLeft = 25,
-                hasReviewed = false,
-                customerLat = _customerLat.value,
-                customerLng = _customerLng.value
-            )
+                val combinedNotes = buildString {
+                    if (_deliveryNotes.value.isNotBlank()) append(_deliveryNotes.value)
+                    append(" • [موعد التسليم: $scheduledTimeInfo]")
+                    append(" • [العميل: $customerName ($customerId)]")
+                    if (tip > 0) append(" • [إكرامية السائق: $tip د.م]")
+                }
 
-            repository.insertOrder(newOrder)
-            FirestoreSyncManager.syncOrderToCloud(newOrder)
-
-            HapticFeedbackHelper.vibrateSuccess(getApplication())
-            AndroidNotificationHelper.showOrderNotification(
-                context = getApplication(),
-                orderId = orderId,
-                title = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
-                body = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك."
-            )
-
-            repository.addNotification(
-                NotificationEntity(
-                    id = "notif_${System.currentTimeMillis()}",
-                    titleAr = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
-                    titleFr = "Commande #$orderId confirmée ! 🛵",
-                    titleEn = "Order #$orderId Confirmed! 🛵",
-                    bodyAr = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك.",
-                    bodyFr = "Votre commande chez \"$storeName\" est confirmée.",
-                    bodyEn = "Your order at \"$storeName\" is confirmed.",
+                val newOrder = OrderEntity(
+                    id = orderId,
+                    storeId = storeId,
+                    storeName = storeName,
+                    itemsSummary = itemsSummary,
+                    itemsCount = itemsCount,
+                    subtotal = subtotal,
+                    deliveryFee = deliveryFee,
+                    discount = discount,
+                    total = total,
+                    status = "RECEIVED",
+                    restaurantStatus = "PENDING_ACCEPTANCE",
+                    driverId = null,
+                    paymentMethod = paymentMethodStr,
+                    deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
+                    deliveryNotes = combinedNotes,
                     timestamp = System.currentTimeMillis(),
-                    isRead = false,
-                    type = "ORDER",
-                    orderId = orderId
+                    courierName = "الكابتن عزيز برادة 🛵",
+                    courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
+                    courierRating = 4.9,
+                    courierVehicle = "دراجة نارية Honda SH",
+                    courierProgress = 0.15f,
+                    estimatedMinsLeft = 25,
+                    hasReviewed = false,
+                    customerLat = _customerLat.value,
+                    customerLng = _customerLng.value
                 )
-            )
 
-            clearCart()
-            _trackingOrderId.value = orderId
-            navigateTo(AppScreen.ORDER_TRACKING)
-            onSuccess(orderId)
+                repository.insertOrder(newOrder)
+                FirestoreSyncManager.syncOrderToCloud(newOrder)
+
+                HapticFeedbackHelper.vibrateSuccess(getApplication())
+                AndroidNotificationHelper.showOrderNotification(
+                    context = getApplication(),
+                    orderId = orderId,
+                    title = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
+                    body = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك."
+                )
+
+                repository.addNotification(
+                    NotificationEntity(
+                        id = "notif_${System.currentTimeMillis()}",
+                        titleAr = "تم تأكيد طلبك #$orderId بنجاح! 🛵",
+                        titleFr = "Commande #$orderId confirmée ! 🛵",
+                        titleEn = "Order #$orderId Confirmed! 🛵",
+                        bodyAr = "طلبك قيد المراجعة لدى متجر \"$storeName\". سيتم إسناد أقرب كابتن إليك.",
+                        bodyFr = "Votre commande chez \"$storeName\" est confirmée.",
+                        bodyEn = "Your order at \"$storeName\" is confirmed.",
+                        timestamp = System.currentTimeMillis(),
+                        isRead = false,
+                        type = "ORDER",
+                        orderId = orderId
+                    )
+                )
+
+                clearCart()
+                _trackingOrderId.value = orderId
+                navigateTo(AppScreen.ORDER_TRACKING)
+                onSuccess(orderId)
+            } finally {
+                isPlacingOrder = false
+            }
         }
     }
 
@@ -1909,7 +1948,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                         context = getApplication(),
                         orderId = orderId,
                         title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
-                        body = "شكراً لاختيارك فيلورا ون (VELORA ONE)! شاركنا تقييمك للخدمة."
+                        body = "شكراً لاختيارك وصلـيكسا (WASLIXA)! شاركنا تقييمك للخدمة."
                     )
                     _userAlertMessage.value = "تم تأكيد تسليم واستلام الطلب بنجاح! 🎉"
                 }
@@ -2141,9 +2180,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                 text = responseText,
                 isUser = false,
                 agentName = when (lang) {
-                    AppLanguage.FRENCH -> "Sara (IA Support VELORA ONE 24/7)"
-                    AppLanguage.ENGLISH -> "Sara (VELORA ONE 24/7 AI Support)"
-                    AppLanguage.ARABIC -> "سارة - دعم فيلورا ون (VELORA ONE)"
+                    AppLanguage.FRENCH -> "Sara (IA Support WASLIXA 24/7)"
+                    AppLanguage.ENGLISH -> "Sara (WASLIXA 24/7 AI Support)"
+                    AppLanguage.ARABIC -> "سارة - دعم وصلـيكسا (WASLIXA)"
                 }
             )
             _supportMessages.value = _supportMessages.value + botMsg
@@ -2159,9 +2198,9 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     titleAr = "شحن المحفظة بنجاح 💳",
                     titleFr = "Portefeuille rechargé 💳",
                     titleEn = "Wallet Topped Up 💳",
-                    bodyAr = "تمت إضافة $amount د.م إلى محفظة VELORA Pay بنجاح.",
-                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille VELORA Pay.",
-                    bodyEn = "$amount MAD successfully added to your VELORA Pay balance.",
+                    bodyAr = "تمت إضافة $amount د.م إلى محفظة WASLIXA Pay بنجاح.",
+                    bodyFr = "$amount DH ajoutés avec succès à votre portefeuille WASLIXA Pay.",
+                    bodyEn = "$amount MAD successfully added to your WASLIXA Pay balance.",
                     timestamp = System.currentTimeMillis(),
                     type = "WALLET"
                 )
@@ -2203,7 +2242,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         return ExternalShareHelper.openWhatsApp(
             context = context,
             phoneE164 = targetPhone,
-            prefilledText = "السلام عليكم كابتن فيلورا ون، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
+            prefilledText = "السلام عليكم كابتن وصلـيكسا، أنا العميل بخصوص طلبي #${order.id} من متجر ${order.storeName} - العنوان: ${order.deliveryAddress}."
         )
     }
 
@@ -2218,7 +2257,7 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         return ExternalShareHelper.openWhatsApp(
             context = context,
             phoneE164 = targetPhone,
-            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة فيلورا ون VELORA ONE بخصوص تطبيق التوصيل."
+            prefilledText = "السلام عليكم، أحتاج مساعدة ودعم فني من إدارة وصلـيكسا WASLIXA بخصوص تطبيق التوصيل."
         )
     }
 

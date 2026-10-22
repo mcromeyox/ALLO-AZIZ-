@@ -1,27 +1,28 @@
-# ALLO AZIZ - Food Delivery & Services Platform
+# WASLIXA - Food Delivery & Local Services Super-App Platform
 
 ## 📌 Overview
-**Allo Aziz** is a comprehensive, scalable food delivery service platform designed to streamline operations between customers, drivers, and partner restaurants. Originally developed for regional operations with a vision for broad scalability, this project features a robust architecture, real-time tracking, and a complete management portal.
+**WASLIXA (وصلـيكسا)** is a comprehensive, scalable food delivery and local e-commerce super-app platform designed to streamline operations between customers, couriers, and partner merchants across Morocco and globally. Featuring a modern Material 3 architecture, real-time GPS tracking, conversational AI shopping assistant, and dedicated multi-role portals (Customer, Driver Partner, Restaurant Merchant, and Super Admin).
 
 ## 🌟 Unique Selling Proposition (USP)
-### 🤖 AI-Powered Shopping Assistant
-* **Conversational Ordering:** Users can chat directly with an integrated AI assistant to describe what they want or need.
-* **Smart Recommendation & Auto-Cart:** The AI intelligently selects the items, builds the shopping basket, and prepares the order.
-* **One-Tap Checkout:** The customer only needs to review the AI's selection and tap "Confirm Order", ensuring a frictionless and futuristic user experience!
+### 🤖 AI-Powered Shopping Assistant (Waslixa AI)
+* **Conversational Voice & Text Ordering:** Users can speak or chat naturally in Moroccan Darija, Arabic, French, or English.
+* **Authoritative Catalog Matching:** Real-time semantic matching strictly against verified merchant menus and inventory—no hallucinated or invented products/prices.
+* **Smart Cart Preparation:** The AI extracts exact quantities and preparation notes, calculates real subtotals, and prepares the cart for user confirmation.
+* **One-Tap Checkout:** Seamless review and confirmation with multiple payment options (Cash on Delivery, WASLIXA Pay Wallet, Bank Card).
 
 ## 🚀 Key Features
-* **Customer App:** Multi-language support, intuitive UI, and seamless food ordering experience.
-* **Real-Time GPS Tracking:** Live tracking for customers to monitor their delivery status in real-time.
-* **Driver & Restaurant Portal:** Dedicated management interfaces to oversee delivery agents, track orders, and manage menu items efficiently.
-* **Automated Workflows:** Integrated build and deployment pipelines.
+* **Multi-Role RBAC:** Secure access separation for Customers, Drivers, Store Owners, Support Agents, and Super Admin.
+* **Real-Time GPS Tracking:** Live map and telemetry tracking for customers to follow couriers from kitchen to doorstep.
+* **Store & Driver Portals:** Dedicated dashboards to accept orders, manage culinary menus, toggle product availability, and monitor earnings.
+* **Cloud & Local Synchronization:** Seamless two-way sync between SQLite Room Database and Google Cloud Firestore.
+* **Localized Moroccan Experience:** Full RTL support, multi-language switching (Arabic, French, English), and local payment methods.
 
 ## 🛠️ Tech Stack
-* Built using modern frameworks and tools tailored for cross-platform performance and reliability.
-* Integrated with cloud databases, mapping services, and advanced AI chat capabilities.
+* **Language & UI:** Kotlin, Jetpack Compose, Material Design 3.
+* **Architecture:** MVVM, Coroutines, StateFlow, Room Database, Cloud Firestore, Firebase Authentication.
+* **AI & Voice:** Google Gemini API with fallback NLP matching and Android Text-to-Speech / Speech Recognizer.
+* **Maps & Geo:** Google Maps SDK, Android FusedLocationProviderClient.
 
 ## 📄 License & Copyrights
-Copyright © 2026 Abdelaziz Chefnaj. All rights reserved. 
-This project and its source code are protected under intellectual property laws. Unauthorized resale, distribution, or commercial use without explicit permission is strictly prohibited.
-
----
-*Interested in acquiring this project or obtaining a commercial license? Contact the developer directly.*
+Copyright © 2026 WASLIXA Technologies. All rights reserved.
+Protected under applicable intellectual property laws.

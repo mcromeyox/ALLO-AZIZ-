@@ -8,7 +8,7 @@ import com.google.firebase.FirebaseApp
 /**
  * ServiceManager
  *
- * Implements graceful service abstractions and development fallbacks for DELIVIO.
+ * Implements graceful service abstractions and development fallbacks for WASLIXA (وصلـيكسا).
  * In Development / Preview mode, all external services are optional.
  * When API keys are not provided, the app runs completely on local Room database,
  * interactive simulated map views, and local development authentication.
@@ -43,7 +43,7 @@ object ServiceManager {
      */
     fun generateDevOtp(recipient: String): String {
         val otp = ((Math.random() * 900000).toInt() + 100000).toString()
-        Log.i("DELIVIO_DEV", "[DELIVIO OTP] Code for $recipient: $otp")
+        Log.i("WASLIXA_DEV", "[WASLIXA OTP] Code for $recipient: $otp")
         return otp
     }
 
@@ -51,6 +51,6 @@ object ServiceManager {
      * Development Email & SMS Logger
      */
     fun recordDevEmail(to: String, subject: String, body: String) {
-        Log.i("DELIVIO_DEV", "[DELIVIO EMAIL/SMS] To: $to | Subject: $subject | Content: $body")
+        Log.i("WASLIXA_DEV", "[WASLIXA EMAIL/SMS] To: $to | Subject: $subject | Content: $body")
     }
 }

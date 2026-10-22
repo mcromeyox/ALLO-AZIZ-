@@ -154,7 +154,7 @@ fun StaffLoginScreen(
                 )
 
                 Text(
-                    text = "DELIVIO • Staff & Partner Portal 🇲🇦",
+                    text = "${com.example.data.config.BrandConfig.BRAND_NAME} • Staff & Partner Portal 🇲🇦",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -193,7 +193,9 @@ fun StaffLoginScreen(
                             val isSelected = selectedRole == role
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { selectedRole = role },
+                                onClick = {
+                                    selectedRole = role
+                                },
                                 label = { Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = AzizOrangePrimary,
@@ -252,7 +254,7 @@ fun StaffLoginScreen(
                         leadingIcon = {
                             Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = AzizOrangePrimary)
                         },
-                        placeholder = { Text("admin@delivio.ma أو البريد المهني", fontSize = 12.sp) },
+                        placeholder = { Text("admin@${com.example.data.config.BrandConfig.DOMAIN} أو البريد المهني", fontSize = 12.sp) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)

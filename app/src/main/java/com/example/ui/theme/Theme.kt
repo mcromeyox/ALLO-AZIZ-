@@ -47,7 +47,7 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun AlloAzizTheme(
-    darkTheme: Boolean = false, // Instant bright DELIVIO brand launch without dark delay
+    darkTheme: Boolean = false, // Instant bright WASLIXA brand launch without dark delay
     dynamicColor: Boolean = false, // Keep branded orange aesthetic consistent
     content: @Composable () -> Unit
 ) {

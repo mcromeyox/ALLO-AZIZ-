@@ -34,9 +34,9 @@ object AiSupportVoiceService {
         val query = userPrompt.trim()
         if (query.isBlank()) {
             return@withContext when (language) {
-                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara de l'assistance DELIVIO. Comment puis-je vous aider aujourd'hui ?"
-                AppLanguage.ENGLISH -> "Hello! I am Sara from DELIVIO 24/7 Support. How can I assist you today?"
-                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لديليفيو DELIVIO. كيف يمكنني مساعدتك اليوم؟"
+                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara de l'assistance ${com.example.data.config.BrandConfig.BRAND_NAME}. Comment puis-je vous aider aujourd'hui ?"
+                AppLanguage.ENGLISH -> "Hello! I am Sara from ${com.example.data.config.BrandConfig.BRAND_NAME} 24/7 Support. How can I assist you today?"
+                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لـ ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}. كيف يمكنني مساعدتك اليوم؟"
             }
         }
 
@@ -72,14 +72,14 @@ object AiSupportVoiceService {
         }
 
         val systemInstruction = """
-            Vous êtes 'Sara', l'assistante vocale intelligente du support client DELIVIO, super-app de livraison express et marketplace e-commerce à Mohammedia et Casablanca (Maroc).
+            Vous êtes 'Sara', l'assistante vocale intelligente du support client ${com.example.data.config.BrandConfig.BRAND_NAME}, super-app de livraison express et marketplace e-commerce à Mohammedia et Casablanca (Maroc).
             $langDirective
             Faits importants :
-            - Livraison en 15 à 25 minutes par nos coursiers DELIVIO sur deux-roues.
-            - Code promo du jour : DELIVIO20 (-20% sur la commande).
-            - Hotline gratuite : 0800-DELIVIO (0800 25 56 29).
+            - Livraison en 15 à 25 minutes par nos coursiers ${com.example.data.config.BrandConfig.BRAND_SHORT} sur deux-roues.
+            - Code promo du jour : WASLIXA20 (-20% sur la commande).
+            - Hotline gratuite : 0800-${com.example.data.config.BrandConfig.BRAND_SHORT}.
             - En cas d'article manquant : réexpédition gratuite immédiate ou remboursement portefeuille en 1 minute.
-            - Paiements acceptés : Carte bancaire marocaine (CMI, Visa, Mastercard), Espèces à la livraison, Portefeuille DELIVIO Pay.
+            - Paiements acceptés : Carte bancaire marocaine (CMI, Visa, Mastercard), Espèces à la livraison, Portefeuille ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay.
             - Contexte commande active : ${activeOrderSummary ?: "Aucune commande en retard."}
             Gardez votre réponse naturelle pour être prononcée à voix haute par synthèse vocale. Pas de puces, pas de markdown, pas de titres.
         """.trimIndent()
@@ -128,19 +128,19 @@ object AiSupportVoiceService {
 
         // Order tracking / Where is courier?
         if (q.contains("où") || q.contains("ou est") || q.contains("commande") || q.contains("coursier") ||
-            q.contains("delivio") || q.contains("livreur") || q.contains("أين") || q.contains("طلبي") ||
+            q.contains("waslixa") || q.contains("وصلـيكسا") || q.contains("delivio") || q.contains("livreur") || q.contains("أين") || q.contains("طلبي") ||
             q.contains("فين") || q.contains("where") || q.contains("track")
         ) {
             return when (language) {
                 AppLanguage.FRENCH -> {
                     if (activeOrderSummary != null) {
-                        "Votre coursier DELIVIO est en route avec votre commande ! Arrivée estimée dans moins de 10 minutes. Vous pouvez suivre sa moto en direct sur la carte."
+                        "Votre coursier ${com.example.data.config.BrandConfig.BRAND_NAME} est en route avec votre commande ! Arrivée estimée dans moins de 10 minutes. Vous pouvez suivre sa moto en direct sur la carte."
                     } else {
-                        "Votre coursier DELIVIO est actuellement sur le boulevard Hassan II. Il arrive très rapidement ! Vous pouvez suivre sa position en direct dans l'onglet 'Suivi de commande'."
+                        "Votre coursier ${com.example.data.config.BrandConfig.BRAND_NAME} est actuellement sur le boulevard Hassan II. Il arrive très rapidement ! Vous pouvez suivre sa position en direct dans l'onglet 'Suivi de commande'."
                     }
                 }
-                AppLanguage.ENGLISH -> "DELIVIO courier is on the way with your order! Estimated arrival is under 10 minutes. You can track the live scooter on the map."
-                AppLanguage.ARABIC -> "مندوب ديليفيو DELIVIO في الطريق إليك وموقعه يبعد دقائق معدودة عن عنوانك. يمكنك تتبعه مباشرة على الخريطة!"
+                AppLanguage.ENGLISH -> "${com.example.data.config.BrandConfig.BRAND_NAME} courier is on the way with your order! Estimated arrival is under 10 minutes. You can track the live scooter on the map."
+                AppLanguage.ARABIC -> "مندوب ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} في الطريق إليك وموقعه يبعد دقائق معدودة عن عنوانك. يمكنك تتبعه مباشرة على الخريطة!"
             }
         }
 
@@ -149,9 +149,9 @@ object AiSupportVoiceService {
             q.contains("remise") || q.contains("خصم") || q.contains("كود") || q.contains("discount")
         ) {
             return when (language) {
-                AppLanguage.FRENCH -> "Bonne nouvelle ! Utilisez le code promo exclusif DELIVIO20 dans votre panier pour bénéficier immédiatement de 20% de réduction sur votre commande !"
-                AppLanguage.ENGLISH -> "Great news! Use the exclusive promo code DELIVIO20 at checkout for an instant 20% discount on your entire order!"
-                AppLanguage.ARABIC -> "خبر سار! استخدم كود الخصم الحصري DELIVIO20 في سلتك للحصول على تخفيض فوري 20% على طلبك!"
+                AppLanguage.FRENCH -> "Bonne nouvelle ! Utilisez le code promo exclusif WASLIXA20 dans votre panier pour bénéficier immédiatement de 20% de réduction sur votre commande !"
+                AppLanguage.ENGLISH -> "Great news! Use the exclusive promo code WASLIXA20 at checkout for an instant 20% discount on your entire order!"
+                AppLanguage.ARABIC -> "خبر سار! استخدم كود الخصم الحصري WASLIXA20 في سلتك للحصول على تخفيض فوري 20% على طلبك!"
             }
         }
 
@@ -173,9 +173,9 @@ object AiSupportVoiceService {
             q.contains("بطاقة") || q.contains("فلوس") || q.contains("pay")
         ) {
             return when (language) {
-                AppLanguage.FRENCH -> "Nous acceptons les cartes bancaires marocaines CMI, Visa, Mastercard, le portefeuille DELIVIO Pay, ainsi que le paiement en espèces à la livraison auprès du coursier."
-                AppLanguage.ENGLISH -> "We accept Moroccan bank cards (CMI, Visa, Mastercard), DELIVIO Pay wallet, and Cash on Delivery directly with DELIVIO courier."
-                AppLanguage.ARABIC -> "نقبل الدفع الآمن بالبطاقة البنكية، محفظة DELIVIO Pay، وكذلك الدفع نقداً عند الاستلام مع كابتن ديليفيو."
+                AppLanguage.FRENCH -> "Nous acceptons les cartes bancaires marocaines CMI, Visa, Mastercard, le portefeuille ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay, ainsi que le paiement en espèces à la livraison auprès du coursier."
+                AppLanguage.ENGLISH -> "We accept Moroccan bank cards (CMI, Visa, Mastercard), ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay wallet, and Cash on Delivery directly with ${com.example.data.config.BrandConfig.BRAND_SHORT} courier."
+                AppLanguage.ARABIC -> "نقبل الدفع الآمن بالبطاقة البنكية، محفظة ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay، وكذلك الدفع نقداً عند الاستلام مع كابتن ${com.example.data.config.BrandConfig.BRAND_TITLE_AR}."
             }
         }
 
@@ -185,9 +185,9 @@ object AiSupportVoiceService {
             q.contains("مناطق") || q.contains("speed") || q.contains("time")
         ) {
             return when (language) {
-                AppLanguage.FRENCH -> "DELIVIO livre partout à Mohammedia et ses environs en 15 à 25 minutes seulement, grâce à nos livreurs déployés en continu !"
-                AppLanguage.ENGLISH -> "DELIVIO delivers everywhere in Mohammedia in just 15 to 25 minutes, with dedicated couriers stationed across the city!"
-                AppLanguage.ARABIC -> "التوصيل مع ديليفيو DELIVIO يستغرق ما بين 15 إلى 25 دقيقة فقط في كافة أحياء المحمدية مع تتبع فوري مباشر!"
+                AppLanguage.FRENCH -> "${com.example.data.config.BrandConfig.BRAND_NAME} livre partout à Mohammedia et ses environs en 15 à 25 minutes seulement, grâce à nos livreurs déployés en continu !"
+                AppLanguage.ENGLISH -> "${com.example.data.config.BrandConfig.BRAND_NAME} delivers everywhere in Mohammedia in just 15 to 25 minutes, with dedicated couriers stationed across the city!"
+                AppLanguage.ARABIC -> "التوصيل مع ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} يستغرق ما بين 15 إلى 25 دقيقة فقط في كافة أحياء المحمدية مع تتبع فوري مباشر!"
             }
         }
 
@@ -197,9 +197,9 @@ object AiSupportVoiceService {
             q.contains("driver") || q.contains("job")
         ) {
             return when (language) {
-                AppLanguage.FRENCH -> "Pour devenir coursier DELIVIO, soumettez votre permis et carte nationale dans l'onglet Chauffeur. Notre équipe support valide votre compte en 24h avec d'excellents revenus !"
+                AppLanguage.FRENCH -> "Pour devenir coursier ${com.example.data.config.BrandConfig.BRAND_NAME}, soumettez votre permis et carte nationale dans l'onglet Chauffeur. Notre équipe support valide votre compte en 24h avec d'excellents revenus !"
                 AppLanguage.ENGLISH -> "To become a courier, upload your driver license and ID in the Driver section. Our support team verifies and activates eligible accounts within 24 hours!"
-                AppLanguage.ARABIC -> "للانضمام ككابتن توصيل مع ديليفيو DELIVIO، ارفع رخصة السياقة والبطاقة في قسم السائقين وسيقوم فريق الدعم باعتماد حسابك فوراً!"
+                AppLanguage.ARABIC -> "للانضمام ككابتن توصيل مع ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}، ارفع رخصة السياقة والبطاقة في قسم السائقين وسيقوم فريق الدعم باعتماد حسابك فوراً!"
             }
         }
 
@@ -208,9 +208,9 @@ object AiSupportVoiceService {
             q.contains("salam") || q.contains("سلام") || q.contains("أهلا")
         ) {
             return when (language) {
-                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante IA du support client DELIVIO. Que puis-je faire pour vous aujourd'hui ?"
-                AppLanguage.ENGLISH -> "Hello! I am Sara, your AI support assistant at DELIVIO. How can I help you today?"
-                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني الذكي لديليفيو DELIVIO. كيف يمكنني مساعدتك في طلبك اليوم؟"
+                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante IA du support client ${com.example.data.config.BrandConfig.BRAND_NAME}. Que puis-je faire pour vous aujourd'hui ?"
+                AppLanguage.ENGLISH -> "Hello! I am Sara, your AI support assistant at ${com.example.data.config.BrandConfig.BRAND_NAME}. How can I help you today?"
+                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني الذكي لـ ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}. كيف يمكنني مساعدتك في طلبك اليوم؟"
             }
         }
 
@@ -218,7 +218,7 @@ object AiSupportVoiceService {
         return when (language) {
             AppLanguage.FRENCH -> "J'ai bien noté votre demande ! Notre équipe support 24/7 veille à ce que votre expérience soit parfaite. N'hésitez pas si vous avez d'autres questions."
             AppLanguage.ENGLISH -> "I have noted your inquiry! Our 24/7 customer care team is here to ensure you have a seamless experience. Let me know if you need anything else."
-            AppLanguage.ARABIC -> "سجلت استفسارك بعناية! فريق دعم ديليفيو DELIVIO متواجد 24 ساعة لخدمتك وحل أي مسألة فوراً."
+            AppLanguage.ARABIC -> "سجلت استفسارك بعناية! فريق دعم ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} متواجد 24 ساعة لخدمتك وحل أي مسألة فوراً."
         }
     }
 

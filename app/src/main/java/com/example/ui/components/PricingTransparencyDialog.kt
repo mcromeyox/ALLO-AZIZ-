@@ -103,7 +103,7 @@ fun PricingTransparencyDialog(
                             Column {
                                 Text(
                                     text = if (language == AppLanguage.ARABIC) "كم الخدمة؟ • دليل الأسعار الشامل 💡"
-                                    else "Tarifs & Frais de Service DELIVIO",
+                                    else "Tarifs & Frais de Service ${com.example.data.config.BrandConfig.BRAND_NAME}",
                                     fontWeight = FontWeight.Black,
                                     fontSize = 15.sp,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -161,7 +161,7 @@ fun PricingTransparencyDialog(
                     PriceBreakdownCard(
                         icon = Icons.Default.Speed,
                         iconColor = AzizAmberSecondary,
-                        title = if (language == AppLanguage.ARABIC) "خدمة ديليفيو إكسبريس ⚡ (DELIVIO Express)" else "DELIVIO Express - Courses sur mesure",
+                        title = if (language == AppLanguage.ARABIC) "خدمة ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} إكسبريس ⚡ (${com.example.data.config.BrandConfig.BRAND_SHORT} Express)" else "${com.example.data.config.BrandConfig.BRAND_SHORT} Express - Courses sur mesure",
                         price = "12 - 15 د.م",
                         time = if (language == AppLanguage.ARABIC) "15 - 25 دقيقة" else "15-25 min",
                         description = if (language == AppLanguage.ARABIC)
@@ -202,8 +202,8 @@ fun PricingTransparencyDialog(
                                     color = AzizMint
                                 )
                                 Text(
-                                    text = if (language == AppLanguage.ARABIC) "لا نفرض أي رسوم خدمة إضافية غير معلنة. الدفع يتم نقداً أو بالبطاقة أو عبر محفظة DELIVIO Pay."
-                                    else "Aucun frais de gestion caché. Paiement à la livraison, portefeuille DELIVIO Pay ou par carte sécurisée.",
+                                    text = if (language == AppLanguage.ARABIC) "لا نفرض أي رسوم خدمة إضافية غير معلنة. الدفع يتم نقداً أو بالبطاقة أو عبر محفظة ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay."
+                                    else "Aucun frais de gestion caché. Paiement à la livraison, portefeuille ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay ou par carte sécurisée.",
                                     fontSize = 10.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -238,7 +238,7 @@ fun PricingTransparencyDialog(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (language == AppLanguage.ARABIC) "عرض ديليفيو برايم (DELIVIO PRIME) 👑" else "DELIVIO PRIME 👑",
+                                    text = if (language == AppLanguage.ARABIC) "عرض ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} برايم (${com.example.data.config.BrandConfig.BRAND_SHORT} PRIME) 👑" else "${com.example.data.config.BrandConfig.BRAND_SHORT} PRIME 👑",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp
                                 )

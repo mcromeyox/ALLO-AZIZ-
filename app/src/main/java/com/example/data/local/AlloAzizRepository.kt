@@ -140,14 +140,23 @@ class AlloAzizRepository(private val database: AppDatabase) {
     // Orders
     suspend fun insertOrder(order: OrderEntity) {
         database.orderDao().insertOrder(order)
+        try {
+            com.example.data.services.FirestoreSyncManager.syncOrderToCloud(order)
+        } catch (_: Exception) {}
     }
 
     suspend fun updateOrderStatus(orderId: String, status: String, progress: Float, minsLeft: Int) {
         database.orderDao().updateOrderStatus(orderId, status, progress, minsLeft)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, status, progress, minsLeft)
+        } catch (_: Exception) {}
     }
 
     suspend fun updateCourierGps(orderId: String, lat: Double, lng: Double, progress: Float, minsLeft: Int) {
         database.orderDao().updateCourierGps(orderId, lat, lng, progress, minsLeft)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateCourierGpsCloud(orderId, lat, lng, progress, minsLeft)
+        } catch (_: Exception) {}
     }
 
     suspend fun updateRestaurantStatus(orderId: String, restStatus: String, orderStatus: String) {
@@ -223,7 +232,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             UserAccountEntity(
                 id = "owner_mcdo",
                 name = "الشيف عمر - مدير ماكدونالدز",
-                email = "partner.mcdo@delivio.ma",
+                email = "partner.mcdo@waslixa.com",
                 phone = "+212 522-889900",
                 password = defaultHashedPassword,
                 role = "RESTAURANT_OWNER",
@@ -236,7 +245,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             UserAccountEntity(
                 id = "owner_tajine",
                 name = "الحاج عبد القادر - طاجين فاس",
-                email = "tajine.fes@delivio.ma",
+                email = "tajine.fes@waslixa.com",
                 phone = "+212 535-445566",
                 password = defaultHashedPassword,
                 role = "RESTAURANT_OWNER",
@@ -248,8 +257,8 @@ class AlloAzizRepository(private val database: AppDatabase) {
             ),
             UserAccountEntity(
                 id = "drv_aziz",
-                name = "عزيز برادة (كابتن ديليفيو)",
-                email = "aziz.courier@delivio.ma",
+                name = "عزيز برادة (كابتن وصلـيكسا)",
+                email = "aziz.courier@waslixa.com",
                 phone = "+212 661-234567",
                 password = defaultHashedPassword,
                 role = "DRIVER",
@@ -289,7 +298,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             UserAccountEntity(
                 id = "usr_support_1",
                 name = "سارة المنصوري (مشرفة الدعم)",
-                email = "sara.support@delivio.ma",
+                email = "sara.support@waslixa.com",
                 phone = "+212 520-112233",
                 password = defaultHashedPassword,
                 role = "SUPPORT_AGENT",
@@ -369,7 +378,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
             SupportTicketEntity(
                 id = "TCK-802",
                 customerName = "مريم الوهابي (عميل)",
-                subject = "استفسار بخصوص خصم كود DELIVIO20",
+                subject = "استفسار بخصوص خصم كود WASLIXA20",
                 status = "RESOLVED",
                 assignedAgent = "سارة المنصوري",
                 lastMessage = "تم تفعيل الخصم 20% بنجاح وشكراً لتعاونكم السريع."
@@ -392,9 +401,9 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.notificationDao().insertNotification(
             NotificationEntity(
                 id = "notif_welcome",
-                titleAr = "مرحباً بك في ديليفيو DELIVIO! 🎉",
-                titleFr = "Bienvenue sur DELIVIO ! 🎉",
-                titleEn = "Welcome to DELIVIO! 🎉",
+                titleAr = "مرحباً بك في وصلـيكسا WASLIXA! 🎉",
+                titleFr = "Bienvenue sur WASLIXA ! 🎉",
+                titleEn = "Welcome to WASLIXA! 🎉",
                 bodyAr = "أسرع منصة توصيل تربط العملاء، المطاعم، والسائقين بنظام احترافي متكامل!",
                 bodyFr = "La plateforme de livraison N°1 connectant clients, restaurants et livreurs !",
                 bodyEn = "The #1 delivery ecosystem connecting customers, restaurants and couriers!",
@@ -407,12 +416,12 @@ class AlloAzizRepository(private val database: AppDatabase) {
         database.notificationDao().insertNotification(
             NotificationEntity(
                 id = "notif_wallet_gift",
-                titleAr = "كود الخصم الترحيبي: DELIVIO20 🏷️",
-                titleFr = "Code promo de bienvenue: DELIVIO20 🏷️",
-                titleEn = "Welcome Promo Code: DELIVIO20 🏷️",
-                bodyAr = "استخدم كود DELIVIO20 عند إتمام الطلب للاستفادة من خصم 20% على وجبتك المفضلة!",
-                bodyFr = "Utilisez le code DELIVIO20 pour obtenir 20% de réduction sur votre commande !",
-                bodyEn = "Use code DELIVIO20 at checkout for 20% off your order!",
+                titleAr = "كود الخصم الترحيبي: WASLIXA20 🏷️",
+                titleFr = "Code promo de bienvenue: WASLIXA20 🏷️",
+                titleEn = "Welcome Promo Code: WASLIXA20 🏷️",
+                bodyAr = "استخدم كود WASLIXA20 عند إتمام الطلب للاستفادة من خصم 20% على وجبتك المفضلة!",
+                bodyFr = "Utilisez le code WASLIXA20 pour obtenir 20% de réduction sur votre commande !",
+                bodyEn = "Use code WASLIXA20 at checkout for 20% off your order!",
                 timestamp = System.currentTimeMillis() - 1800000,
                 isRead = false,
                 type = "PROMO"
@@ -428,7 +437,7 @@ class AlloAzizRepository(private val database: AppDatabase) {
                 storeRating = 5,
                 courierRating = 5,
                 tagsJson = "[\"توصيل سريع\", \"أكل ساخن ولذيذ\", \"تغليف محكم\"]",
-                comment = "وصل البيج ماك والبطاطس ساخنة ومقرمشة في 17 دقيقة فقط مع كابتن ديليفيو! تطبيق مذهل يفوق جميع المنافسين.",
+                comment = "وصل البيج ماك والبطاطس ساخنة ومقرمشة في 17 دقيقة فقط مع كابتن وصلـيكسا! تطبيق مذهل يفوق جميع المنافسين.",
                 dateString = "اليوم، 13:45"
             )
         )

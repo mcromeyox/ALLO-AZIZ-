@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "VELORA ONE"
+rootProject.name = "Waslixa"
 
 include(":app")

@@ -192,7 +192,6 @@ fun AuthScreen(
     var forgotEnteredOtp by remember { mutableStateOf("") }
     var forgotNewPassword by remember { mutableStateOf("") }
     var forgotMessage by remember { mutableStateOf<String?>(null) }
-    var staffTapCount by remember { mutableIntStateOf(0) }
 
     LazyColumn(
         modifier = Modifier
@@ -226,7 +225,7 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "DELIVIO",
+                    text = com.example.data.config.BrandConfig.BRAND_NAME,
                     fontWeight = FontWeight.Black,
                     fontSize = 28.sp,
                     color = AzizOrangePrimary,
@@ -1572,7 +1571,7 @@ fun AuthScreen(
                         value = regSupportEmail,
                         onValueChange = { regSupportEmail = it },
                         label = { Text("البريد الإلكتروني المهني (جيميل)") },
-                        placeholder = { Text("support.agent@delivio.ma أو gmail.com") },
+                        placeholder = { Text("support.agent@${com.example.data.config.BrandConfig.DOMAIN} أو gmail.com") },
                         leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = AzizOrangePrimary) },
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
@@ -1703,24 +1702,39 @@ fun AuthScreen(
             }
         }
 
-        // Footer & Secret Portal for Management / Staff (3 taps)
+        // Footer with official version and standard visible Partner/Staff link
         item {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(
+                    onClick = onOpenStaffLogin,
+                    modifier = Modifier.testTag("open_staff_portal_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(13.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "بوابة الشركاء وطاقم الإدارة (Staff & Partners)",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+            }
             Text(
-                text = "DELIVIO Super-App v3.2 • Super Admin & Staff Portal 🇲🇦",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                text = "${com.example.data.config.BrandConfig.BRAND_NAME} Super-App • الإصدار 3.2 🇲🇦",
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
                 textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .clickable {
-                        staffTapCount++
-                        if (staffTapCount >= 3) {
-                            staffTapCount = 0
-                            onOpenStaffLogin()
-                        }
-                    }
-                    .testTag("app_version_footer")
+                modifier = Modifier.testTag("app_version_footer")
             )
         }
     }

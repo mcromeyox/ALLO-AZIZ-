@@ -89,9 +89,9 @@ object AppStrings {
     }
 
     fun expressBannerTitle(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "خدمة فيلورا إكسبريس ⚡"
-        AppLanguage.FRENCH -> "Service VELORA ONE Express ⚡"
-        AppLanguage.ENGLISH -> "VELORA ONE Express ⚡"
+        AppLanguage.ARABIC -> "خدمة وصلـيكسا إكسبريس ⚡"
+        AppLanguage.FRENCH -> "Service WASLIXA Express ⚡"
+        AppLanguage.ENGLISH -> "WASLIXA Express ⚡"
     }
 
     fun expressBannerDesc(lang: AppLanguage): String = when (lang) {
@@ -174,9 +174,9 @@ object AppStrings {
     }
 
     fun promoCodePrompt(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "كود الخصم (جرب: VELORA20)"
-        AppLanguage.FRENCH -> "Code Promo (ex: VELORA20)"
-        AppLanguage.ENGLISH -> "Promo Code (try: VELORA20)"
+        AppLanguage.ARABIC -> "كود الخصم (جرب: WASLIXA20)"
+        AppLanguage.FRENCH -> "Code Promo (ex: WASLIXA20)"
+        AppLanguage.ENGLISH -> "Promo Code (try: WASLIXA20)"
     }
 
     fun apply(lang: AppLanguage): String = when (lang) {
@@ -211,9 +211,9 @@ object AppStrings {
     }
 
     fun payWallet(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "محفظة VELORA Pay (رصيدك:"
-        AppLanguage.FRENCH -> "Portefeuille VELORA Pay (Solde:"
-        AppLanguage.ENGLISH -> "VELORA Pay Wallet (Balance:"
+        AppLanguage.ARABIC -> "محفظة WASLIXA Pay (رصيدك:"
+        AppLanguage.FRENCH -> "Portefeuille WASLIXA Pay (Solde:"
+        AppLanguage.ENGLISH -> "WASLIXA Pay Wallet (Balance:"
     }
 
     fun payAppleGoogle(lang: AppLanguage): String = when (lang) {
@@ -333,9 +333,9 @@ object AppStrings {
     }
 
     fun courierRating(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "تقييم كابتن التوصيل (فيلورا ون)"
-        AppLanguage.FRENCH -> "Note du livreur VELORA ONE"
-        AppLanguage.ENGLISH -> "VELORA ONE Courier Rating"
+        AppLanguage.ARABIC -> "تقييم كابتن التوصيل (وصلـيكسا)"
+        AppLanguage.FRENCH -> "Note du livreur WASLIXA"
+        AppLanguage.ENGLISH -> "WASLIXA Courier Rating"
     }
 
     fun writeReviewPlaceholder(lang: AppLanguage): String = when (lang) {
@@ -463,9 +463,9 @@ object AppStrings {
     }
 
     fun aboutApp(lang: AppLanguage): String = when (lang) {
-        AppLanguage.ARABIC -> "حول تطبيق فيلورا ون VELORA ONE"
-        AppLanguage.FRENCH -> "À propos de VELORA ONE"
-        AppLanguage.ENGLISH -> "About VELORA ONE"
+        AppLanguage.ARABIC -> "حول تطبيق وصلـيكسا WASLIXA"
+        AppLanguage.FRENCH -> "À propos de WASLIXA"
+        AppLanguage.ENGLISH -> "About WASLIXA"
     }
 
     fun appVersion(lang: AppLanguage): String = when (lang) {

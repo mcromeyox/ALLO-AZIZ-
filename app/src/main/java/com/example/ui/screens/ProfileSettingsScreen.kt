@@ -142,7 +142,7 @@ fun ProfileSettingsScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = currentUser?.name?.ifBlank { "عميل ديليفيو DELIVIO" } ?: "عميل ديليفيو DELIVIO",
+                            text = currentUser?.name?.ifBlank { "عميل ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}" } ?: "عميل ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -184,7 +184,7 @@ fun ProfileSettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (isSuperAdmin) "صلاحية استعراض واجهات المنصة لكافة الفئات" else "حساب معتمد وموثق على منصة ديليفيو DELIVIO",
+                                text = if (isSuperAdmin) "صلاحية استعراض واجهات المنصة لكافة الفئات" else "حساب معتمد وموثق على منصة ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}",
                                 fontSize = 11.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -445,7 +445,7 @@ fun ProfileSettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "محفظة DELIVIO Pay الرقمية",
+                                text = "محفظة ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay الرقمية",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
@@ -881,7 +881,7 @@ fun ProfileSettingsScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "DELIVIO Technologies - ديليفيو للخدمات اللوجستية والتجارة",
+                                text = "${com.example.data.config.BrandConfig.BRAND_SHORT} Technologies - ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} للخدمات اللوجستية والتجارة",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 12.sp
                             )
@@ -1084,7 +1084,7 @@ fun ProfileSettingsScreen(
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("شحن رصيد DELIVIO Pay 💳", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("شحن رصيد ${com.example.data.config.BrandConfig.BRAND_SHORT} Pay 💳", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             },
             text = {

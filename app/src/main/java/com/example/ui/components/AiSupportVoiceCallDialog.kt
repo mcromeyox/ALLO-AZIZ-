@@ -117,9 +117,9 @@ fun AiSupportVoiceCallDialog(
     var lastAiReply by remember {
         mutableStateOf(
             when (language) {
-                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante vocale DELIVIO. Je vous écoute, comment puis-je vous aider aujourd'hui ?"
-                AppLanguage.ENGLISH -> "Hello! I am Sara, your DELIVIO AI assistant. How can I assist you today?"
-                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لديليفيو DELIVIO. تفضل بالسؤال وسأجيبك فوراً!"
+                AppLanguage.FRENCH -> "Bonjour ! Je suis Sara, votre assistante vocale ${com.example.data.config.BrandConfig.BRAND_NAME}. Je vous écoute, comment puis-je vous aider aujourd'hui ?"
+                AppLanguage.ENGLISH -> "Hello! I am Sara, your ${com.example.data.config.BrandConfig.BRAND_NAME} AI assistant. How can I assist you today?"
+                AppLanguage.ARABIC -> "أهلاً بك! أنا سارة من الدعم الفني لـ ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME}. تفضل بالسؤال وسأجيبك فوراً!"
             }
         )
     }
@@ -209,8 +209,8 @@ fun AiSupportVoiceCallDialog(
             launchSystemSpeechRecognizerForSupport(context, speechLauncher, language, onFallback = {
                 isListening = false
                 val defaultPrompt = when (language) {
-                    AppLanguage.FRENCH -> "Où se trouve ma commande et mon coursier DELIVIO ?"
-                    AppLanguage.ENGLISH -> "Where is my order and DELIVIO courier?"
+                    AppLanguage.FRENCH -> "Où se trouve ma commande et mon coursier ${com.example.data.config.BrandConfig.BRAND_NAME} ?"
+                    AppLanguage.ENGLISH -> "Where is my order and ${com.example.data.config.BrandConfig.BRAND_NAME} courier?"
                     AppLanguage.ARABIC -> "أين طلبي وموقع كابتن التوصيل حالياً؟"
                 }
                 lastUserQuestion = defaultPrompt

@@ -76,6 +76,39 @@ import com.example.ui.theme.AzizOrangePrimary
 import com.example.ui.viewmodel.AppScreen
 
 @Composable
+fun WaslixaTopBar(
+    currentScreen: AppScreen,
+    currentRole: UserRole,
+    language: AppLanguage,
+    onRoleChange: (UserRole) -> Unit,
+    onLanguageChange: (AppLanguage) -> Unit,
+    onBackClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onCartClick: () -> Unit,
+    unreadNotifCount: Int,
+    cartItemCount: Int,
+    deliveryAddress: String,
+    onAddressClick: (() -> Unit)? = null,
+    onAiVoiceClick: (() -> Unit)? = null
+) {
+    AlloAzizTopBar(
+        currentScreen = currentScreen,
+        currentRole = currentRole,
+        language = language,
+        onRoleChange = onRoleChange,
+        onLanguageChange = onLanguageChange,
+        onBackClick = onBackClick,
+        onNotificationClick = onNotificationClick,
+        onCartClick = onCartClick,
+        unreadNotifCount = unreadNotifCount,
+        cartItemCount = cartItemCount,
+        deliveryAddress = deliveryAddress,
+        onAddressClick = onAddressClick,
+        onAiVoiceClick = onAiVoiceClick
+    )
+}
+
+@Composable
 fun AlloAzizTopBar(
     currentScreen: AppScreen,
     currentRole: UserRole,
@@ -130,7 +163,7 @@ fun AlloAzizTopBar(
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "DELIVIO",
+                        text = com.example.data.config.BrandConfig.BRAND_NAME,
                         fontWeight = FontWeight.Black,
                         fontSize = 15.sp,
                         color = AzizOrangePrimary,
@@ -265,7 +298,7 @@ fun AlloAzizTopBar(
                             AppLanguage.ENGLISH -> "Customer Support Hub 🎧"
                             AppLanguage.ARABIC -> "مركز خدمة العملاء 🎧"
                         }
-                        else -> "DELIVIO"
+                        else -> com.example.data.config.BrandConfig.BRAND_NAME
                     }
                     Text(
                         text = title,
@@ -486,6 +519,23 @@ fun AlloAzizTopBar(
             }
         }
     }
+}
+
+@Composable
+fun WaslixaBottomNav(
+    currentScreen: AppScreen,
+    currentRole: UserRole,
+    language: AppLanguage,
+    onNavigate: (AppScreen) -> Unit,
+    activeOrderCount: Int
+) {
+    AlloAzizBottomNav(
+        currentScreen = currentScreen,
+        currentRole = currentRole,
+        language = language,
+        onNavigate = onNavigate,
+        activeOrderCount = activeOrderCount
+    )
 }
 
 @Composable

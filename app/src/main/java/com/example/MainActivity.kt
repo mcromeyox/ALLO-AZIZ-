@@ -71,9 +71,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AlloAzizApp()
+            WaslixaApp()
         }
     }
+}
+
+@Composable
+fun WaslixaApp(viewModel: AlloAzizViewModel = viewModel()) {
+    AlloAzizApp(viewModel)
 }
 
 @Composable

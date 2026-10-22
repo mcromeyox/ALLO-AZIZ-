@@ -1,7 +1,7 @@
 package com.example.data.model
 
 /**
- * Complete, Comprehensive Culinary Catalog for ALLO AZIZ in Mohammedia.
+ * Complete, Comprehensive Culinary Catalog for WASLIXA (وصلـيكسا) in Mohammedia & Morocco.
  * Contains all popular dishes, sandwiches, pizzas, burgers, tacos, moroccan specialties,
  * and delivery apps favorites with their authentic sauces and customization options.
  */
@@ -86,7 +86,7 @@ object CatalogData {
                 MealOptionItem("sauce_samourai", "صلصة ساموراي حارة 🔥", "Sauce Samouraï", "Samurai Sauce", 0.0),
                 MealOptionItem("sauce_bbq", "صوص باربكيو مدخن", "Sauce Barbecue Fumée", "Smoky BBQ Sauce", 0.0),
                 MealOptionItem("sauce_cheddar", "صوص الجبن الشيدر الذائب 🧀", "Sauce Cheddar Fondue", "Melted Cheddar Sauce", 0.0),
-                MealOptionItem("sauce_special", "صوص ديليفيو الخاص 🌶️", "Sauce Spéciale DELIVIO", "DELIVIO Secret Sauce", 0.0)
+                MealOptionItem("sauce_special", "صوص وصلـيكسا الخاص 🌶️", "Sauce Spéciale WASLIXA", "WASLIXA Secret Sauce", 0.0)
             )
         ),
         MealOptionGroup(
@@ -436,9 +436,9 @@ object CatalogData {
         ),
         Store(
             id = "store_express",
-            name = "ديليفيو إكسبريس (خدمة التوصيل السريع)",
-            nameAr = "ديليفيو إكسبريس (توصيل طرود فوري)",
-            nameFr = "DELIVIO Express Mohammedia",
+            name = "وصلـيكسا إكسبريس (خدمة التوصيل السريع)",
+            nameAr = "وصلـيكسا إكسبريس (توصيل طرود فوري)",
+            nameFr = "WASLIXA Express Mohammedia",
             category = StoreCategory.EXPRESS,
             rating = 5.0,
             reviewCount = 490,
@@ -1042,13 +1042,13 @@ object CatalogData {
         Product(
             id = "p_express_service",
             storeId = "store_express",
-            storeName = "خدمة ديليفيو إكسبريس (توصيل طرود فوري)",
-            nameEn = "DELIVIO Express Courier Pickup",
-            nameAr = "خدمة ديليفيو للتوصيل الفوري أو الشراء بالنيابة",
-            nameFr = "DELIVIO Coursier Express sur Mesure",
-            descriptionEn = "DELIVIO courier will pick up any parcel, keys, documents or medicine and deliver within 20 mins.",
-            descriptionAr = "مندوب ديليفيو يشتري لك ما ترغب أو ينقل طردك، مفاتيح، أوراق مستعجلة، أو أدوية في 15 دقيقة فقط.",
-            descriptionFr = "Le coursier DELIVIO effectue vos achats ou livre vos colis urgents (clés, pharmacie) en 15 min.",
+            storeName = "خدمة وصلـيكسا إكسبريس (توصيل طرود فوري)",
+            nameEn = "WASLIXA Express Courier Pickup",
+            nameAr = "خدمة وصلـيكسا للتوصيل الفوري أو الشراء بالنيابة",
+            nameFr = "WASLIXA Coursier Express sur Mesure",
+            descriptionEn = "WASLIXA courier will pick up any parcel, keys, documents or medicine and deliver within 20 mins.",
+            descriptionAr = "مندوب وصلـيكسا يشتري لك ما ترغب أو ينقل طردك، مفاتيح، أوراق مستعجلة، أو أدوية في 15 دقيقة فقط.",
+            descriptionFr = "Le coursier WASLIXA effectue vos achats ou livre vos colis urgents (clés, pharmacie) en 15 min.",
             price = 20.0,
             category = StoreCategory.EXPRESS,
             emoji = "🛵",

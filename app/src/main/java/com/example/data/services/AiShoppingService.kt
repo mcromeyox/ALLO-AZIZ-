@@ -43,7 +43,7 @@ data class AiRecommendedItem(
 )
 
 /**
- * Ultra-accurate AI Shopping Engine for ALLO AZIZ.
+ * Ultra-accurate AI Shopping Engine for WASLIXA (وصلـيكسا).
  * Supports natural Moroccan Darija, French, and English voice commands.
  * Automatically extracts multi-product orders, exact quantities, personalized culinary notes,
  * and generates human-like spoken responses with natural cadence and Moroccan hospitality.
@@ -101,7 +101,7 @@ object AiShoppingService {
         }
 
         val systemPrompt = """
-            You are 'Sara' or 'Karim', the AI voice shopping assistant for VELORA ONE Super-App in Mohammedia, Morocco.
+            You are 'Sara' or 'Karim', the AI voice shopping assistant for WASLIXA Super-App in Mohammedia, Morocco.
             The user spoke or typed in Moroccan Darija, French, Arabic, or English: "$userVoiceText".
             
             AUTHORITATIVE VERIFIED CATALOG:
@@ -171,7 +171,7 @@ object AiShoppingService {
                 val explAr = parsedJson.optString("explanationAr", "تم اختيار المنتجات المطابقة لطلبك الصوتي بدقة.")
                 val speechFr = parsedJson.optString("speechAudioFr", explFr)
                 val speechAr = parsedJson.optString("speechAudioAr", explAr)
-                val targetStore = parsedJson.optString("storeName", "DELIVIO Express")
+                val targetStore = parsedJson.optString("storeName", "${com.example.data.config.BrandConfig.BRAND_SHORT} Express")
                 val confidence = parsedJson.optInt("confidence", 99)
 
                 val notesArray = parsedJson.optJSONArray("notes")
@@ -365,13 +365,13 @@ object AiShoppingService {
             }
             return AiShoppingRecommendation(
                 userPrompt = query,
-                aiExplanationAr = "عذراً، الطلب المباشر من منصة $platformLabel غير مدعوم حالياً على فيلورا ون (VELORA ONE). يمكنك تصفح مطاعمنا ومتاجرنا المحلية المعتمدة في المحمدية.",
-                aiExplanationFr = "Désolé, les commandes directes depuis $platformLabel ne sont pas disponibles sur VELORA ONE. Découvrez nos commerces et restaurants partenaires vérifiés à Mohammedia !",
+                aiExplanationAr = "عذراً، الطلب المباشر من منصة $platformLabel غير مدعوم حالياً على وصلـيكسا (WASLIXA). يمكنك تصفح مطاعمنا ومتاجرنا المحلية المعتمدة في المحمدية.",
+                aiExplanationFr = "Désolé, les commandes directes depuis $platformLabel ne sont pas disponibles sur WASLIXA. Découvrez nos commerces et restaurants partenaires vérifiés à Mohammedia !",
                 items = emptyList(),
                 estimatedTotal = 0.0,
                 deliveryFee = 0.0,
                 grandTotal = 0.0,
-                targetStoreName = "VELORA ONE Partner Catalog",
+                targetStoreName = "WASLIXA Partner Catalog",
                 estimatedTimeMins = 0,
                 confidenceScore = 95,
                 speechAudioTextFr = "Désolé, les articles de cette plateforme externe ne sont pas disponibles pour commande directe. Découvrez notre sélection locale de partenaires !",
@@ -560,13 +560,13 @@ object AiShoppingService {
                 // Mandatory Safeguard: Never fabricate products or prices from unpartnered external platforms
                 return AiShoppingRecommendation(
                     userPrompt = query,
-                    aiExplanationAr = "عذراً، الطلب المباشر من منصات خارجية غير معتمدة ($query) غير مدعوم على فيلورا ون. يرجى تصفح المطاعم والمتاجر المحلية المعتمدة في المحمدية.",
-                    aiExplanationFr = "Désolé, la commande directe depuis des plateformes externes ($query) n'est pas disponible sur VELORA ONE. Découvrez nos commerces partenaires locaux à Mohammedia !",
+                    aiExplanationAr = "عذراً، الطلب المباشر من منصات خارجية غير معتمدة ($query) غير مدعوم على وصلـيكسا. يرجى تصفح المطاعم والمتاجر المحلية المعتمدة في المحمدية.",
+                    aiExplanationFr = "Désolé, la commande directe depuis des plateformes externes ($query) n'est pas disponible sur WASLIXA. Découvrez nos commerces partenaires locaux à Mohammedia !",
                     items = emptyList(),
                     estimatedTotal = 0.0,
                     deliveryFee = 0.0,
                     grandTotal = 0.0,
-                    targetStoreName = "VELORA ONE Partner Catalog",
+                    targetStoreName = "WASLIXA Partner Catalog",
                     estimatedTimeMins = 0,
                     confidenceScore = 95,
                     speechAudioTextFr = "Désolé, les articles de cette plateforme externe ne sont pas disponibles pour commande directe. Découvrez nos commerces partenaires à Mohammedia !",
@@ -606,7 +606,7 @@ object AiShoppingService {
         }
 
         val speechAr = if (matchedItems.isNotEmpty()) {
-            "ممتاز وعلى راسي وعيني! جهزت لك طلبك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد لينطلق كابتن فيلورا إليك!"
+            "ممتاز وعلى راسي وعيني! جهزت لك طلبك المعتمد من $mainStoreName ($itemsDescriptionAr). المجموع ${grandTotal.toInt()} درهم مع التوصيل السريع. اضغط على تأكيد لينطلق كابتن وصلـيكسا إليك!"
         } else {
             "لم أجد هذا المنتج في قائمة المتاجر المعتمدة، إليك اقتراحات مميزة متوفرة للتوصيل الفوري."
         }

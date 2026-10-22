@@ -502,9 +502,9 @@ fun HomeScreen(
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = when (language) {
-                                                AppLanguage.FRENCH -> "Assistant Vocal DELIVIO AI"
-                                                AppLanguage.ENGLISH -> "DELIVIO AI Voice Assistant"
-                                                AppLanguage.ARABIC -> "مساعد ديليفيو الصوتي AI"
+                                                AppLanguage.FRENCH -> "Assistant Vocal ${com.example.data.config.BrandConfig.BRAND_SHORT} AI"
+                                                AppLanguage.ENGLISH -> "${com.example.data.config.BrandConfig.BRAND_SHORT} AI Voice Assistant"
+                                                AppLanguage.ARABIC -> "مساعد ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} الصوتي AI"
                                             },
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Black,
@@ -1012,7 +1012,7 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = if (isEcommerceBranch) "📦 شحن 18 د.م" else "⭐ DELIVIO GOURMET",
+                        text = if (isEcommerceBranch) "📦 شحن 18 د.م" else "⭐ ${com.example.data.config.BrandConfig.BRAND_SHORT} GOURMET",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = if (isEcommerceBranch) Color(0xFF6366F1) else AzizAmberSecondary
@@ -1120,7 +1120,7 @@ fun HomeScreen(
                             Text("🛡️", fontSize = 22.sp)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "ضمان ديليفيو DELIVIO للتوصيل السريع",
+                                text = "ضمان ${com.example.data.config.BrandConfig.BRAND_TITLE_AR} ${com.example.data.config.BrandConfig.BRAND_NAME} للتوصيل السريع",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -1194,9 +1194,9 @@ fun HomeScreen(
                             )
                             Text(
                                 text = when (language) {
-                                    AppLanguage.FRENCH -> "DELIVIO Express • Mohammedia"
-                                    AppLanguage.ENGLISH -> "DELIVIO Express • Mohammedia"
-                                    AppLanguage.ARABIC -> "ديليفيو إكسبريس • المحمدية"
+                                    AppLanguage.FRENCH -> "${com.example.data.config.BrandConfig.BRAND_SHORT} Express • Mohammedia"
+                                    AppLanguage.ENGLISH -> "${com.example.data.config.BrandConfig.BRAND_SHORT} Express • Mohammedia"
+                                    AppLanguage.ARABIC -> "${com.example.data.config.BrandConfig.BRAND_TITLE_AR} إكسبريس • المحمدية"
                                 },
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 11.sp
@@ -1286,9 +1286,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = when (language) {
-                            AppLanguage.FRENCH -> "DELIVIO AI 🎙️"
-                            AppLanguage.ENGLISH -> "DELIVIO AI 🎙️"
-                            AppLanguage.ARABIC -> "ديليفيو AI 🎙️"
+                            AppLanguage.FRENCH -> "${com.example.data.config.BrandConfig.BRAND_SHORT} AI 🎙️"
+                            AppLanguage.ENGLISH -> "${com.example.data.config.BrandConfig.BRAND_SHORT} AI 🎙️"
+                            AppLanguage.ARABIC -> "${com.example.data.config.BrandConfig.BRAND_TITLE_AR} AI 🎙️"
                         },
                         fontWeight = FontWeight.Black,
                         fontSize = 13.sp,
@@ -1512,7 +1512,7 @@ fun HeroDeliveryBanner(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "⚡ DELIVIO EXPRESS",
+                            text = "⚡ ${com.example.data.config.BrandConfig.BRAND_SHORT} EXPRESS",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -1546,7 +1546,7 @@ fun HeroDeliveryBanner(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "كود الخصم: DELIVIO20 (خصم 20%)",
+                        text = "كود الخصم: WASLIXA20 (خصم 20%)",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -1558,7 +1558,7 @@ fun HeroDeliveryBanner(
                     color = AzizOrangePrimary,
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .clickable { onApplyCode("DELIVIO20") }
+                        .clickable { onApplyCode("WASLIXA20") }
                         .testTag("apply_hero_promo_button")
                 ) {
                     Text(

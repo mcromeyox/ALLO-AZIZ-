@@ -22,8 +22,8 @@ import com.example.R
  */
 object AndroidNotificationHelper {
 
-    const val CHANNEL_ORDERS_ID = "allo_aziz_orders_channel"
-    const val CHANNEL_PROMOS_ID = "allo_aziz_promos_channel"
+    const val CHANNEL_ORDERS_ID = "waslixa_orders_channel"
+    const val CHANNEL_PROMOS_ID = "waslixa_promos_channel"
 
     private var channelsCreated = false
 
