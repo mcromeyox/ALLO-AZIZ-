@@ -37,9 +37,15 @@ object FirestoreSyncManager {
      */
     suspend fun syncOrderToCloud(order: OrderEntity): Boolean {
         val db = firestore ?: return false
+        val cid = order.customerId
+        if (cid.isNullOrBlank()) {
+            Log.i(TAG, "Order #${order.id} has no cloud customerId. Retained safely in local Room database without cloud sync.")
+            return false
+        }
         return try {
             val orderMap = hashMapOf(
                 "id" to order.id,
+                "customerId" to cid,
                 "storeId" to order.storeId,
                 "storeName" to order.storeName,
                 "itemsSummary" to order.itemsSummary,

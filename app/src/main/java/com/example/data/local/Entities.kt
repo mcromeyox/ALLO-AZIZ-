@@ -102,7 +102,8 @@ data class OrderEntity(
     val customerLat: Double = 33.6835,
     val customerLng: Double = -7.3849,
     val courierLat: Double = 33.6900,
-    val courierLng: Double = -7.3835
+    val courierLng: Double = -7.3835,
+    val customerId: String? = null
 )
 
 @Entity(tableName = "reviews")

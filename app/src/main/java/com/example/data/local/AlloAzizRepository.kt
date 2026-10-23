@@ -138,6 +138,8 @@ class AlloAzizRepository(private val database: AppDatabase) {
     }
 
     // Orders
+    fun getOrdersForCustomer(customerId: String): Flow<List<OrderEntity>> = database.orderDao().getOrdersForCustomer(customerId)
+
     suspend fun insertOrder(order: OrderEntity) {
         database.orderDao().insertOrder(order)
         try {
