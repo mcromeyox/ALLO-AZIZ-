@@ -1840,15 +1840,17 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
                     deliveryAddress = _deliveryAddress.value.ifBlank { "المحمدية، المغرب" },
                     deliveryNotes = combinedNotes,
                     timestamp = System.currentTimeMillis(),
-                    courierName = "الكابتن عزيز برادة 🛵",
-                    courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
-                    courierRating = 4.9,
-                    courierVehicle = "دراجة نارية Honda SH",
-                    courierProgress = 0.15f,
-                    estimatedMinsLeft = 25,
+                    courierName = "",
+                    courierPhone = "",
+                    courierRating = 5.0,
+                    courierVehicle = "",
+                    courierProgress = 0.0f,
+                    estimatedMinsLeft = 0,
                     hasReviewed = false,
                     customerLat = _customerLat.value,
-                    customerLng = _customerLng.value
+                    customerLng = _customerLng.value,
+                    courierLat = 0.0,
+                    courierLng = 0.0
                 )
 
                 repository.insertOrder(newOrder)
@@ -1888,154 +1890,356 @@ class AlloAzizViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun advanceOrderTrackingStage(orderId: String) {
-        viewModelScope.launch {
-            val order = allOrders.value.firstOrNull { it.id == orderId } ?: activeOrder.value ?: return@launch
-            when (order.status) {
-                "RECEIVED", "PLACED" -> {
-                    repository.updateOrderStatus(orderId, "PREPARING", 0.35f, 18)
-                    repository.updateRestaurantStatus(orderId, "COOKING", "PREPARING")
-                    HapticFeedbackHelper.vibrateAlert(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "المطعم يجهز وجبتك بعناية 👨‍🍳",
-                        body = "طلبك #$orderId قيد التحضير في المطبخ الآن."
-                    )
-                    _userAlertMessage.value = "المطعم بدأ في تحضير الطلب الآن 👨‍🍳"
-                }
-                "PREPARING" -> {
-                    val savedPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication())
-                    val courierPhone = if (!ExternalShareHelper.isPlaceholderOrInvalid(order.courierPhone)) {
-                        order.courierPhone
-                    } else if (!ExternalShareHelper.isPlaceholderOrInvalid(savedPhone)) {
-                        savedPhone
-                    } else {
-                        ""
-                    }
-                    val courierName = if (order.courierName.contains("جاري") || order.courierName.isBlank()) {
-                        "الكابتن عزيز برادة"
-                    } else {
-                        order.courierName
-                    }
-                    repository.assignDriverToOrder(orderId, order.driverId ?: "drv_aziz", courierName, courierPhone)
-                    repository.updateOrderStatus(orderId, "ON_THE_WAY", 0.65f, 10)
-                    repository.updateRestaurantStatus(orderId, "READY_FOR_PICKUP", "ON_THE_WAY")
-                    HapticFeedbackHelper.vibrateAlert(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "الكابتن استلم الطلب وهو في الطريق إليك! 🛵💨",
-                        body = "الكابتن انطلق بدراجته النارية لتسليم طلبك."
-                    )
-                    _userAlertMessage.value = "الكابتن استلم الطلب وهو في الطريق إليك 🛵💨"
-                }
-                "ON_THE_WAY" -> {
-                    repository.updateOrderStatus(orderId, "ARRIVED", 0.90f, 2)
-                    HapticFeedbackHelper.vibrateAlert(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "الكابتن وصل أمام العنوان! 📍🚪",
-                        body = "الكابتن متواجد أمام المبنى لتسليمك الطلب ساخناً."
-                    )
-                    _userAlertMessage.value = "الكابتن وصل عند بابك لتسليم الطلب 📍🚪"
-                }
-                "ARRIVED" -> {
-                    repository.updateOrderStatus(orderId, "DELIVERED", 1.0f, 0)
-                    HapticFeedbackHelper.vibrateSuccess(getApplication())
-                    AndroidNotificationHelper.showOrderNotification(
-                        context = getApplication(),
-                        orderId = orderId,
-                        title = "تم تسليم الطلب بنجاح! بالصحة والراحة 😋🎉",
-                        body = "شكراً لاختيارك وصلـيكسا (WASLIXA)! شاركنا تقييمك للخدمة."
-                    )
-                    _userAlertMessage.value = "تم تأكيد تسليم واستلام الطلب بنجاح! 🎉"
-                }
-            }
-        }
-    }
-
     fun setTrackingOrder(orderId: String) {
         _trackingOrderId.value = orderId
         navigateTo(AppScreen.ORDER_TRACKING)
     }
 
-    private var simulationJob: kotlinx.coroutines.Job? = null
-    private val _isCourierSimulating = MutableStateFlow(false)
-    val isCourierSimulating: StateFlow<Boolean> = _isCourierSimulating.asStateFlow()
-
-    fun startLiveDemoOrderTracking() {
+    /**
+     * Customer cancels an order before the restaurant starts preparing.
+     */
+    fun customerCancelOrder(orderId: String) {
         viewModelScope.launch {
-            val demoNum = kotlin.random.Random.nextInt(1000, 9999)
-            val demoId = "AZ-$demoNum"
-            val demoOrder = OrderEntity(
-                id = demoId,
-                storeId = "store_mcdo_mohammedia",
-                storeName = "ماكدونالدز ميرامار المحمدية 🍔",
-                itemsSummary = "2x وجبة بيج ماك ماكسي، 9 قطع ناجتس، بطاطس مقلية، 2 كوكاكولا",
-                itemsCount = 5,
-                subtotal = 89.0,
-                deliveryFee = 7.0,
-                discount = 0.0,
-                total = 96.0,
-                status = "ON_THE_WAY",
-                restaurantStatus = "PICKED_UP",
-                driverId = "drv_aziz_01",
-                paymentMethod = "الدفع عند الاستلام (كاش)",
-                deliveryAddress = "شارع الحسن الثاني، إقامة الياسمين، المحمدية 🇲🇦",
-                deliveryNotes = "العمارة B، الطابق 2، شقة 5 - يرجى الاتصال عند الوصول",
-                timestamp = System.currentTimeMillis(),
-                courierName = "الكابتن عزيز برادة 🛵",
-                courierPhone = ExternalShareHelper.getSavedWhatsAppNumber(getApplication()).ifBlank { "+212661458920" },
-                courierRating = 4.95,
-                courierVehicle = "سكوتر ياماها NMAX 155cc",
-                courierProgress = 0.35f,
-                estimatedMinsLeft = 7,
-                hasReviewed = false,
-                customerLat = 33.6865,
-                customerLng = -7.3820,
-                courierLat = 33.6920,
-                courierLng = -7.3880
-            )
-            repository.insertOrder(demoOrder)
-            _trackingOrderId.value = demoId
-            navigateTo(AppScreen.ORDER_TRACKING)
-            _userAlertMessage.value = "تم بدء تتبع مباشر لطلبك على الخريطة في شوارع المحمدية! 🛵💨"
+            val order = allOrders.value.firstOrNull { it.id == orderId } ?: activeOrder.value
+            if (order == null) {
+                _userAlertMessage.value = "الطلب غير موجود."
+                return@launch
+            }
+            if (order.status != "RECEIVED" && order.status != "PLACED") {
+                _userAlertMessage.value = "لا يمكن إلغاء الطلب لأن المتجر بدأ في تحضير الوجبة بالفعل أو تم إسناده لكابتن."
+                return@launch
+            }
+            val cancelled = repository.cancelOrder(orderId)
+            if (cancelled) {
+                HapticFeedbackHelper.vibrateAlert(getApplication())
+                AndroidNotificationHelper.showOrderNotification(
+                    context = getApplication(),
+                    orderId = orderId,
+                    title = "تم إلغاء الطلب #$orderId",
+                    body = "تم تأكيد إلغاء طلبك بنجاح بناءً على رغبتك."
+                )
+                repository.addNotification(
+                    NotificationEntity(
+                        id = "notif_cancel_${System.currentTimeMillis()}",
+                        titleAr = "تم إلغاء الطلب #$orderId",
+                        titleFr = "Commande #$orderId annulée",
+                        titleEn = "Order #$orderId cancelled",
+                        bodyAr = "تم إلغاء الطلب قبل بدء التحضير في المطبخ.",
+                        bodyFr = "La commande a été annulée avant préparation.",
+                        bodyEn = "Order was cancelled prior to kitchen preparation.",
+                        timestamp = System.currentTimeMillis(),
+                        type = "ORDER",
+                        orderId = orderId
+                    )
+                )
+                _userAlertMessage.value = "تم إلغاء الطلب #$orderId بنجاح ✓"
+            }
         }
     }
 
-    fun toggleLiveCourierSimulation(orderId: String) {
-        if (_isCourierSimulating.value) {
-            simulationJob?.cancel()
-            _isCourierSimulating.value = false
-            _userAlertMessage.value = "تم إيقاف محاكاة حركة المندوب مؤقتاً ⏸️"
-        } else {
-            _isCourierSimulating.value = true
-            _userAlertMessage.value = "تم تفعيل محاكاة حركة المندوب الحية في الوقت الفعلي! 🛵💨"
-            simulationJob = viewModelScope.launch {
-                var currentP = allOrders.value.firstOrNull { it.id == orderId }?.courierProgress ?: 0.3f
-                while (_isCourierSimulating.value && currentP < 0.98f) {
-                    kotlinx.coroutines.delay(1800)
-                    currentP += 0.05f
-                    val clamped = currentP.coerceAtMost(0.98f)
-                    val minsLeft = ((1.0f - clamped) * 12).toInt().coerceAtLeast(1)
-                    val status = when {
-                        clamped >= 0.92f -> "ARRIVED"
-                        clamped >= 0.25f -> "ON_THE_WAY"
-                        else -> "PREPARING"
-                    }
-                    val lat = 33.7020 + (33.6865 - 33.7020) * clamped
-                    val lng = -7.3940 + (-7.3820 - -7.3940) * clamped
-                    repository.updateCourierGps(orderId, lat, lng, clamped, minsLeft)
-                    if (clamped >= 0.92f) {
-                        repository.updateOrderStatus(orderId, "ARRIVED", clamped, 0)
-                        _userAlertMessage.value = "وصل المندوب إلى موقعك الآن! 🔔 يرجى الاستلام"
-                        break
-                    }
-                }
-                _isCourierSimulating.value = false
+    /**
+     * Restaurant accepts an incoming order and starts cooking in kitchen.
+     */
+    fun merchantAcceptAndCook(orderId: String) {
+        viewModelScope.launch {
+            val role = _currentRole.value
+            if (role != UserRole.RESTAURANT_OWNER && role != UserRole.SUPER_ADMIN) {
+                _userAlertMessage.value = "غير مصرح: إجراء مخصص للمطاعم المعتمدة فقط."
+                return@launch
             }
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || (order.status != "RECEIVED" && order.status != "PLACED")) {
+                _userAlertMessage.value = "لا يمكن قبول طلب تم قبوله أو تحضيره مسبقاً."
+                return@launch
+            }
+            repository.updateRestaurantStatus(orderId, "COOKING", "PREPARING")
+            HapticFeedbackHelper.vibrateAlert(getApplication())
+            AndroidNotificationHelper.showOrderNotification(
+                context = getApplication(),
+                orderId = orderId,
+                title = "المطعم يجهز وجبتك بعناية 👨‍🍳",
+                body = "بدأ الطهاة في تحضير طلبك في المطبخ الآن."
+            )
+            repository.addNotification(
+                NotificationEntity(
+                    id = "notif_prep_${System.currentTimeMillis()}",
+                    titleAr = "بدء التحضير في المطبخ 👨‍🍳",
+                    titleFr = "Préparation en cuisine 👨‍🍳",
+                    titleEn = "Preparation in kitchen 👨‍🍳",
+                    bodyAr = "قبل المطعم الطلب #$orderId وبدأ في إعداده طازجاً.",
+                    bodyFr = "Le restaurant a accepté la commande #$orderId et prépare les plats.",
+                    bodyEn = "The restaurant accepted order #$orderId and is preparing the dishes.",
+                    timestamp = System.currentTimeMillis(),
+                    type = "ORDER",
+                    orderId = orderId
+                )
+            )
+            _userAlertMessage.value = "تم قبول الطلب #$orderId وبدء التحضير في المطبخ 👨‍🍳"
+        }
+    }
+
+    /**
+     * Restaurant marks order ready for pickup and publishes to drivers pool.
+     */
+    fun merchantMarkReadyForPickup(orderId: String) {
+        viewModelScope.launch {
+            val role = _currentRole.value
+            if (role != UserRole.RESTAURANT_OWNER && role != UserRole.SUPER_ADMIN) {
+                _userAlertMessage.value = "غير مصرح: إجراء مخصص للمطاعم المعتمدة فقط."
+                return@launch
+            }
+            val order = allOrders.value.firstOrNull { it.id == orderId } ?: return@launch
+            val nextStatus = if (order.driverId.isNullOrBlank()) "LOOKING_FOR_DRIVER" else "READY_FOR_PICKUP"
+            repository.updateRestaurantStatus(orderId, "READY_FOR_PICKUP", nextStatus)
+            HapticFeedbackHelper.vibrateAlert(getApplication())
+            AndroidNotificationHelper.showOrderNotification(
+                context = getApplication(),
+                orderId = orderId,
+                title = "الطلب جاهز للاستلام 📦",
+                body = "أنهى المطعم تجهيز الوجبة وبانتظار استلام الكابتن."
+            )
+            repository.addNotification(
+                NotificationEntity(
+                    id = "notif_ready_${System.currentTimeMillis()}",
+                    titleAr = "الطلب جاهز للاستلام 📦",
+                    titleFr = "Commande prête 📦",
+                    titleEn = "Order ready 📦",
+                    bodyAr = "الطلب #$orderId معبأ وجاهز في المتجر بانتظار الكابتن.",
+                    bodyFr = "La commande #$orderId est prête au magasin pour le livreur.",
+                    bodyEn = "Order #$orderId is ready at the store for courier pickup.",
+                    timestamp = System.currentTimeMillis(),
+                    type = "ORDER",
+                    orderId = orderId
+                )
+            )
+            _userAlertMessage.value = "الطلب #$orderId جاهز للتسليم للكابتن 📦"
+        }
+    }
+
+    /**
+     * Driver accepts an available delivery task.
+     */
+    fun driverAcceptDeliveryTask(orderId: String) {
+        viewModelScope.launch {
+            if (!_driverIsOnline.value) {
+                _userAlertMessage.value = "يجب تفعيل زر الاتصال (متصل 🟢) أولاً لتلقي المهام."
+                return@launch
+            }
+            val role = _currentRole.value
+            if (role != UserRole.DRIVER && role != UserRole.SUPER_ADMIN) {
+                _userAlertMessage.value = "غير مصرح: هذا الإجراء مخصص للسائقين المعتمدين."
+                return@launch
+            }
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || !order.driverId.isNullOrBlank()) {
+                _userAlertMessage.value = "عذراً! تم إسناد هذا الطلب لكابتن آخر بالفعل."
+                return@launch
+            }
+            if (order.status != "PREPARING" && order.status != "READY_FOR_PICKUP" && order.status != "LOOKING_FOR_DRIVER") {
+                _userAlertMessage.value = "الطلب ليس في مرحلة جاهزة للاستلام من السائقين."
+                return@launch
+            }
+
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val driverName = driver?.name?.ifBlank { "كابتن وصلـيكسا" } ?: "كابتن وصلـيكسا"
+            val driverPhone = driver?.phone?.ifBlank { "+212 600-000000" } ?: "+212 600-000000"
+            val vehicle = driver?.vehicleType?.ifBlank { "دراجة نارية هوندا" } ?: "دراجة نارية هوندا"
+
+            repository.assignDriverToOrder(orderId, driverId, driverName, driverPhone, vehicle)
+            HapticFeedbackHelper.vibrateAlert(getApplication())
+            AndroidNotificationHelper.showOrderNotification(
+                context = getApplication(),
+                orderId = orderId,
+                title = "تم إسناد الطلب #$orderId إليك بنجاح! 🛵",
+                body = "توجه إلى متجر \"${order.storeName}\" لاستلام الوجبة."
+            )
+            repository.addNotification(
+                NotificationEntity(
+                    id = "notif_drv_acc_${System.currentTimeMillis()}",
+                    titleAr = "تم إسناد كابتن للطلب 🛵",
+                    titleFr = "Chauffeur assigné 🛵",
+                    titleEn = "Courier assigned 🛵",
+                    bodyAr = "قبل الكابتن $driverName المهمة وهو في طريقه للمتجر.",
+                    bodyFr = "Le chauffeur $driverName a accepté la commande et se rend au magasin.",
+                    bodyEn = "Courier $driverName accepted the order and is heading to the store.",
+                    timestamp = System.currentTimeMillis(),
+                    type = "ORDER",
+                    orderId = orderId
+                )
+            )
+            _userAlertMessage.value = "تم قبول مهمة التوصيل! توجه إلى ${order.storeName} 🛵"
+        }
+    }
+
+    /**
+     * Driver rejects an assigned task and returns it to the pool.
+     */
+    fun driverRejectDeliveryTask(orderId: String) {
+        viewModelScope.launch {
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || order.driverId != driverId) {
+                _userAlertMessage.value = "غير مصرح لك بإلغاء هذا الطلب."
+                return@launch
+            }
+            if (order.status == "ON_THE_WAY" || order.status == "ARRIVED" || order.status == "DELIVERED") {
+                _userAlertMessage.value = "لا يمكن التراجع عن المهمة بعد استلام الوجبة من المتجر."
+                return@launch
+            }
+            repository.driverRejectedOrder(orderId, driverId)
+            _userAlertMessage.value = "تم الاعتذار عن المهمة وإعادة الطلب #$orderId للبحث عن كابتن بديل."
+        }
+    }
+
+    /**
+     * Driver confirms arrival at store.
+     */
+    fun driverConfirmArrivedAtStore(orderId: String) {
+        viewModelScope.launch {
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || order.driverId != driverId) {
+                _userAlertMessage.value = "غير مصرح لك بتحديث هذه المهمة."
+                return@launch
+            }
+            repository.driverArrivedAtStore(orderId, driverId)
+            HapticFeedbackHelper.vibrateAlert(getApplication())
+            _userAlertMessage.value = "تم تأكيد وصولك إلى متجر ${order.storeName} 🏬"
+        }
+    }
+
+    /**
+     * Driver confirms picking up order from kitchen and starts driving to customer.
+     */
+    fun driverConfirmPickedUpOrder(orderId: String) {
+        viewModelScope.launch {
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || order.driverId != driverId) {
+                _userAlertMessage.value = "غير مصرح لك بتحديث هذه المهمة."
+                return@launch
+            }
+            repository.driverPickedUpOrder(orderId, driverId)
+            HapticFeedbackHelper.vibrateAlert(getApplication())
+            AndroidNotificationHelper.showOrderNotification(
+                context = getApplication(),
+                orderId = orderId,
+                title = "الكابتن استلم الطلب وهو في الطريق إليك! 🛵💨",
+                body = "انطلق الكابتن ${order.courierName} لتسليم طلبك في العنوان المحدد."
+            )
+            repository.addNotification(
+                NotificationEntity(
+                    id = "notif_pickup_${System.currentTimeMillis()}",
+                    titleAr = "الكابتن استلم الوجبة وانطلق 🛵💨",
+                    titleFr = "Commande récupérée 🛵💨",
+                    titleEn = "Order picked up 🛵💨",
+                    bodyAr = "الكابتن استلم طلبك من ${order.storeName} وهو في طريقه إليك الآن.",
+                    bodyFr = "Le livreur a récupéré votre commande et arrive vers chez vous.",
+                    bodyEn = "The courier picked up your order and is heading towards your location.",
+                    timestamp = System.currentTimeMillis(),
+                    type = "ORDER",
+                    orderId = orderId
+                )
+            )
+            _userAlertMessage.value = "تم تأكيد استلام الطلب! انطلق نحو موقع العميل 🛵💨"
+        }
+    }
+
+    /**
+     * Driver confirms arrival at customer's doorstep.
+     */
+    fun driverConfirmArrivedAtCustomer(orderId: String) {
+        viewModelScope.launch {
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || order.driverId != driverId) {
+                _userAlertMessage.value = "غير مصرح لك بتحديث هذه المهمة."
+                return@launch
+            }
+            repository.driverArrivedAtCustomer(orderId, driverId)
+            HapticFeedbackHelper.vibrateAlert(getApplication())
+            AndroidNotificationHelper.showOrderNotification(
+                context = getApplication(),
+                orderId = orderId,
+                title = "الكابتن وصل أمام المبنى! 📍🚪",
+                body = "الكابتن متواجد الآن أمام العنوان لتسليمك الطلب ساخناً."
+            )
+            repository.addNotification(
+                NotificationEntity(
+                    id = "notif_arr_${System.currentTimeMillis()}",
+                    titleAr = "الكابتن وصل أمام العنوان 📍🚪",
+                    titleFr = "Livreur arrivé 📍🚪",
+                    titleEn = "Courier arrived 📍🚪",
+                    bodyAr = "الكابتن متواجد أمام المبنى لتسليمك الوجبة ساخنة.",
+                    bodyFr = "Le livreur est arrivé devant votre adresse pour vous remettre la commande.",
+                    bodyEn = "The courier is at your building entrance ready for delivery.",
+                    timestamp = System.currentTimeMillis(),
+                    type = "ORDER",
+                    orderId = orderId
+                )
+            )
+            _userAlertMessage.value = "تم تسجيل وصولك أمام موقع العميل! اتصل به للاستلام 📍🚪"
+        }
+    }
+
+    /**
+     * Driver confirms successful delivery and collects payment if cash on delivery.
+     */
+    fun driverConfirmDelivered(orderId: String) {
+        viewModelScope.launch {
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val order = allOrders.value.firstOrNull { it.id == orderId }
+            if (order == null || order.driverId != driverId) {
+                _userAlertMessage.value = "غير مصرح لك بإنهاء هذه المهمة."
+                return@launch
+            }
+            repository.driverDeliveredOrder(orderId, driverId)
+            HapticFeedbackHelper.vibrateSuccess(getApplication())
+            AndroidNotificationHelper.showOrderNotification(
+                context = getApplication(),
+                orderId = orderId,
+                title = "تم تسليم الطلب بنجاح! بالصحة والراحة 🎉",
+                body = "شكراً لاختيارك وصلـيكسا (WASLIXA)! شاركنا تقييمك للمتجر والكابتن."
+            )
+            repository.addNotification(
+                NotificationEntity(
+                    id = "notif_del_${System.currentTimeMillis()}",
+                    titleAr = "تم تسليم الطلب بنجاح ✅",
+                    titleFr = "Commande livrée avec succès ✅",
+                    titleEn = "Order successfully delivered ✅",
+                    bodyAr = "تم تأكيد تسليم الطلب #$orderId بالكامل. بالصحة والراحة!",
+                    bodyFr = "La commande #$orderId a été livrée avec succès. Bon appétit !",
+                    bodyEn = "Order #$orderId has been delivered successfully. Enjoy your meal!",
+                    timestamp = System.currentTimeMillis(),
+                    type = "ORDER",
+                    orderId = orderId
+                )
+            )
+            _userAlertMessage.value = "تم إكمال التوصيل وتسليم الطلب بنجاح! أضيفت العمولة لمحفظتك 🏆"
+        }
+    }
+
+    /**
+     * Broadcasts real hardware GPS coordinates from driver device to database and cloud.
+     */
+    fun broadcastDriverRealGps(orderId: String, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            val driver = _currentUser.value
+            val driverId = driver?.id ?: "drv_current"
+            val order = allOrders.value.firstOrNull { it.id == orderId } ?: return@launch
+            if (order.driverId != driverId) return@launch
+
+            val distKm = LocationServiceManager.calculateDistanceKm(lat, lng, order.customerLat, order.customerLng)
+            val minsLeft = LocationServiceManager.estimateMinutesLeft(distKm)
+            val progress = (1.0f - (distKm / 5.0f).toFloat()).coerceIn(0.1f, 0.98f)
+
+            repository.updateCourierGps(orderId, lat, lng, progress, minsLeft)
         }
     }
 

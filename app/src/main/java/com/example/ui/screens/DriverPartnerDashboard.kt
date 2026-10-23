@@ -69,13 +69,24 @@ fun DriverPartnerDashboard(
     currentDeviceLocation: DeviceLocation? = null,
     onToggleOnline: () -> Unit,
     onAcceptTask: (String) -> Unit,
+    onDriverArrivedAtStore: ((String) -> Unit)? = null,
     onMarkPickedUp: (String) -> Unit,
+    onDriverArrivedAtCustomer: ((String) -> Unit)? = null,
     onMarkDelivered: (String) -> Unit,
+    onRejectTask: ((String) -> Unit)? = null,
     onNavigateWithGoogleMaps: ((OrderEntity) -> Unit)? = null,
     onBroadcastGpsLocation: ((orderId: String) -> Unit)? = null
 ) {
-    val activeDelivery = orders.firstOrNull { it.status == "ON_THE_WAY" || it.status == "PREPARING" }
-    val availableTasks = orders.filter { it.status == "RECEIVED" || (it.status == "PREPARING" && it.id != activeDelivery?.id) }
+    val activeDelivery = orders.firstOrNull {
+        !it.driverId.isNullOrBlank() && it.status in listOf("DRIVER_ACCEPTED", "DRIVER_AT_STORE", "ON_THE_WAY", "ARRIVED")
+    }
+    val availableTasks = if (isOnline && activeDelivery == null) {
+        orders.filter {
+            it.driverId.isNullOrBlank() && it.status in listOf("PREPARING", "READY_FOR_PICKUP", "LOOKING_FOR_DRIVER")
+        }
+    } else {
+        emptyList()
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -216,12 +227,13 @@ fun DriverPartnerDashboard(
                         )
 
                         val context = LocalContext.current
-                        val distKm = remember(activeDelivery.courierLat, activeDelivery.courierLng, activeDelivery.customerLat, activeDelivery.customerLng) {
+                        val hasGps = activeDelivery.courierLat != 0.0 && activeDelivery.courierLng != 0.0
+                        val distKm = if (hasGps) {
                             LocationServiceManager.calculateDistanceKm(
                                 activeDelivery.courierLat, activeDelivery.courierLng,
                                 activeDelivery.customerLat, activeDelivery.customerLng
                             )
-                        }
+                        } else 0.0
 
                         Spacer(modifier = Modifier.height(10.dp))
 
@@ -244,7 +256,7 @@ fun DriverPartnerDashboard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "المسافة للوجهة: %.1f كم (Play Services)".format(distKm),
+                                    text = if (hasGps) "المسافة للوجهة: %.1f كم (موقع GPS حقيقي)".format(distKm) else "بانتظار التقاط إشارة GPS المباشرة",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -253,10 +265,10 @@ fun DriverPartnerDashboard(
 
                             if (onBroadcastGpsLocation != null) {
                                 Text(
-                                    text = "بث GPS نشط 📡",
+                                    text = if (hasGps) "بث GPS نشط 📡" else "GPS في الانتظار ⏳",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = AzizMint
+                                    color = if (hasGps) AzizMint else AzizOrangePrimary
                                 )
                             }
                         }
@@ -290,7 +302,7 @@ fun DriverPartnerDashboard(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "فتح الملاحة في خرائط Google (Turn-by-Turn GPS) 🗺️",
+                                text = "فتح الملاحة الخارجية (Google Maps GPS) 🗺️",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = AzizOrangePrimary
@@ -299,27 +311,70 @@ fun DriverPartnerDashboard(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            if (activeDelivery.status != "ON_THE_WAY") {
+                        when (activeDelivery.status) {
+                            "DRIVER_ACCEPTED" -> {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = { onDriverArrivedAtStore?.invoke(activeDelivery.id) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.weight(1.4f)
+                                    ) {
+                                        Text("وصلت إلى المتجر 🏬", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                    }
+                                    if (onRejectTask != null) {
+                                        OutlinedButton(
+                                            onClick = { onRejectTask(activeDelivery.id) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("اعتذار ❌", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                                        }
+                                    }
+                                }
+                            }
+                            "DRIVER_AT_STORE" -> {
                                 Button(
                                     onClick = { onMarkPickedUp(activeDelivery.id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("استلمت الوجبة وبدأت التوصيل للزبون 🛵💨", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            "ON_THE_WAY" -> {
+                                Button(
+                                    onClick = { onDriverArrivedAtCustomer?.invoke(activeDelivery.id) },
                                     colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                                     shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("تم استلام الطلب من المطعم 📦", fontSize = 11.sp, color = Color.White)
+                                    Text("وصلت أمام موقع العميل 📍🚪", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
                                 }
-                            } else {
+                            }
+                            "ARRIVED" -> {
                                 Button(
                                     onClick = { onMarkDelivered(activeDelivery.id) },
                                     colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
                                     shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("تم تسليم الطلب للزبون بنجاح 🏁", fontSize = 11.sp, color = Color.White)
+                                    Text("تم تسليم الطلب واستلام المبلغ بنجاح ✓🏁", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            else -> {
+                                Button(
+                                    onClick = { onMarkDelivered(activeDelivery.id) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("تأكيد إتمام المهمة ✓", fontSize = 11.sp, color = Color.White)
                                 }
                             }
                         }
@@ -353,9 +408,14 @@ fun DriverPartnerDashboard(
                 ) {
                     Box(modifier = Modifier.padding(20.dp), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "لا توجد طلبات توصيل قريبة معلقة الآن. خليك متصل وسنرسل لك إشعاراً فورياً!",
+                            text = if (!isOnline) {
+                                "أنت في وضع غير متصل 🔴 • قم بتفعيل زر الاتصال بالأعلى لبدء استقبال طلبات التوصيل الفعلية."
+                            } else {
+                                "لا توجد طلبات توصيل قريبة معلقة الآن. خليك متصل وسنرسل لك إشعاراً فورياً!"
+                            },
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
                 }

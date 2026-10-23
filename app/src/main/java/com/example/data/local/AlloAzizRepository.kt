@@ -161,10 +161,62 @@ class AlloAzizRepository(private val database: AppDatabase) {
 
     suspend fun updateRestaurantStatus(orderId: String, restStatus: String, orderStatus: String) {
         database.orderDao().updateRestaurantStatus(orderId, restStatus, orderStatus)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, orderStatus, 0.25f, 20, restStatus)
+        } catch (_: Exception) {}
     }
 
-    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String = "") {
-        database.orderDao().assignDriverToOrder(orderId, driverId, driverName, driverPhone)
+    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String = "", vehicle: String = "دراجة نارية") {
+        database.orderDao().assignDriverToOrder(orderId, driverId, driverName, driverPhone, vehicle)
+        try {
+            com.example.data.services.FirestoreSyncManager.assignDriverCloud(orderId, driverId, driverName, driverPhone, vehicle, "DRIVER_ACCEPTED")
+        } catch (_: Exception) {}
+    }
+
+    suspend fun driverArrivedAtStore(orderId: String, driverId: String) {
+        database.orderDao().driverArrivedAtStore(orderId, driverId)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, "DRIVER_AT_STORE", 0.30f, 15)
+        } catch (_: Exception) {}
+    }
+
+    suspend fun driverPickedUpOrder(orderId: String, driverId: String) {
+        database.orderDao().driverPickedUpOrder(orderId, driverId)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, "ON_THE_WAY", 0.50f, 12, "PICKED_UP")
+        } catch (_: Exception) {}
+    }
+
+    suspend fun driverArrivedAtCustomer(orderId: String, driverId: String) {
+        database.orderDao().driverArrivedAtCustomer(orderId, driverId)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, "ARRIVED", 0.95f, 2)
+        } catch (_: Exception) {}
+    }
+
+    suspend fun driverDeliveredOrder(orderId: String, driverId: String) {
+        database.orderDao().driverDeliveredOrder(orderId, driverId)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, "DELIVERED", 1.0f, 0)
+        } catch (_: Exception) {}
+    }
+
+    suspend fun driverRejectedOrder(orderId: String, driverId: String) {
+        database.orderDao().driverRejectedOrder(orderId, driverId)
+        try {
+            com.example.data.services.FirestoreSyncManager.updateOrderStatusCloud(orderId, "LOOKING_FOR_DRIVER", 0.0f, 25)
+        } catch (_: Exception) {}
+    }
+
+    suspend fun cancelOrder(orderId: String): Boolean {
+        val rows = database.orderDao().cancelOrder(orderId)
+        if (rows > 0) {
+            try {
+                com.example.data.services.FirestoreSyncManager.cancelOrderCloud(orderId)
+            } catch (_: Exception) {}
+            return true
+        }
+        return false
     }
 
     suspend fun updateCourierPhone(orderId: String, phone: String) {

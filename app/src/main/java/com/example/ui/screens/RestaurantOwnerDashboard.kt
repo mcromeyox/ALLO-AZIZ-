@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -375,37 +376,139 @@ fun RestaurantOwnerDashboard(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            if (order.status == "RECEIVED") {
-                                Button(
-                                    onClick = { onUpdateOrderStatus(order.id, "COOKING", "PREPARING") },
-                                    colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("بدء التحضير 🍳", fontSize = 11.sp, color = Color.White)
+                            when (order.status) {
+                                "RECEIVED", "PLACED" -> {
+                                    Button(
+                                        onClick = { onUpdateOrderStatus(order.id, "COOKING", "PREPARING") },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("قبول وبدء التحضير 🍳", fontSize = 11.sp, color = Color.White)
+                                    }
                                 }
-                            } else if (order.status == "PREPARING") {
-                                Button(
-                                    onClick = { onUpdateOrderStatus(order.id, "READY_FOR_PICKUP", "ON_THE_WAY") },
-                                    colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
-                                    shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("جاهز للاستلام من المندوب 🛵", fontSize = 11.sp, color = Color.White)
+                                "PREPARING" -> {
+                                    Button(
+                                        onClick = {
+                                            val nextStatus = if (order.driverId.isNullOrBlank()) "LOOKING_FOR_DRIVER" else "READY_FOR_PICKUP"
+                                            onUpdateOrderStatus(order.id, "READY_FOR_PICKUP", nextStatus)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = AzizMint),
+                                        shape = RoundedCornerShape(10.dp),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text("جاهز للاستلام بالمطبخ 📦", fontSize = 11.sp, color = Color.White)
+                                    }
                                 }
-                            } else {
-                                Surface(
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = AzizMint.copy(alpha = 0.15f),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text(
-                                        text = "المندوب استلم الطلب وهو في الطريق ✓",
-                                        modifier = Modifier.padding(vertical = 8.dp),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = AzizMint
-                                    )
+                                "READY_FOR_PICKUP", "LOOKING_FOR_DRIVER" -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = AzizAmberSecondary.copy(alpha = 0.15f),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = if (order.driverId.isNullOrBlank()) "جاهز • بانتظار قبول كابتن التوصيل 🛵" else "جاهز • الكابتن في الطريق للمتجر 🏃",
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizAmberSecondary,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                "DRIVER_ACCEPTED", "DRIVER_AT_STORE" -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = AzizMint.copy(alpha = 0.15f),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "الكابتن وصل أمام المتجر للاستلام 🏬",
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizMint,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                "ON_THE_WAY" -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = AzizMint.copy(alpha = 0.15f),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "المندوب استلم الطلب وهو في الطريق للزبون ✓",
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizMint,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                "ARRIVED" -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = AzizMint.copy(alpha = 0.15f),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "المندوب وصل عند عنوان الزبون 📍",
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizMint,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                "DELIVERED" -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = AzizMint.copy(alpha = 0.15f),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "تم التسليم للزبون بنجاح ✓",
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AzizMint,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                "CANCELLED" -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = Color(0xFFDC2626).copy(alpha = 0.15f),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = "تم إلغاء الطلب ✕",
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFDC2626),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                else -> {
+                                    Surface(
+                                        shape = RoundedCornerShape(10.dp),
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = order.status,
+                                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 6.dp),
+                                            fontSize = 11.sp,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 }
                             }
                         }

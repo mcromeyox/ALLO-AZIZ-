@@ -109,21 +109,73 @@ object FirestoreSyncManager {
     /**
      * Updates order status in Cloud Firestore.
      */
-    suspend fun updateOrderStatusCloud(orderId: String, status: String, progress: Float, minsLeft: Int) {
+    suspend fun updateOrderStatusCloud(orderId: String, status: String, progress: Float, minsLeft: Int, restaurantStatus: String? = null) {
+        val db = firestore ?: return
+        try {
+            val updateMap = mutableMapOf<String, Any>(
+                "status" to status,
+                "courierProgress" to progress,
+                "estimatedMinsLeft" to minsLeft,
+                "updatedAt" to System.currentTimeMillis()
+            )
+            if (restaurantStatus != null) {
+                updateMap["restaurantStatus"] = restaurantStatus
+            }
+            db.collection(COLLECTION_ORDERS)
+                .document(orderId)
+                .update(updateMap)
+                .await()
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to update status in cloud: ${e.message}")
+        }
+    }
+
+    /**
+     * Updates driver assignment in Cloud Firestore when an authorized driver accepts.
+     */
+    suspend fun assignDriverCloud(
+        orderId: String,
+        driverId: String,
+        driverName: String,
+        driverPhone: String,
+        vehicle: String,
+        status: String
+    ) {
         val db = firestore ?: return
         try {
             db.collection(COLLECTION_ORDERS)
                 .document(orderId)
                 .update(
                     mapOf(
+                        "driverId" to driverId,
+                        "courierName" to driverName,
+                        "courierPhone" to driverPhone,
+                        "courierVehicle" to vehicle,
                         "status" to status,
-                        "courierProgress" to progress,
-                        "estimatedMinsLeft" to minsLeft,
                         "updatedAt" to System.currentTimeMillis()
                     )
                 ).await()
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to update status in cloud: ${e.message}")
+            Log.w(TAG, "Failed to update driver assignment in cloud: ${e.message}")
+        }
+    }
+
+    /**
+     * Cancels an order in Cloud Firestore if requested before store acceptance.
+     */
+    suspend fun cancelOrderCloud(orderId: String) {
+        val db = firestore ?: return
+        try {
+            db.collection(COLLECTION_ORDERS)
+                .document(orderId)
+                .update(
+                    mapOf(
+                        "status" to "CANCELLED",
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                ).await()
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to cancel order in cloud: ${e.message}")
         }
     }
 

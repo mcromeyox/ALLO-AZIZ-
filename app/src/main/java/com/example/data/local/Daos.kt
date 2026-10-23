@@ -120,7 +120,7 @@ interface OrderDao {
     @Query("SELECT * FROM orders WHERE storeId = :storeId ORDER BY timestamp DESC")
     fun getOrdersByStore(storeId: String): Flow<List<OrderEntity>>
 
-    @Query("SELECT * FROM orders WHERE driverId = :driverId OR (driverId IS NULL AND status IN ('PREPARING', 'ON_THE_WAY')) ORDER BY timestamp DESC")
+    @Query("SELECT * FROM orders WHERE driverId = :driverId OR (driverId IS NULL AND status IN ('PREPARING', 'READY_FOR_PICKUP', 'LOOKING_FOR_DRIVER')) ORDER BY timestamp DESC")
     fun getOrdersForDriver(driverId: String): Flow<List<OrderEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -132,14 +132,32 @@ interface OrderDao {
     @Query("UPDATE orders SET status = :status, courierProgress = :progress, estimatedMinsLeft = :minsLeft WHERE id = :orderId")
     suspend fun updateOrderStatus(orderId: String, status: String, progress: Float, minsLeft: Int)
 
-    @Query("UPDATE orders SET courierLat = :lat, courierLng = :lng, courierProgress = :progress, estimatedMinsLeft = :minsLeft, status = 'ON_THE_WAY' WHERE id = :orderId")
+    @Query("UPDATE orders SET courierLat = :lat, courierLng = :lng, courierProgress = :progress, estimatedMinsLeft = :minsLeft WHERE id = :orderId")
     suspend fun updateCourierGps(orderId: String, lat: Double, lng: Double, progress: Float, minsLeft: Int)
 
     @Query("UPDATE orders SET restaurantStatus = :restStatus, status = :orderStatus WHERE id = :orderId")
     suspend fun updateRestaurantStatus(orderId: String, restStatus: String, orderStatus: String)
 
-    @Query("UPDATE orders SET driverId = :driverId, courierName = :driverName, courierPhone = :driverPhone, status = 'ON_THE_WAY', courierProgress = 0.5 WHERE id = :orderId")
-    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String)
+    @Query("UPDATE orders SET driverId = :driverId, courierName = :driverName, courierPhone = :driverPhone, courierVehicle = :vehicle, status = 'DRIVER_ACCEPTED', courierProgress = 0.15 WHERE id = :orderId AND (driverId IS NULL OR driverId = '')")
+    suspend fun assignDriverToOrder(orderId: String, driverId: String, driverName: String, driverPhone: String, vehicle: String = "دراجة نارية")
+
+    @Query("UPDATE orders SET status = 'DRIVER_AT_STORE', courierProgress = 0.30 WHERE id = :orderId AND driverId = :driverId")
+    suspend fun driverArrivedAtStore(orderId: String, driverId: String)
+
+    @Query("UPDATE orders SET status = 'ON_THE_WAY', restaurantStatus = 'PICKED_UP', courierProgress = 0.50 WHERE id = :orderId AND driverId = :driverId")
+    suspend fun driverPickedUpOrder(orderId: String, driverId: String)
+
+    @Query("UPDATE orders SET status = 'ARRIVED', courierProgress = 0.95 WHERE id = :orderId AND driverId = :driverId")
+    suspend fun driverArrivedAtCustomer(orderId: String, driverId: String)
+
+    @Query("UPDATE orders SET status = 'DELIVERED', courierProgress = 1.0, estimatedMinsLeft = 0 WHERE id = :orderId AND driverId = :driverId")
+    suspend fun driverDeliveredOrder(orderId: String, driverId: String)
+
+    @Query("UPDATE orders SET driverId = NULL, courierName = '', courierPhone = '', status = 'LOOKING_FOR_DRIVER', courierProgress = 0.0 WHERE id = :orderId AND driverId = :driverId")
+    suspend fun driverRejectedOrder(orderId: String, driverId: String)
+
+    @Query("UPDATE orders SET status = 'CANCELLED' WHERE id = :orderId AND status IN ('RECEIVED', 'PLACED')")
+    suspend fun cancelOrder(orderId: String): Int
 
     @Query("UPDATE orders SET courierPhone = :driverPhone WHERE id = :orderId")
     suspend fun updateCourierPhone(orderId: String, driverPhone: String)

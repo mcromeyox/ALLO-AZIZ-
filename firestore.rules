@@ -86,20 +86,21 @@ service cloud.firestore {
         (!('customerId' in request.resource.data) || request.resource.data.customerId == request.auth.uid)
       ) || isSuperAdmin();
 
-      // Updates: Courier can update GPS and delivery status; Merchant can update preparation; Admin can update all
+      // Updates: Courier can update GPS, assignment, and delivery status; Merchant can update preparation; Admin can update all
       allow update: if isSuperAdmin() || isSupportAgent() || (
         isAuthenticated() && (
-          // Courier updating location and status
+          // Courier accepting task and updating GPS location / delivery status
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'courierLat', 'courierLng', 'courierProgress', 'estimatedMinsLeft', 'status', 'updatedAt'
+            'courierLat', 'courierLng', 'courierProgress', 'estimatedMinsLeft', 'status', 'updatedAt',
+            'driverId', 'courierName', 'courierPhone', 'courierVehicle'
           ]) ||
           // Merchant updating order acceptance and kitchen prep
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'restaurantStatus', 'status', 'updatedAt'
           ]) ||
-          // Customer rating or updating delivery notes
+          // Customer rating or updating delivery notes or cancelling before preparation
           request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'hasReviewed', 'deliveryNotes', 'updatedAt'
+            'hasReviewed', 'deliveryNotes', 'status', 'updatedAt'
           ])
         )
       );

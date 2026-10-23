@@ -123,7 +123,6 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
     val selectedCity by viewModel.selectedCity.collectAsState()
     val deviceLocation by viewModel.deviceLocation.collectAsState()
     val isGpsLive by viewModel.isLiveLocationTrackingEnabled.collectAsState()
-    val isCourierSimulating by viewModel.isCourierSimulating.collectAsState()
     val isNetworkConnected by viewModel.isNetworkConnected.collectAsState()
     val customerLat by viewModel.customerLat.collectAsState()
     val customerLng by viewModel.customerLng.collectAsState()
@@ -450,7 +449,6 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 currentRole = currentRole,
                                 currentDeviceLocation = deviceLocation,
                                 isGpsLive = isGpsLive,
-                                isCourierSimulating = isCourierSimulating,
                                 onBack = { viewModel.navigateBack() },
                                 onSubmitReview = { orderId, storeName, sRating, cRating, tags, comment ->
                                     viewModel.submitReview(orderId, storeName, sRating, cRating, tags, comment)
@@ -484,17 +482,11 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 onOpenWhatsAppCourier = { order ->
                                     viewModel.openCourierWhatsApp(context, order)
                                 },
-                                onAdvanceStage = { orderId ->
-                                    viewModel.advanceOrderTrackingStage(orderId)
-                                },
                                 onUpdateCourierPhone = { phone ->
                                     viewModel.updateCourierPhone(orderToTrack?.id ?: "", phone)
                                 },
-                                onStartDemoOrder = {
-                                    viewModel.startLiveDemoOrderTracking()
-                                },
-                                onToggleCourierSimulation = { orderId ->
-                                    viewModel.toggleLiveCourierSimulation(orderId)
+                                onCancelOrder = { orderId ->
+                                    viewModel.customerCancelOrder(orderId)
                                 }
                             )
                         }
@@ -585,14 +577,21 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                                 orders = allOrders,
                                 currentDeviceLocation = deviceLocation,
                                 onToggleOnline = { viewModel.toggleDriverOnline() },
-                                onAcceptTask = { orderId -> viewModel.acceptDeliveryTask(orderId) },
-                                onMarkPickedUp = { orderId -> viewModel.markOrderPickedUpFromKitchen(orderId) },
-                                onMarkDelivered = { orderId -> viewModel.markOrderDeliveredToCustomer(orderId) },
+                                onAcceptTask = { orderId -> viewModel.driverAcceptDeliveryTask(orderId) },
+                                onDriverArrivedAtStore = { orderId -> viewModel.driverConfirmArrivedAtStore(orderId) },
+                                onMarkPickedUp = { orderId -> viewModel.driverConfirmPickedUpOrder(orderId) },
+                                onDriverArrivedAtCustomer = { orderId -> viewModel.driverConfirmArrivedAtCustomer(orderId) },
+                                onMarkDelivered = { orderId -> viewModel.driverConfirmDelivered(orderId) },
+                                onRejectTask = { orderId -> viewModel.driverRejectDeliveryTask(orderId) },
                                 onNavigateWithGoogleMaps = { order ->
                                     viewModel.openGoogleMapsRoute(context, order)
                                 },
                                 onBroadcastGpsLocation = { orderId ->
-                                    viewModel.startRealtimeLocationTracking(context)
+                                    viewModel.broadcastDriverRealGps(
+                                        orderId,
+                                        deviceLocation?.latitude ?: 0.0,
+                                        deviceLocation?.longitude ?: 0.0
+                                    )
                                 }
                             )
                         }

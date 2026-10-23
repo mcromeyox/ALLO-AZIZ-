@@ -108,7 +108,6 @@ fun OrderTrackingScreen(
     currentRole: com.example.data.model.UserRole = com.example.data.model.UserRole.CUSTOMER,
     currentDeviceLocation: DeviceLocation? = null,
     isGpsLive: Boolean = false,
-    isCourierSimulating: Boolean = false,
     onBack: () -> Unit,
     onSubmitReview: (orderId: String, storeName: String, storeRating: Int, courierRating: Int, tags: List<String>, comment: String) -> Unit,
     onContactSupport: () -> Unit,
@@ -117,10 +116,8 @@ fun OrderTrackingScreen(
     onToggleGpsTracking: ((Boolean) -> Unit)? = null,
     onShareReceipt: ((OrderEntity) -> Unit)? = null,
     onOpenWhatsAppCourier: ((OrderEntity) -> Unit)? = null,
-    onAdvanceStage: ((String) -> Unit)? = null,
     onUpdateCourierPhone: ((String) -> Unit)? = null,
-    onStartDemoOrder: (() -> Unit)? = null,
-    onToggleCourierSimulation: ((String) -> Unit)? = null
+    onCancelOrder: ((String) -> Unit)? = null
 ) {
     BackHandler { onBack() }
 
@@ -188,7 +185,7 @@ fun OrderTrackingScreen(
                     text = when (language) {
                         AppLanguage.FRENCH -> "Visualisez le trajet du livreur en temps réel du magasin jusqu'à chez vous sur la carte interactive !"
                         AppLanguage.ENGLISH -> "View the courier's real-time journey from the store to your doorstep on the interactive map!"
-                        AppLanguage.ARABIC -> "شاهد مسار المندوب في الوقت الفعلي من المتجر إلى موقعك على الخريطة التفاعلية!"
+                        AppLanguage.ARABIC -> "لا يوجد طلب قيد التوصيل حالياً. اطلب الآن من مطاعم ومتاجر المحمدية لمتابعة كابتن التوصيل على الخريطة مباشرة!"
                     },
                     fontSize = 13.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -196,19 +193,19 @@ fun OrderTrackingScreen(
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
-                    onClick = { onStartDemoOrder?.invoke() },
+                    onClick = onBack,
                     colors = ButtonDefaults.buttonColors(containerColor = AzizOrangePrimary),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
-                        .testTag("start_demo_tracking_btn")
+                        .testTag("back_to_restaurants_btn")
                 ) {
                     Row(
                         modifier = Modifier.padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ElectricScooter,
+                            imageVector = Icons.Default.Restaurant,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(20.dp)
@@ -216,9 +213,9 @@ fun OrderTrackingScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = when (language) {
-                                AppLanguage.FRENCH -> "Lancer la simulation en direct 🛰️"
-                                AppLanguage.ENGLISH -> "Launch Live Tracking Map 🛰️"
-                                AppLanguage.ARABIC -> "بدء تتبع حي مباشر على الخريطة 🛰️"
+                                AppLanguage.FRENCH -> "Découvrir les restaurants"
+                                AppLanguage.ENGLISH -> "Explore Restaurants & Menus"
+                                AppLanguage.ARABIC -> "تصفح المطاعم وقوائم الطعام 🍔"
                             },
                             color = Color.White,
                             fontWeight = FontWeight.Bold,
@@ -226,33 +223,19 @@ fun OrderTrackingScreen(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(10.dp))
-                OutlinedButton(
-                    onClick = onBack,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                ) {
-                    Text(
-                        text = when (language) {
-                            AppLanguage.FRENCH -> "Retour aux restaurants"
-                            AppLanguage.ENGLISH -> "Back to restaurants"
-                            AppLanguage.ARABIC -> "العودة للرئيسية وتصفح المأكولات"
-                        },
-                        color = AzizOrangePrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             }
         }
         return
     }
 
     val currentStageIndex = when (order.status) {
-        "RECEIVED" -> 0
+        "RECEIVED", "PLACED" -> 0
         "PREPARING" -> 1
-        "ON_THE_WAY" -> 2
-        "ARRIVED" -> 3
-        "DELIVERED" -> 4
+        "READY_FOR_PICKUP", "LOOKING_FOR_DRIVER", "DRIVER_ACCEPTED", "DRIVER_AT_STORE" -> 2
+        "ON_THE_WAY" -> 3
+        "ARRIVED" -> 4
+        "DELIVERED" -> 5
+        "CANCELLED" -> -1
         else -> 0
     }
 
@@ -361,7 +344,7 @@ fun OrderTrackingScreen(
             )
         }
 
-        // Real-Time Interactive Courier Movement & Tracking Controls
+        // Real-Time Delivery Status & Actions Card
         item {
             ElevatedCard(
                 shape = RoundedCornerShape(16.dp),
@@ -381,28 +364,48 @@ fun OrderTrackingScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(34.dp)
+                                    .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(if (isCourierSimulating) AzizMint.copy(alpha = 0.2f) else AzizOrangePrimary.copy(alpha = 0.2f)),
+                                    .background(AzizOrangePrimary.copy(alpha = 0.2f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = if (isCourierSimulating) Icons.Default.ElectricScooter else Icons.Default.LocationOn,
+                                    imageVector = when (order.status) {
+                                        "DELIVERED" -> Icons.Default.CheckCircle
+                                        "ON_THE_WAY" -> Icons.Default.ElectricScooter
+                                        "PREPARING" -> Icons.Default.Restaurant
+                                        else -> Icons.Default.LocationOn
+                                    },
                                     contentDescription = null,
-                                    tint = if (isCourierSimulating) AzizMint else AzizOrangePrimary,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = if (order.status == "DELIVERED") AzizMint else AzizOrangePrimary,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = if (isCourierSimulating) "المندوب يتحرك مباشرة على الخريطة 🛵💨" else "تتبع مسار المندوب التفاعلي 📍",
+                                    text = when (order.status) {
+                                        "RECEIVED", "PLACED" -> "تم تسجيل الطلب • بانتظار مراجعة المتجر ⏳"
+                                        "PREPARING" -> "المتجر يقوم بتحضير وجبتك في المطبخ 🍳"
+                                        "READY_FOR_PICKUP", "LOOKING_FOR_DRIVER" -> "الوجبة جاهزة • جاري إسناد أقرب كابتن 🛵"
+                                        "DRIVER_ACCEPTED" -> "قبل الكابتن المهمة وهو متوجه للمطعم 🏃"
+                                        "DRIVER_AT_STORE" -> "الكابتن وصل المتجر لاستلام الطلب 🏬"
+                                        "ON_THE_WAY" -> "الكابتن استلم الطلب وهو في الطريق إليك 🛵💨"
+                                        "ARRIVED" -> "الكابتن وصل أمام عنوان التوصيل 📍🚪"
+                                        "DELIVERED" -> "تم تسليم الطلب بنجاح ✓"
+                                        "CANCELLED" -> "تم إلغاء الطلب ❌"
+                                        else -> "متابعة الطلب المباشرة 📍"
+                                    },
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 13.sp,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = "السرعة: 38 كم/س • شوارع المحمدية (شارع الحسن الثاني)",
+                                    text = if (order.courierLat != 0.0 && order.courierLng != 0.0) {
+                                        "تتبع GPS حي ومباشر للكابتن 🛰️"
+                                    } else {
+                                        "نظام تتبع حقيقي منضبط بالأحداث الفعلية"
+                                    },
                                     fontSize = 11.sp,
                                     color = Color.White.copy(alpha = 0.7f)
                                 )
@@ -411,78 +414,62 @@ fun OrderTrackingScreen(
 
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = if (isCourierSimulating) AzizMint.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.12f)
+                            color = when (order.status) {
+                                "DELIVERED" -> AzizMint.copy(alpha = 0.25f)
+                                "CANCELLED" -> Color(0xFFDC2626).copy(alpha = 0.25f)
+                                else -> AzizOrangePrimary.copy(alpha = 0.25f)
+                            }
                         ) {
                             Text(
-                                text = if (isCourierSimulating) "مباشر 🔴" else "جاهز 🛰️",
+                                text = when (order.status) {
+                                    "DELIVERED" -> "مكتمل ✓"
+                                    "CANCELLED" -> "ملغي ❌"
+                                    "ON_THE_WAY" -> "على الطريق 🛵"
+                                    "PREPARING" -> "تحضير 🍳"
+                                    else -> "نشط 🔴"
+                                },
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isCourierSimulating) AzizMint else Color.White
+                                color = when (order.status) {
+                                    "DELIVERED" -> AzizMint
+                                    "CANCELLED" -> Color(0xFFEF4444)
+                                    else -> AzizOrangePrimary
+                                }
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = { onToggleCourierSimulation?.invoke(order.id) },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isCourierSimulating) Color(0xFFDC2626) else AzizOrangePrimary
-                            ),
+                    if (order.status in listOf("RECEIVED", "PLACED")) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = { onCancelOrder?.invoke(order.id) },
                             shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                             modifier = Modifier
-                                .weight(1f)
-                                .testTag("toggle_courier_sim_btn")
+                                .fillMaxWidth()
+                                .testTag("cancel_order_btn")
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = if (isCourierSimulating) "⏸️" else "▶️",
-                                    fontSize = 14.sp
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (isCourierSimulating) "إيقاف مؤقت ⏸️" else "محاكاة حركة المندوب 🛵",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                        }
-
-                        if (onAdvanceStage != null && order.status != "DELIVERED") {
-                            OutlinedButton(
-                                onClick = { onAdvanceStage(order.id) },
-                                shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f)),
-                                modifier = Modifier.testTag("advance_order_stage_btn")
-                            ) {
-                                Text(
-                                    text = "المرحلة التالية ⏩",
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Text(
+                                text = "إلغاء الطلب ❌ (متاح قبل بدء الطهي)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFEF4444)
+                            )
                         }
                     }
                 }
             }
         }
 
-        // Google Play Services Real-Time GPS Tracking & Maps Navigation Card
+        // OpenStreetMap Real-Time GPS Tracking & External Maps Card
         item {
-            val distKm = remember(order.courierLat, order.courierLng, order.customerLat, order.customerLng) {
-                LocationServiceManager.calculateDistanceKm(order.courierLat, order.courierLng, order.customerLat, order.customerLng)
-            }
-            val formattedDist = if (distKm < 1.0) {
-                "${(distKm * 1000).toInt()} متر"
+            val hasCourierLocation = order.courierLat != 0.0 && order.courierLng != 0.0
+            val formattedDist = if (hasCourierLocation) {
+                val distKm = LocationServiceManager.calculateDistanceKm(order.courierLat, order.courierLng, order.customerLat, order.customerLng)
+                if (distKm < 1.0) "${(distKm * 1000).toInt()} متر" else "%.1f كم".format(distKm)
             } else {
-                "%.1f كم".format(distKm)
+                "بانتظار إرسال موقع الكابتن"
             }
 
             ElevatedCard(
@@ -700,56 +687,6 @@ fun OrderTrackingScreen(
                         currentStage = currentStageIndex,
                         language = language
                     )
-
-                    // Stage Progression Sync Controller (visible ONLY for staff/partner testing, never for customer)
-                    if (currentRole != com.example.data.model.UserRole.CUSTOMER && onAdvanceStage != null && order.status != "DELIVERED") {
-                        Spacer(modifier = Modifier.height(14.dp))
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column {
-                                Text(
-                                    text = "مزامنة دورة التوصيل (لوحة الإدارة):",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "تحديث مرحلة التوصيل تجريبياً",
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                                )
-                            }
-                            Button(
-                                onClick = { onAdvanceStage(order.id) },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = when (order.status) {
-                                        "RECEIVED" -> AzizOrangePrimary
-                                        "PREPARING" -> AzizAmberSecondary
-                                        "ON_THE_WAY" -> AzizMint
-                                        else -> AzizMint
-                                    }
-                                ),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                modifier = Modifier.testTag("sync_advance_stage_btn")
-                            ) {
-                                val nextLabel = when (order.status) {
-                                    "RECEIVED" -> "بدء التحضير 🍳"
-                                    "PREPARING" -> "انطلاق الكابتن 🛵"
-                                    "ON_THE_WAY" -> "وصول الكابتن 📍"
-                                    "ARRIVED" -> "تأكيد الاستلام ✓"
-                                    else -> "تحديث الحالة 🔄"
-                                }
-                                Text(nextLabel, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -1633,12 +1570,47 @@ fun TrackingStagesStepper(
     currentStage: Int,
     language: AppLanguage
 ) {
+    if (currentStage == -1) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = Color(0xFFDC2626).copy(alpha = 0.12f),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("❌", fontSize = 22.sp)
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "تم إلغاء هذا الطلب",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = Color(0xFFDC2626)
+                    )
+                    Text(
+                        text = "تم إلغاء تنفيذ الطلب ولم يتم خصم أي رسوم إضافية.",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+        return
+    }
+
     val stages = listOf(
         Pair("1", AppStrings.statusReceived(language)),
         Pair("2", AppStrings.statusPreparing(language)),
-        Pair("3", AppStrings.statusOnTheWay(language)),
-        Pair("4", AppStrings.statusArrived(language)),
-        Pair("5", AppStrings.statusDelivered(language))
+        Pair("3", when (language) {
+            AppLanguage.ARABIC -> "جاهز واستلام الكابتن"
+            AppLanguage.FRENCH -> "Prêt & Prise en charge"
+            AppLanguage.ENGLISH -> "Ready & Courier Assigned"
+        }),
+        Pair("4", AppStrings.statusOnTheWay(language)),
+        Pair("5", AppStrings.statusArrived(language)),
+        Pair("6", AppStrings.statusDelivered(language))
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
