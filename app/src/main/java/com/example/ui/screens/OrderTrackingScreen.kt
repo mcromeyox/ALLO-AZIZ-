@@ -319,11 +319,11 @@ fun OrderTrackingScreen(
             }
         }
 
-        // High-Fidelity Realistic Google Delivery Map Tracking
+        // High-Fidelity OpenStreetMap Live Delivery Tracking via MapLibre Native
         item {
-            com.example.ui.components.RealisticGoogleDeliveryMap(
+            com.example.ui.components.RealisticMapLibreDeliveryMap(
                 order = order,
-                onOpenGoogleMapsApp = {
+                onOpenExternalMap = {
                     if (onOpenGoogleMaps != null) {
                         onOpenGoogleMaps(order)
                     } else {

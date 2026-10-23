@@ -23,10 +23,9 @@ object ServiceManager {
         }
     }
 
-    fun isGoogleMapsConfigured(): Boolean {
-        val key = try { BuildConfig.GOOGLE_MAPS_API_KEY } catch (e: Exception) { "" }
-        return key.isNotBlank() && !key.contains("YourReal") && !key.contains("PLACEHOLDER")
-    }
+    fun isOpenStreetMapConfigured(): Boolean = true
+
+    fun isGoogleMapsConfigured(): Boolean = false
 
     fun isPaymentGatewayConfigured(): Boolean {
         val key = try { BuildConfig.PAYMENT_PROVIDER_KEY } catch (e: Exception) { "" }

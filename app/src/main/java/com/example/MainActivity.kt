@@ -69,6 +69,9 @@ import com.example.ui.viewmodel.AppScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        try {
+            org.maplibre.android.MapLibre.getInstance(applicationContext)
+        } catch (_: Exception) {}
         enableEdgeToEdge()
         setContent {
             WaslixaApp()
@@ -625,7 +628,7 @@ fun AlloAzizApp(viewModel: AlloAzizViewModel = viewModel()) {
                     }
 
                     if (showLocationPickerModal) {
-                        com.example.ui.components.CustomerGoogleMapLocationDialog(
+                        com.example.ui.components.CustomerMapLibreLocationDialog(
                             initialLat = customerLat,
                             initialLng = customerLng,
                             initialAddress = deliveryAddress,

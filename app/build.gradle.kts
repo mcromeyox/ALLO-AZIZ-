@@ -20,9 +20,6 @@ android {
     versionName = "1.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-    manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = "AIzaSyDummyMapsKeyForDevMohammedia"
-    buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"\"")
     buildConfigField("String", "PAYMENT_PROVIDER_KEY", "\"\"")
     buildConfigField("String", "FIREBASE_PROJECT_ID", "\"allo-aziz\"")
     buildConfigField("String", "GEMINI_API_KEY", "\"\"")
@@ -125,6 +122,7 @@ dependencies {
   implementation(libs.okhttp)
   implementation(libs.play.services.location)
   implementation(libs.retrofit)
+  implementation(libs.maplibre.android)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
